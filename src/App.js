@@ -1,23 +1,30 @@
-import logo from './logo.svg';
+import React, { useState } from 'react';
 import './App.css';
+import WelcomeScreen from './WelcomeScreen.js';
 
 function App() {
+  const [isLoggedIn, setIsLoggedIn] = useState(false);
+  
+  const handleLogin = () => {
+    setIsLoggedIn(true);
+  };
+
+  if (isLoggedIn) {
+    return <WelcomeScreen/>;
+  }
+  
   return (
     <div className="App">
-      <header className="App-header">
-        <img src={logo} className="App-logo" alt="logo" />
-        <p>
-          Edit <code>src/App.js</code> and save to reload.
-        </p>
-        <a
-          className="App-link"
-          href="https://reactjs.org"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          Learn React
-        </a>
-      </header>
+      <div className="logo-container">
+        <img src="/logo1.png" alt="WOLFit Logo" className="login-logo" />
+      </div>
+      
+      <div className="login-form">
+        <input type="user name" placeholder="שם משתמש" />
+        <input type="password" placeholder="סיסמה" />
+        <button onClick={handleLogin}>כניסה</button>
+        <p>אין לך חשבון? <span>הירשם  כאן</span></p>
+      </div>
     </div>
   );
 }

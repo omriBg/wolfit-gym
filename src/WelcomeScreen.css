@@ -1,0 +1,294 @@
+.WelcomeScreen {
+  text-align: center;
+  background-color: #000000;
+  color: white;
+  overflow-y: auto;
+  
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  min-height: 100vh;
+  
+}
+
+.main-logo2 {
+  position: fixed;
+  width: 600px;
+  height: auto;
+  z-index: 900;
+  transition: all 2s cubic-bezier(0.4, 0, 0.2, 1); 
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+}
+
+.main-logo2.scrolled {
+  width: 80px;
+  top: 20px !important;
+  left: 20px !important;
+  transform: translate(0, 0) !important;
+}
+
+
+
+.spacer {
+  height: 400vh; 
+
+
+@keyframes fade-in-slow {
+  from { 
+    opacity: 0; 
+    transform: translate(-50%, -50%) scale(0.8); 
+  }
+  to { 
+    opacity: 1; 
+    transform: translate(-50%, -50%) scale(1); 
+  }
+}
+
+@keyframes slide-in {
+  from {
+    opacity: 0;
+    transform: translateX(-20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
+
+@media (max-width: 768px) {
+  .main-logo2 {
+    width: 250px;
+  }
+  
+  .main-logo2.scrolled {
+    width: 60px;
+    top: 15px !important;
+    left: 15px !important;
+  }
+  
+  .welcome-text {
+    left: 85px; 
+    top: 15px;
+  }
+  
+  .welcome-text h1 {
+    font-size: 1.4rem;
+  }
+  
+  .advanced-scroll-indicator {
+    bottom: 25px;
+  }
+  
+  .initial-scroll-indicator {
+    bottom: 60px;
+  }
+  
+  .scroll-arrow-container {
+    padding: 8px 12px;
+  }
+  
+  .scroll-progress {
+    width: 100px;
+  }
+}
+}
+.text-container {
+  position: fixed;
+  left: 50%;
+  top: 50%;
+  transform: translate(-50%, -50%);
+  font-size: 3.5rem;
+  font-weight: bold;
+  color: white;
+  z-index: 999;
+  text-align: center;
+}
+
+.text-line {
+  opacity: 0;
+  transform: translateY(80px);
+  transition: all 2.5s ease;
+  text-shadow: 0 0 20px rgba(255, 255, 255, 0.5);
+  margin: 20px 0;
+}
+
+.text-line.visible {
+  opacity: 1;
+  transform: translateY(0);
+  text-shadow: 0 0 30px rgba(255, 255, 255, 0.8), 0 0 50px rgba(255, 255, 255, 0.4);
+}
+
+.text-line.fade-out {
+  opacity: 0;
+  transform: translateY(-80px);
+  text-shadow: 0 0 10px rgba(255, 255, 255, 0.2);
+}
+
+.scroll-indicator {
+  position: fixed;
+  right: 30px;
+  top: 50%;
+  transform: translateY(-50%);
+  z-index: 1000;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 10px;
+}
+
+.scroll-dot {
+  width: 12px;
+  height: 12px;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.3);
+  transition: all 0.3s ease;
+  cursor: pointer;
+}
+
+.scroll-dot.active {
+  background: rgba(255, 255, 255, 0.8);
+  box-shadow: 0 0 20px rgba(255, 255, 255, 0.5);
+  transform: scale(1.2);
+}
+
+.scroll-line {
+  width: 2px;
+  height: 100px;
+  background: linear-gradient(to bottom, transparent, rgba(255, 255, 255, 0.3), transparent);
+  margin: 10px 0;
+}
+
+/* אינדיקטור גלילה למסך הראשוני */
+.initial-scroll-indicator {
+  position: fixed;
+  bottom: 80px;
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 1000;
+  opacity: 0;
+  animation: fadeInScrollIndicator 2s ease 1s forwards;
+}
+
+.initial-scroll-indicator .scroll-arrow {
+  font-size: 1.2rem;
+  color: rgba(255, 255, 255, 0.6);
+  animation: bounceArrow 2s infinite;
+  filter: blur(0.5px);
+}
+
+/* אינדיקטור גלילה מתקדם */
+.advanced-scroll-indicator {
+  position: fixed;
+  bottom: 40px;
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 1000;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 10px;
+  opacity: 0;
+  animation: fadeInScrollIndicator 2s ease 1s forwards;
+}
+
+@keyframes fadeInScrollIndicator {
+  to {
+    opacity: 1;
+  }
+}
+
+.scroll-arrow-container {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 15px;
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  border-radius: 20px;
+  backdrop-filter: blur(15px);
+  transition: all 0.3s ease;
+  filter: blur(0.3px);
+}
+
+.scroll-arrow-container:hover {
+  background: rgba(255, 255, 255, 0.08);
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+}
+
+.scroll-arrow {
+  font-size: 1.2rem;
+  animation: bounceArrow 2s infinite;
+  color: rgba(255, 255, 255, 0.7);
+  filter: blur(0.2px);
+}
+
+@keyframes bounceArrow {
+  0%, 20%, 50%, 80%, 100% {
+    transform: translateY(0);
+  }
+  40% {
+    transform: translateY(-10px);
+  }
+  60% {
+    transform: translateY(-5px);
+  }
+}
+
+.scroll-text {
+  font-size: 0.9rem;
+  color: rgba(255, 255, 255, 0.8);
+  font-weight: 500;
+  letter-spacing: 1px;
+}
+
+.scroll-progress {
+  width: 120px;
+  height: 3px;
+  background: rgba(255, 255, 255, 0.15);
+  border-radius: 2px;
+  overflow: hidden;
+  position: relative;
+  filter: blur(0.2px);
+}
+
+.progress-bar {
+  height: 100%;
+  background: linear-gradient(90deg, #4CAF50, #8BC34A, #CDDC39);
+  border-radius: 2px;
+  transition: width 0.3s ease;
+  position: relative;
+  overflow: hidden;
+}
+
+.progress-bar::after {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: -100%;
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.4), transparent);
+  animation: shimmer 2s infinite;
+}
+
+@keyframes shimmer {
+  0% {
+    left: -100%;
+  }
+  100% {
+    left: 100%;
+  }
+}
+
+/* הסתרת האינדיקטור כשמגיעים לתפריט */
+.advanced-scroll-indicator.hidden {
+  opacity: 0;
+  transform: translateX(-50%) translateY(20px);
+  transition: all 0.5s ease;
+}

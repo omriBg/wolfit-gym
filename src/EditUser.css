@@ -1,0 +1,510 @@
+.edit-user-container {
+  background: black;
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  color: white;
+  box-sizing: border-box;
+  overflow-y: auto;
+  z-index: 9999;
+  background-image: url("../public/logo2.png");
+  background-position: center center;
+  background-repeat: no-repeat;
+  background-size: 60%;
+  background-attachment: fixed;
+}
+
+.edit-user-container::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: rgba(0, 0, 0, 0.8);
+  z-index: 1;
+}
+
+.edit-user-container .back-button {
+  position: absolute !important;
+  top: 20px !important;
+  right: 20px !important;
+  padding: 5px 10px !important;
+  font-size: 12px !important;
+  background-color: white !important;
+  color: black !important;
+  border: none !important;
+  border-radius: 3px !important;
+  cursor: pointer !important;
+  height: auto !important;
+  width: auto !important;
+  min-height: unset !important;
+  min-width: unset !important;
+  line-height: 1.2 !important;
+  transition: background-color 0.3s ease !important;
+  font-family: Arial, sans-serif !important;
+  font-weight: 500 !important;
+  z-index: 3 !important;
+}
+
+.edit-user-container .back-button:hover {
+  background-color: #f0f0f0 !important;
+  transform: translateY(-1px) !important;
+}
+
+.content {
+  padding: 60px 30px 30px 30px;
+  position: relative;
+  z-index: 2;
+  max-height: 100vh;
+  overflow-y: auto;
+}
+
+.content h1 {
+  font-size: 2.5rem;
+  margin-bottom: 20px;
+}
+
+.content p {
+  font-size: 1.2rem;
+  opacity: 0.8;
+}
+
+@media (max-width: 768px) {
+  .edit-user-container .back-button {
+    top: 15px !important;
+    right: 15px !important;
+    padding: 6px 12px !important;
+    font-size: 12px !important;
+  }
+  
+  .content {
+    padding: 60px 20px 20px 20px;
+  }
+  
+  .content h1 {
+    font-size: 2rem;
+  }
+}
+
+/* בחירת סוג העדפה */
+.preference-mode-selector {
+  display: flex;
+  gap: 15px;
+  margin-bottom: 25px;
+  justify-content: center;
+}
+
+/* הכפתור הפעיל - יהיה תמיד מודגש */
+.mode-button.active {
+  background: linear-gradient(45deg, #b38ed8, #b38ed8);
+  border-color: #8762ab;
+  box-shadow: 0 0 15px rgba(237, 239, 237, 0.2);
+  transform: scale(1.05);
+  font-weight: bold;
+  color: white;
+}
+
+/* הכפתור הרגיל */
+.mode-button {
+  padding: 15px 30px;
+  font-size: 1.1rem;
+  background: rgba(255, 255, 255, 0.1);
+  color: rgba(255, 255, 255, 0.7);
+  border: 1px solid rgba(255, 255, 255, 0.3);
+  border-radius: 10px;
+  cursor: pointer;
+  transition: all 0.3s ease;
+}
+
+.mode-button:hover {
+  background: rgba(255, 255, 255, 0.15);
+  color: white;
+}
+
+/* הוראות דירוג */
+.ranking-instructions {
+  text-align: center;
+  margin-bottom: 20px;
+  padding: 10px;
+  background: rgba(255, 255, 255, 0.05);
+  border-radius: 10px;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.ranking-instructions p {
+  margin: 5px 0;
+  font-size: 0.9rem;
+  opacity: 0.8;
+}
+
+/* מיכל הספורטים - שתי עמודות */
+.sports-container {
+  display: flex;
+  gap: 25px;
+  margin-top: 20px;
+}
+
+/* כל עמודה */
+.sports-column {
+  flex: 1;
+  background: rgba(255, 255, 255, 0.05);
+  border-radius: 15px;
+  padding: 20px;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.sports-column h3 {
+  text-align: center;
+  margin-bottom: 15px;
+  font-size: 1.1rem;
+  color: #ffffff;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.2);
+  padding-bottom: 8px;
+}
+
+.sports-list {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.sport-item {
+  background: none;
+  border: none;
+  padding: 0;
+  position: relative;
+}
+
+.sport-item button {
+  width: 100%;
+  padding: 12px 15px;
+  background: rgba(255, 255, 255, 0.08);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  border-radius: 10px;
+  color: white;
+  font-size: 0.9rem;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  text-align: center;
+}
+
+.sport-item button:hover {
+  background: rgba(255, 255, 255, 0.15);
+  border-color: rgba(255, 255, 255, 0.4);
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(255, 255, 255, 0.1);
+}
+
+.sports-column:first-child .sport-item button {
+  background: rgba(135, 98, 171, 0.705);
+  border-color: rgba(135, 98, 171, 0.7);
+}
+
+.sports-column:first-child .sport-item button:hover {
+  background: rgba(135, 98, 171, 0.475);
+  border-color: rgba(135, 98, 171, 0.6);
+}
+
+/* סגנונות לדירוג */
+.ranked-sport-button {
+  display: flex !important;
+  align-items: center;
+  justify-content: space-between;
+  padding: 15px 20px !important;
+  background: linear-gradient(135deg, rgba(135, 98, 171, 0.8), rgba(179, 142, 216, 0.6)) !important;
+  border: 2px solid rgba(135, 98, 171, 0.8) !important;
+  position: relative;
+  overflow: hidden;
+}
+
+.ranked-sport-button::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: -100%;
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.2), transparent);
+  transition: left 0.5s ease;
+}
+
+.ranked-sport-button:hover::before {
+  left: 100%;
+}
+
+.ranking-display {
+  display: flex;
+  align-items: center;
+  gap: 15px;
+  width: 100%;
+}
+
+.rank-number {
+  font-size: 1.5rem;
+  font-weight: bold;
+  min-width: 40px;
+  text-align: center;
+  animation: rankPulse 2s infinite;
+}
+
+@keyframes rankPulse {
+  0%, 100% { transform: scale(1); }
+  50% { transform: scale(1.1); }
+}
+
+.sport-icon {
+  font-size: 1.3rem;
+  margin: 0 10px;
+}
+
+.sport-name {
+  flex: 1;
+  text-align: right;
+  font-weight: 500;
+}
+
+/* כפתורי שליטה בדירוג */
+.ranking-controls {
+  display: flex;
+  gap: 5px;
+  margin-top: 8px;
+  justify-content: center;
+}
+
+.rank-control-btn {
+  padding: 8px 12px;
+  background: rgba(255, 255, 255, 0.1);
+  border: 1px solid rgba(255, 255, 255, 0.3);
+  border-radius: 6px;
+  color: white;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  font-size: 0.9rem;
+}
+
+.rank-control-btn:hover:not(:disabled) {
+  background: rgba(255, 255, 255, 0.2);
+  transform: translateY(-1px);
+}
+
+.rank-control-btn:disabled {
+  opacity: 0.3;
+  cursor: not-allowed;
+}
+
+.up-btn:hover:not(:disabled) {
+  background: rgba(76, 175, 80, 0.3);
+}
+
+.down-btn:hover:not(:disabled) {
+  background: rgba(244, 67, 54, 0.3);
+}
+
+/* סיכום הדירוג */
+.summary-section {
+  margin-top: 20px;
+  text-align: center;
+}
+
+.ranking-summary {
+  margin-top: 15px;
+  padding: 15px;
+  background: rgba(255, 255, 255, 0.05);
+  border-radius: 15px;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.ranking-summary h4 {
+  margin-bottom: 10px;
+  color: #b38ed8;
+  font-size: 1rem;
+}
+
+.ranking-list {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.ranking-item {
+  display: flex;
+  align-items: center;
+  gap: 15px;
+  padding: 12px 20px;
+  background: rgba(135, 98, 171, 0.2);
+  border-radius: 10px;
+  border: 1px solid rgba(135, 98, 171, 0.3);
+  transition: all 0.3s ease;
+}
+
+.ranking-item:hover {
+  background: rgba(135, 98, 171, 0.3);
+  transform: translateX(5px);
+}
+
+.rank-badge {
+  font-size: 1.2rem;
+  font-weight: bold;
+  min-width: 30px;
+}
+
+/* אנימציות נוספות */
+.sport-item {
+  animation: slideInUp 0.5s ease forwards;
+  opacity: 0;
+  transform: translateY(20px);
+}
+
+.sport-item:nth-child(1) { animation-delay: 0.1s; }
+.sport-item:nth-child(2) { animation-delay: 0.2s; }
+.sport-item:nth-child(3) { animation-delay: 0.3s; }
+.sport-item:nth-child(4) { animation-delay: 0.4s; }
+.sport-item:nth-child(5) { animation-delay: 0.5s; }
+.sport-item:nth-child(6) { animation-delay: 0.6s; }
+.sport-item:nth-child(7) { animation-delay: 0.7s; }
+.sport-item:nth-child(8) { animation-delay: 0.8s; }
+.sport-item:nth-child(9) { animation-delay: 0.9s; }
+
+@keyframes slideInUp {
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* בחירת עצימות */
+.intensity-section {
+  margin-top: 20px;
+  text-align: center;
+}
+
+.intensity-section h4 {
+  margin-bottom: 15px;
+  color: #ffffff;
+  font-size: 1rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+}
+
+.intensity-selector {
+  display: flex;
+  gap: 15px;
+  justify-content: center;
+  flex-wrap: wrap;
+}
+
+.intensity-btn {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+  padding: 15px 20px;
+  background: rgba(255, 255, 255, 0.1);
+  border: 2px solid rgba(255, 255, 255, 0.3);
+  border-radius: 15px;
+  color: white;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  min-width: 70px;
+  position: relative;
+  overflow: hidden;
+}
+
+.intensity-btn::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: -100%;
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.2), transparent);
+  transition: left 0.5s ease;
+}
+
+.intensity-btn:hover::before {
+  left: 100%;
+}
+
+.intensity-btn:hover {
+  transform: translateY(-3px);
+  box-shadow: 0 8px 20px rgba(0, 0, 0, 0.3);
+}
+
+.intensity-btn.active {
+  transform: scale(1.05);
+  box-shadow: 0 0 20px rgba(255, 255, 255, 0.3);
+}
+
+.intensity-number {
+  font-size: 1.5rem;
+  font-weight: bold;
+  line-height: 1;
+}
+
+.intensity-label {
+  font-size: 0.8rem;
+  opacity: 0.9;
+  font-weight: 500;
+}
+
+/* אנימציה לכפתורי עצימות */
+.intensity-btn {
+  animation: intensityPulse 0.6s ease forwards;
+  opacity: 0;
+  transform: scale(0.8);
+}
+
+.intensity-btn:nth-child(1) { animation-delay: 0.1s; }
+.intensity-btn:nth-child(2) { animation-delay: 0.2s; }
+.intensity-btn:nth-child(3) { animation-delay: 0.3s; }
+
+@keyframes intensityPulse {
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+/* התאמה למובייל */
+@media (max-width: 768px) {
+  .sports-container {
+    flex-direction: column;
+    gap: 20px;
+  }
+  
+  .ranking-display {
+    flex-direction: column;
+    gap: 8px;
+  }
+  
+  .sport-name {
+    text-align: center;
+  }
+  
+  .ranking-controls {
+    flex-direction: row;
+    justify-content: center;
+  }
+  
+  .ranking-item {
+    flex-direction: column;
+    text-align: center;
+    gap: 8px;
+  }
+  
+  .intensity-selector {
+    flex-direction: column;
+    align-items: center;
+    gap: 10px;
+  }
+  
+  .intensity-btn {
+    min-width: 120px;
+    padding: 15px 20px;
+  }
+}
