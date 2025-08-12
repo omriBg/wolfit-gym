@@ -1,0 +1,346 @@
+  .signup-container {
+    background: black;
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    color: white;
+    box-sizing: border-box;
+    overflow-y: hidden;
+    z-index: 9999;
+    background-image: url("../public/logo2.png");
+    background-position: center center;
+    background-repeat: no-repeat;
+    background-size: 60%;
+    background-attachment: fixed;
+  }
+  
+  .signup-container::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0, 0, 0, 0.8);
+    z-index: 1;
+  }
+  
+  .signup-container .back-button {
+    position: absolute !important;
+    top: 20px !important;
+    right: 20px !important;
+    padding: 5px 10px !important;
+    font-size: 12px !important;
+    background-color: white !important;
+    color: black !important;
+    border: none !important;
+    border-radius: 3px !important;
+    cursor: pointer !important;
+    height: auto !important;
+    width: auto !important;
+    min-height: unset !important;
+    min-width: unset !important;
+    line-height: 1.2 !important;
+    transition: background-color 0.3s ease !important;
+    font-family: Arial, sans-serif !important;
+    font-weight: 500 !important;
+    z-index: 3 !important;
+  }
+  
+  .signup-container .back-button:hover {
+    background-color: #f0f0f0 !important;
+    transform: translateY(-1px) !important;
+  }
+  
+  .content {
+    padding: 60px 30px 30px 30px;
+    position: relative;
+    z-index: 2;
+    height: 100vh;
+    overflow: hidden;
+    text-align: center;
+  }
+  
+  .content h1 {
+    font-size: 2.5rem;
+    margin-bottom: 10px;
+    background: linear-gradient(45deg, #ffffff, #b38ed8);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+  }
+  
+  .content p {
+    font-size: 1.2rem;
+    opacity: 0.8;
+    margin-bottom: 40px;
+  }
+  
+  .signup-form {
+    max-width: 400px;
+    margin: 0 auto;
+    display: flex;
+    flex-direction: column;
+    gap: 15px;
+  }
+  
+  .form-group {
+    position: relative;
+    animation: slideInUp 0.5s ease forwards;
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  
+  .form-group:nth-child(1) { animation-delay: 0.1s; }
+  .form-group:nth-child(2) { animation-delay: 0.2s; }
+  .form-group:nth-child(3) { animation-delay: 0.3s; }
+  .form-group:nth-child(4) { animation-delay: 0.4s; }
+  .form-group:nth-child(5) { animation-delay: 0.5s; }
+  .form-group:nth-child(6) { animation-delay: 0.6s; }
+  .form-group:nth-child(7) { animation-delay: 0.7s; }
+  
+  @keyframes slideInUp {
+    to {
+      opacity: 1;
+      transform: translateY(0);
+    }
+  }
+  
+  .form-group input {
+    width: 100%;
+    height: 50px;
+    padding: 15px 20px;
+    font-size: 16px;
+    border: 2px solid rgba(255, 255, 255, 0.2);
+    border-radius: 12px;
+    background: rgba(255, 255, 255, 0.1);
+    color: white;
+    text-align: right;
+    transition: all 0.3s ease;
+    box-sizing: border-box;
+  }
+  
+  .form-group input:focus {
+    outline: none;
+    border-color: #b38ed8;
+    background: rgba(255, 255, 255, 0.15);
+    box-shadow: 0 0 20px rgba(179, 142, 216, 0.3);
+  }
+
+  .form-group input.error {
+    border-color: #ff6b6b;
+    background: rgba(255, 107, 107, 0.1);
+    box-shadow: 0 0 10px rgba(255, 107, 107, 0.3);
+  }
+
+  .form-group input.error:focus {
+    border-color: #ff6b6b;
+    background: rgba(255, 107, 107, 0.15);
+    box-shadow: 0 0 15px rgba(255, 107, 107, 0.4);
+  }
+
+  /* סגנון לשדות ריקים כשהמשתמש ניסה להזין נתונים */
+  .form-group input:not(:placeholder-shown):invalid {
+    border-color: rgba(255, 255, 255, 0.2);
+  }
+
+  .form-group input:not(:placeholder-shown):invalid:focus {
+    border-color: #b38ed8;
+  }
+  
+  .form-group input::placeholder {
+    color: rgba(255, 255, 255, 0.6);
+  }
+
+  /* הודעות שגיאה */
+  .error-message {
+    color: #ff6b6b;
+    font-size: 0.8rem;
+    margin-top: 5px;
+    text-align: right;
+    animation: fadeIn 0.3s ease;
+    font-weight: 500;
+    padding: 2px 0;
+  }
+
+  @keyframes fadeIn {
+    from {
+      opacity: 0;
+      transform: translateY(-5px);
+    }
+    to {
+      opacity: 1;
+      transform: translateY(0);
+    }
+  }
+
+  /* שדה תאריך משופר */
+  .date-input-container {
+    position: relative;
+    display: flex;
+    align-items: center;
+  }
+
+  .date-input-container input {
+    flex: 1;
+    border-top-right-radius: 0;
+    border-bottom-right-radius: 0;
+  }
+
+  .date-picker-toggle {
+    width: 50px;
+    height: 50px;
+    background: rgba(179, 142, 216, 0.3);
+    border: 2px solid rgba(255, 255, 255, 0.2);
+    border-left: none;
+    border-top-right-radius: 12px;
+    border-bottom-right-radius: 12px;
+    color: white;
+    cursor: pointer;
+    font-size: 18px;
+    transition: all 0.3s ease;
+  }
+
+  .date-picker-toggle:hover {
+    background: rgba(179, 142, 216, 0.5);
+    border-color: #b38ed8;
+  }
+
+  .date-picker-dropdown {
+    position: absolute;
+    top: 100%;
+    left: 0;
+    right: 0;
+    background: rgba(0, 0, 0, 0.9);
+    border: 1px solid rgba(179, 142, 216, 0.5);
+    border-radius: 12px;
+    padding: 15px;
+    margin-top: 5px;
+    z-index: 1000;
+    backdrop-filter: blur(10px);
+  }
+
+  .date-selectors {
+    display: flex;
+    gap: 10px;
+  }
+
+  .date-selectors select {
+    flex: 1;
+    padding: 10px;
+    background: rgba(255, 255, 255, 0.1);
+    border: 1px solid rgba(255, 255, 255, 0.3);
+    border-radius: 8px;
+    color: white;
+    font-size: 14px;
+    cursor: pointer;
+    transition: all 0.3s ease;
+  }
+
+  .date-selectors select:focus {
+    outline: none;
+    border-color: #b38ed8;
+    background: rgba(255, 255, 255, 0.15);
+  }
+
+  .date-selectors select option {
+    background: #000000;
+    color: white;
+  }
+  
+  /* כפתור ההרשמה */
+  .signup-button {
+    width: 100%;
+    height: 55px;
+    font-size: 18px;
+    font-weight: bold;
+    background: linear-gradient(45deg, #b38ed8, #9c7dc4);
+    color: #ffffff;
+    border: none;
+    border-radius: 12px;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    margin-top: 60px;
+    position: relative;
+    overflow: hidden;
+    animation: slideInUp 0.5s ease forwards;
+    opacity: 0;
+    transform: translateY(20px);
+    animation-delay: 0.8s;
+  }
+  
+  .signup-button:hover {
+    background: linear-gradient(45deg, #9c7dc4, #8762ab);
+    transform: translateY(-2px);
+    box-shadow: 0 8px 25px rgba(179, 142, 216, 0.4);
+  }
+
+  /* כפתור לא פעיל כשהטופס לא תקין */
+  .signup-button:disabled {
+    background: rgba(255, 255, 255, 0.2);
+    color: rgba(255, 255, 255, 0.5);
+    cursor: not-allowed;
+    transform: none;
+  }
+
+  .signup-button:disabled:hover {
+    background: rgba(255, 255, 255, 0.2);
+    transform: none;
+    box-shadow: none;
+  }
+
+  /* הודעת סטטוס הטופס */
+  .form-status {
+    margin-top: 20px;
+    padding: 15px;
+    background: rgba(255, 255, 255, 0.1);
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    border-radius: 12px;
+    text-align: center;
+  }
+
+  .form-status p {
+    margin: 0;
+    color: rgba(255, 255, 255, 0.8);
+    font-size: 0.9rem;
+  }
+  
+  /* אפקט הברק */
+  .signup-button::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: -100%;
+    width: 100%;
+    height: 100%;
+    background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.3), transparent);
+    transition: left 0.5s ease;
+  }
+  
+  .signup-button:hover::before {
+    left: 100%;
+  }
+  
+  /* התאמה למובייל */
+  @media (max-width: 768px) {
+    .signup-container .back-button {
+      top: 15px !important;
+      right: 15px !important;
+      padding: 6px 12px !important;
+      font-size: 12px !important;
+    }
+    
+    .content {
+      padding: 60px 20px 20px 20px;
+    }
+    
+    .content h1 {
+      font-size: 2rem;
+    }
+    
+    .signup-form {
+      max-width: 100%;
+    }
+  }

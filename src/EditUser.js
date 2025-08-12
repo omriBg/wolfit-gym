@@ -47,7 +47,6 @@ function toggleSport(sportId) {
   const isCurrentlySelected = currentSelected.includes(sportId);
   
   if (preferenceMode === 'simple') {
-    // מצב פשוט - כמו קודם
     if (isCurrentlySelected) {
       const newSelected = currentSelected.filter(function(id) {
         return id !== sportId;
@@ -58,15 +57,12 @@ function toggleSport(sportId) {
       setSelectedSports(currentSelected);
     }
   } else {
-    // מצב דירוג - לוגיקה חדשה
     if (isCurrentlySelected) {
-      // הסר מהרשימה
       const newSelected = currentSelected.filter(function(id) {
         return id !== sportId;
       });
       setSelectedSports(newSelected);
     } else {
-      // הוסף בסוף הרשימה (הדירוג הבא)
       currentSelected.push(sportId);
       setSelectedSports(currentSelected);
     }

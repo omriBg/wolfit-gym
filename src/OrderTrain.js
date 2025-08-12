@@ -40,7 +40,7 @@ function generateTimeOptions() {
  
  for (let hour = 6; hour <= 23; hour++) {
    for (let minute = 0; minute < 60; minute += 15) {
-     if (hour === 23 && minute > 30) break;
+     if (hour === 23 && minute > 0) break;
      
      if (isToday) {
        const currentHour = now.getHours();
@@ -149,6 +149,21 @@ selected={selectDate}
 )}
 
 </div>
+
+{/* הכפתור מחוץ ל-order-content */}
+{selectDate && startTime && endTime && (
+  <div className="create-workout-button-container">
+    <button 
+      className="create-workout-button"
+      onClick={() => {
+        console.log('עוברים למסך בניית אימון!');
+        alert('עוברים למסך הבא!');
+      }}
+    >
+       צור אימון
+    </button>
+  </div>
+)}
 </div>
 );
 }
