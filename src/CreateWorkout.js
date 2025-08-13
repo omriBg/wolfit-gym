@@ -22,6 +22,8 @@ function CreateWorkout({ user, selectedDate, startTime, endTime, onBackClick }) 
   const [timeSlots, setTimeSlots] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
+  const [isSaving, setIsSaving] = useState(false);
+  const [saveSuccess, setSaveSuccess] = useState(false);
 
   useEffect(() => {
     console.log('🚀 CreateWorkout נטען עם:', {
@@ -29,6 +31,13 @@ function CreateWorkout({ user, selectedDate, startTime, endTime, onBackClick }) 
       selectedDate,
       startTime,
       endTime
+    });
+    
+    // בדיקת פורמט התאריך
+    console.log('📅 פורמט התאריך:', {
+      selectedDate,
+      type: typeof selectedDate,
+      length: selectedDate?.length
     });
     
     initializeWorkoutData();
@@ -112,6 +121,10 @@ function CreateWorkout({ user, selectedDate, startTime, endTime, onBackClick }) 
 
   const loadAvailableFields = async (timeSlots) => {
     try {
+      console.log('🏟️ טוען מגרשים זמינים...');
+      console.log('📅 תאריך:', selectedDate);
+      console.log('⏰ זמנים:', timeSlots);
+      
       const response = await fetch('http://localhost:3001/api/available-fields-for-workout', {
         method: 'POST',
         headers: {
@@ -123,26 +136,24 @@ function CreateWorkout({ user, selectedDate, startTime, endTime, onBackClick }) 
         })
       });
       
+      console.log('📥 תגובה מהשרת:', response.status);
+      
       if (response.ok) {
         const data = await response.json();
+        console.log('📋 נתונים מהשרת:', data);
+        
         if (data.success) {
           setFieldsByTime(data.fieldsByTime);
+          console.log('✅ מגרשים נטענו בהצלחה');
           return;
+        } else {
+          console.error('❌ שגיאה מהשרת:', data.message);
+          throw new Error(data.message);
         }
+      } else {
+        console.error('❌ שגיאת HTTP:', response.status);
+        throw new Error(`HTTP error! status: ${response.status}`);
       }
-      
-      const mockFieldsByTime = {};
-      timeSlots.forEach(time => {
-        mockFieldsByTime[time] = [
-          { id: 1, name: 'מגרש כדורגל 1', sportType: 'כדורגל' },
-          { id: 2, name: 'מגרש כדורסל 1', sportType: 'כדורסל' },
-          { id: 3, name: 'חדר כושר 1', sportType: 'חדר כושר' },
-          { id: 4, name: 'מגרש טניס 1', sportType: 'טניס' },
-          { id: 5, name: 'אולם ריקוד', sportType: 'ריקוד' }
-        ];
-      });
-      
-      setFieldsByTime(mockFieldsByTime);
       
     } catch (error) {
       console.error('❌ שגיאה בטעינת מגרשים:', error);
@@ -152,6 +163,10 @@ function CreateWorkout({ user, selectedDate, startTime, endTime, onBackClick }) 
 
   const loadFieldsForTimeSlots = async (timeSlots, date) => {
     try {
+      console.log('🏟️ טוען מגרשים זמינים לחלופות...');
+      console.log('📅 תאריך:', date);
+      console.log('⏰ זמנים:', timeSlots);
+      
       const response = await fetch('http://localhost:3001/api/available-fields-for-workout', {
         method: 'POST',
         headers: {
@@ -166,25 +181,19 @@ function CreateWorkout({ user, selectedDate, startTime, endTime, onBackClick }) 
       if (response.ok) {
         const data = await response.json();
         if (data.success) {
+          console.log('✅ מגרשים לחלופות נטענו בהצלחה');
           return data.fieldsByTime;
+        } else {
+          console.error('❌ שגיאה מהשרת:', data.message);
+          return {};
         }
+      } else {
+        console.error('❌ שגיאת HTTP:', response.status);
+        return {};
       }
       
-      const mockFieldsByTime = {};
-      timeSlots.forEach(time => {
-        mockFieldsByTime[time] = [
-          { id: 1, name: 'מגרש כדורגל 1', sportType: 'כדורגל' },
-          { id: 2, name: 'מגרש כדורסל 1', sportType: 'כדורסל' },
-          { id: 3, name: 'חדר כושר 1', sportType: 'חדר כושר' },
-          { id: 4, name: 'מגרש טניס 1', sportType: 'טניס' },
-          { id: 5, name: 'אולם ריקוד', sportType: 'ריקוד' }
-        ];
-      });
-      
-      return mockFieldsByTime;
-      
     } catch (error) {
-      console.error('❌ שגיאה בטעינת מגרשים:', error);
+      console.error('❌ שגיאה בטעינת מגרשים לחלופות:', error);
       return {};
     }
   };
@@ -193,31 +202,29 @@ function CreateWorkout({ user, selectedDate, startTime, endTime, onBackClick }) 
     let score = 100; // ניקוד בסיס גבוה (רע)
     
     console.log(`🧮 מחשב ניקוד למגרש: ${field.name} (${field.sportType})`);
+    console.log(`📋 העדפות משתמש (IDs):`, userPreferences);
+    console.log(`🏷️ ID ספורט של המגרש:`, field.sportTypeId);
     
-    // המרת העדפות המשתמש ממספרים לשמות עבריים
-    const userSportNames = userPreferences.map(sportId => SPORT_MAPPING[sportId]).filter(Boolean);
-    console.log(`📋 העדפות משתמש בעברית:`, userSportNames);
-    
-    // בדיקת עדיפות - החזרה להשוואת שמות
-    const preferenceIndex = userSportNames.indexOf(field.sportType);
+    // בדיקת עדיפות - השוואת ID-ים
+    const preferenceIndex = userPreferences.indexOf(field.sportTypeId);
     if (preferenceIndex !== -1) {
       score = preferenceIndex * 10; // עדיפות 1 = 0, עדיפות 2 = 10, וכו'
       console.log(`✅ נמצא בעדיפות ${preferenceIndex + 1}, ניקוד בסיס: ${score}`);
     } else {
-      console.log(`❌ לא נמצא בעדיפות (ספורט: ${field.sportType}), ניקוד בסיס: ${score}`);
+      console.log(`❌ לא נמצא בעדיפות (ID: ${field.sportTypeId}), ניקוד בסיס: ${score}`);
     }
     
     // קנס כפילויות
-    const timesUsed = usedSports.filter(sport => sport === field.sportType).length;
+    const timesUsed = usedSports.filter(sportId => sportId === field.sportTypeId).length;
     if (timesUsed > 0) {
-      score += 50;
-      console.log(`🔄 קנס כפילות: +50 (השתמשנו ${timesUsed} פעמים), ניקוד כולל: ${score}`);
+      score += 150;
+      console.log(`🔄 קנס כפילות: +150 (תמשנו ${timesUsed} פעמים), ניקוד כולל: ${score}`);
     }
     
     // קנס רצף
     if (selectedWorkout.length > 0) {
       const lastWorkout = selectedWorkout[selectedWorkout.length - 1];
-      if (lastWorkout.field && lastWorkout.field.sportType === field.sportType) {
+      if (lastWorkout.field && lastWorkout.field.sportTypeId === field.sportTypeId) {
         score += 30;
         console.log(`⭐ קנס רצף: +30, ניקוד סופי: ${score}`);
       }
@@ -234,10 +241,6 @@ function CreateWorkout({ user, selectedDate, startTime, endTime, onBackClick }) 
     console.log('🧠 מתחיל אלגוריתם חכם...');
     console.log('🎯 העדפות משתמש (IDs):', userPreferences);
     
-    // המרת העדפות למערך שמות עבריים לבדיקה
-    const userSportNames = userPreferences.map(sportId => SPORT_MAPPING[sportId]).filter(Boolean);
-    console.log('🎯 העדפות משתמש (עברית):', userSportNames);
-    
     for (let i = 0; i < timeSlots.length; i++) {
       const timeSlot = timeSlots[i];
       const availableFields = fieldsByTime[timeSlot] || [];
@@ -245,7 +248,7 @@ function CreateWorkout({ user, selectedDate, startTime, endTime, onBackClick }) 
       console.log(`\n⏰ מעבד זמן: ${timeSlot}`);
       console.log(`🏟️ מגרשים זמינים: ${availableFields.length}`);
       availableFields.forEach(field => {
-        console.log(`  - ${field.name} (${field.sportType})`);
+        console.log(`  - ${field.name} (${field.sportType}, ID: ${field.sportTypeId})`);
       });
       
       if (availableFields.length === 0) {
@@ -282,7 +285,7 @@ function CreateWorkout({ user, selectedDate, startTime, endTime, onBackClick }) 
           field: bestChoice,
           score: bestScore
         });
-        usedSports.push(bestChoice.sportType);
+        usedSports.push(bestChoice.sportTypeId);
         console.log(`📝 ספורטים שנוצרו עד כה:`, usedSports);
       }
     }
@@ -446,6 +449,91 @@ function CreateWorkout({ user, selectedDate, startTime, endTime, onBackClick }) 
     }
   };
 
+  const saveWorkoutToDatabase = async () => {
+    if (!workoutPlan || !user || !user.id) {
+      console.error('❌ נתונים חסרים:', { workoutPlan: !!workoutPlan, user: !!user, userId: user?.id });
+      setError('אין תוכנית אימון או משתמש לא מוגדר');
+      return;
+    }
+
+    setIsSaving(true);
+    setError('');
+    setSaveSuccess(false);
+
+    try {
+      console.log('💾 מתחיל לשמור אימון במסד הנתונים...');
+      console.log('👤 משתמש:', user);
+      console.log('📅 תאריך:', selectedDate);
+      console.log('🎯 תוכנית אימון:', workoutPlan);
+      
+      // הכנת הנתונים לשמירה
+      const bookings = workoutPlan.slots
+        .filter(slot => slot.field !== null) // רק מגרשים שנבחרו
+        .map(slot => ({
+          idField: slot.field.id,
+          bookingDate: selectedDate,
+          startTime: slot.time,
+          idUser: user.id
+        }));
+
+      console.log('📋 נתונים לשמירה:', bookings);
+
+      if (bookings.length === 0) {
+        setError('אין מגרשים לשמירה - כל המגרשים הם מנוחה');
+        setIsSaving(false);
+        return;
+      }
+
+      // שליחה לשרת
+      const requestBody = {
+        bookings: bookings,
+        userId: user.id,
+        date: selectedDate
+      };
+
+      console.log('📤 שולח לשרת:', requestBody);
+
+      const response = await fetch('http://localhost:3001/api/book-fields', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(requestBody)
+      });
+
+      console.log('📥 תגובה מהשרת:', response.status, response.statusText);
+
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
+
+      const data = await response.json();
+      console.log('📋 נתונים מהשרת:', data);
+
+      if (data.success) {
+        console.log('✅ האימון נשמר בהצלחה!');
+        setSaveSuccess(true);
+        setError('');
+        
+        // אפשרות לחזרה לתפריט הראשי
+        setTimeout(() => {
+          if (onBackClick) {
+            onBackClick();
+          }
+        }, 2000);
+      } else {
+        console.error('❌ שגיאה בשמירת האימון:', data.message);
+        setError(`שגיאה בשמירת האימון: ${data.message}`);
+      }
+
+    } catch (error) {
+      console.error('❌ שגיאה בשמירת האימון:', error);
+      setError(`שגיאה בשמירת האימון: ${error.message}`);
+    } finally {
+      setIsSaving(false);
+    }
+  };
+
   const runTests = () => {
     console.log('🧪 הפעלת בדיקות:');
     console.log('👤 משתמש:', user);
@@ -594,6 +682,34 @@ function CreateWorkout({ user, selectedDate, startTime, endTime, onBackClick }) 
                 </div>
               ))}
             </div>
+
+            {saveSuccess ? (
+              <div style={{ 
+                color: '#51cf66', 
+                textAlign: 'center', 
+                margin: '20px 0',
+                padding: '15px',
+                background: 'rgba(81, 207, 102, 0.1)',
+                borderRadius: '8px',
+                border: '1px solid rgba(81, 207, 102, 0.3)'
+              }}>
+                ✅ האימון נשמר בהצלחה! מעביר אותך לתפריט הראשי...
+              </div>
+            ) : (
+              <div className="action-buttons" style={{ marginTop: '20px' }}>
+                <button
+                  className="generate-button"
+                  onClick={saveWorkoutToDatabase}
+                  disabled={isSaving}
+                  style={{ 
+                    backgroundColor: '#51cf66',
+                    borderColor: '#51cf66'
+                  }}
+                >
+                  {isSaving ? '⏳ שומר אימון...' : '💾 אישור ושמירת האימון'}
+                </button>
+              </div>
+            )}
           </div>
         )}
       </div>

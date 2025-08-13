@@ -101,7 +101,7 @@ function OrderTrain({ onBackClick, user }){
     return (
       <CreateWorkout 
         user={user}
-        selectedDate={selectDate.toISOString().split('T')[0]}
+        selectedDate={selectDate.toLocaleDateString('en-CA')}
         startTime={startTime}
         endTime={endTime}
         onBackClick={handleBackFromCreateWorkout}

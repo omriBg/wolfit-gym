@@ -241,6 +241,197 @@ app.put('/api/save-user-preferences/:userId', async (req, res) => {
     });
   }
 });
+
+// API לשמירת אימון במסד הנתונים
+app.post('/api/book-fields', async (req, res) => {
+  try {
+    const { bookings, userId, date } = req.body;
+    
+    console.log('📋 מקבל בקשה לשמירת אימון:', { bookings, userId, date });
+    
+    if (!bookings || !Array.isArray(bookings) || bookings.length === 0) {
+      return res.json({
+        success: false,
+        message: 'אין נתוני הזמנות לשמירה'
+      });
+    }
+    
+    if (!userId) {
+      return res.json({
+        success: false,
+        message: 'מזהה משתמש נדרש'
+      });
+    }
+    
+    // בדיקה שהתאריך לא בעבר
+    const today = new Date().toISOString().split('T')[0]; // YYYY-MM-DD
+    if (date < today) {
+      return res.json({
+        success: false,
+        message: `לא ניתן להזמין מגרשים לתאריך בעבר: ${date}`
+      });
+    }
+    
+    // אם זה היום, נבדוק שהשעות לא עברו
+    if (date === today) {
+      const now = new Date();
+      const currentTime = now.toTimeString().split(' ')[0]; // HH:MM:SS
+      
+      // נבדוק רק הזמנות שעברו
+      const pastBookings = bookings.filter(booking => booking.startTime < currentTime);
+      if (pastBookings.length > 0) {
+        return res.json({
+          success: false,
+          message: `לא ניתן להזמין מגרשים לשעות שעברו: ${pastBookings.map(b => b.startTime).join(', ')}`
+        });
+      }
+    }
+    
+    // בדיקה שהמשתמש קיים
+    const userCheck = await pool.query(
+      'SELECT idUser FROM "User" WHERE idUser = $1',
+      [userId]
+    );
+    
+    if (userCheck.rows.length === 0) {
+      return res.json({
+        success: false,
+        message: 'משתמש לא נמצא'
+      });
+    }
+    
+    // שמירת כל ההזמנות
+    for (const booking of bookings) {
+      const { idField, bookingDate, startTime, idUser } = booking;
+      
+      // בדיקה שהמגרש קיים
+      const fieldCheck = await pool.query(
+        'SELECT idField FROM Field WHERE idField = $1',
+        [idField]
+      );
+      
+      if (fieldCheck.rows.length === 0) {
+        console.warn(`⚠️ מגרש ${idField} לא נמצא, מדלג...`);
+        continue;
+      }
+      
+      // בדיקה שהמגרש לא תפוס כבר
+      const existingBooking = await pool.query(
+        'SELECT * FROM BookField WHERE idField = $1 AND bookingDate = $2 AND startTime = $3',
+        [idField, bookingDate, startTime]
+      );
+      
+      if (existingBooking.rows.length > 0) {
+        console.warn(`⚠️ מגרש ${idField} תפוס ב-${bookingDate} ${startTime}, מדלג...`);
+        continue;
+      }
+      
+      // הכנסת ההזמנה
+      await pool.query(
+        'INSERT INTO BookField (idField, bookingDate, startTime, idUser) VALUES ($1, $2, $3, $4)',
+        [idField, bookingDate, startTime, idUser]
+      );
+      
+      console.log(`✅ נשמרה הזמנה: מגרש ${idField}, תאריך ${bookingDate}, שעה ${startTime}`);
+    }
+    
+    res.json({
+      success: true,
+      message: `האימון נשמר בהצלחה! נשמרו ${bookings.length} הזמנות`,
+      savedCount: bookings.length
+    });
+    
+  } catch (err) {
+    console.error('❌ שגיאה בשמירת האימון:', err);
+    res.json({
+      success: false,
+      message: 'שגיאה בשמירת האימון',
+      error: err.message
+    });
+  }
+});
+
+// API לקבלת מגרשים זמינים ליצירת אימון
+app.post('/api/available-fields-for-workout', async (req, res) => {
+  try {
+    const { date, timeSlots } = req.body;
+    
+    console.log('🏟️ מקבל בקשה למגרשים זמינים:', { date, timeSlots });
+    
+    if (!date || !timeSlots || !Array.isArray(timeSlots)) {
+      return res.json({
+        success: false,
+        message: 'תאריך ורשימת זמנים נדרשים'
+      });
+    }
+    
+    // בדיקה שהתאריך לא בעבר
+    const today = new Date().toISOString().split('T')[0];
+    if (date < today) {
+      return res.json({
+        success: false,
+        message: 'לא ניתן לבדוק זמינות לתאריך בעבר'
+      });
+    }
+    
+    const fieldsByTime = {};
+    
+    // עבור כל זמן, נבדוק אילו מגרשים זמינים
+    for (const timeSlot of timeSlots) {
+      console.log(`⏰ בודק זמינות ל-${timeSlot}`);
+      
+      // קבלת כל המגרשים
+      const fieldsResult = await pool.query(
+        'SELECT f.idField, f.fieldName, f.sportType, st.sportName FROM Field f JOIN SportTypes st ON f.sportType = st.sportType ORDER BY f.idField'
+      );
+      
+      const availableFields = [];
+      
+      for (const field of fieldsResult.rows) {
+        // בדיקה אם המגרש תפוס בזמן זה
+        const bookingCheck = await pool.query(
+          'SELECT * FROM BookField WHERE idField = $1 AND bookingDate = $2 AND startTime = $3',
+          [field.idfield, date, timeSlot]
+        );
+        
+        if (bookingCheck.rows.length === 0) {
+          // המגרש זמין
+          availableFields.push({
+            id: field.idfield,
+            name: field.fieldname,
+            sportType: field.sportname,
+            sportTypeId: field.sporttype
+          });
+        } else {
+          console.log(`❌ מגרש ${field.fieldname} תפוס ב-${timeSlot}`);
+        }
+      }
+      
+      fieldsByTime[timeSlot] = availableFields;
+      console.log(`✅ נמצאו ${availableFields.length} מגרשים זמינים ל-${timeSlot}`);
+    }
+    
+    console.log('📊 סיכום זמינות:', Object.keys(fieldsByTime).map(time => 
+      `${time}: ${fieldsByTime[time].length} מגרשים`
+    ));
+    
+    res.json({
+      success: true,
+      fieldsByTime: fieldsByTime,
+      totalTimeSlots: timeSlots.length,
+      totalAvailableFields: Object.values(fieldsByTime).reduce((sum, fields) => sum + fields.length, 0)
+    });
+    
+  } catch (err) {
+    console.error('❌ שגיאה בבדיקת זמינות:', err);
+    res.json({
+      success: false,
+      message: 'שגיאה בבדיקת זמינות המגרשים',
+      error: err.message
+    });
+  }
+});
+
 app.listen(PORT, () => {
   console.log(`🚀 השרת רץ על http://localhost:${PORT}`);
 });
