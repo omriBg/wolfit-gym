@@ -69,7 +69,7 @@ function CreateWorkout({ user, selectedDate, startTime, endTime, onBackClick }) 
         throw new Error('משתמש לא מוגדר');
       }
       
-      const url = `http://localhost:3001/api/user-preferences/${user.id}`;
+      const url = `https://wolfit-gym-backend-ijvq.onrender.com/api/user-preferences/${user.id}`;
       const response = await fetch(url);
       const data = await response.json();
       
@@ -125,7 +125,7 @@ function CreateWorkout({ user, selectedDate, startTime, endTime, onBackClick }) 
       console.log('📅 תאריך:', selectedDate);
       console.log('⏰ זמנים:', timeSlots);
       
-      const response = await fetch('http://localhost:3001/api/available-fields-for-workout', {
+      const response = await fetch('https://wolfit-gym-backend-ijvq.onrender.com/api/available-fields-for-workout', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -167,7 +167,7 @@ function CreateWorkout({ user, selectedDate, startTime, endTime, onBackClick }) 
       console.log('📅 תאריך:', date);
       console.log('⏰ זמנים:', timeSlots);
       
-      const response = await fetch('http://localhost:3001/api/available-fields-for-workout', {
+      const response = await fetch('https://wolfit-gym-backend-ijvq.onrender.com/api/available-fields-for-workout', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -493,7 +493,7 @@ function CreateWorkout({ user, selectedDate, startTime, endTime, onBackClick }) 
 
       console.log('📤 שולח לשרת:', requestBody);
 
-      const response = await fetch('http://localhost:3001/api/book-fields', {
+      const response = await fetch('https://wolfit-gym-backend-ijvq.onrender.com/api/book-fields', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',

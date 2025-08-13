@@ -24,7 +24,7 @@ function App() {
     setLoginMessage(''); 
 
     try {
-      const response = await fetch('http://localhost:3001/api/login', {
+      const response = await fetch('https://wolfit-gym-backend-ijvq.onrender.com/api/login', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -79,7 +79,7 @@ function App() {
     console.log('נתוני משתמש מלאים:', completeUserData);
     
     try {
-      const response = await fetch('http://localhost:3001/api/register', {
+      const response = await fetch('https://wolfit-gym-backend-ijvq.onrender.com/api/register', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
