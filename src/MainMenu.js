@@ -6,7 +6,7 @@ import './MainMenu.css';
 function MainMenu({ user }) {
   const [isLoaded, setIsLoaded] = useState(false);
   const [hoveredButton, setHoveredButton] = useState(null);
-  const [currentView, setCurrentView] = useState('menu'); // 'menu', 'editUser', 'workoutBooking'
+  const [currentView, setCurrentView] = useState('menu');
 
   useEffect(() => {
     const timer = setTimeout(() => setIsLoaded(true), 100);
@@ -36,10 +36,8 @@ function MainMenu({ user }) {
     return <EditUser onBackClick={handleBackToMenu} currentUser={user} />; 
   }
 
-
   if (currentView === 'workoutBooking') {
-    
-    return <OrderTrain onBackClick={handleBackToMenu} />;
+    return <OrderTrain onBackClick={handleBackToMenu} user={user} />;
   }
 
   return (
