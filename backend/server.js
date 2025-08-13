@@ -5,7 +5,7 @@ const { Pool } = require('pg');
 require('dotenv').config();
 
 const app = express();
-const PORT = 3001;
+const PORT = process.env.PORT || 3001;
 
 // Middleware
 app.use(cors());
@@ -13,11 +13,11 @@ app.use(express.json());
 
 // חיבור למסד נתונים
 const pool = new Pool({
-  host: 'localhost',
-  port: 5432,
-  database: 'Wolfit',
-  user: 'postgres',
-  password: '9526',
+  host: process.env.DB_HOST || 'localhost',
+  port: process.env.DB_PORT || 5432,
+  database: process.env.DB_NAME || 'Wolfit',
+  user: process.env.DB_USER || 'postgres',
+  password: process.env.DB_PASSWORD || '9526',
 });
 
 // בדיקת חיבור

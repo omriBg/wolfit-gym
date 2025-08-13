@@ -1,0 +1,36 @@
+services:
+  - type: web
+    name: wolfit-gym-backend
+    env: node
+    buildCommand: cd backend && npm install
+    startCommand: cd backend && npm start
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: PORT
+        value: 10000
+      - key: DB_HOST
+        fromDatabase:
+          name: wolfit-database
+          property: host
+      - key: DB_PORT
+        fromDatabase:
+          name: wolfit-database
+          property: port
+      - key: DB_NAME
+        fromDatabase:
+          name: wolfit-database
+          property: database
+      - key: DB_USER
+        fromDatabase:
+          name: wolfit-database
+          property: user
+      - key: DB_PASSWORD
+        fromDatabase:
+          name: wolfit-database
+          property: password
+
+databases:
+  - name: wolfit-database
+    databaseName: wolfit
+    user: wolfit_user

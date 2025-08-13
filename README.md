@@ -1,70 +1,122 @@
-# Getting Started with Create React App
+# 🏋️‍♂️ Wolfit Gym - מערכת ניהול חדר כושר
 
-This project was bootstrapped with [Create React App](https://github.com/facebook/create-react-app).
+אפליקציה מלאה לניהול חדר כושר הכוללת:
+- מערכת הרשמה והתחברות
+- הזמנת מגרשים ואימונים
+- ניהול העדפות משתמשים
+- ממשק משתמש מודרני וידידותי
 
-## Available Scripts
+## 🚀 הוראות הרצה מהירות
 
-In the project directory, you can run:
+### התקנת תלויות
+```bash
+npm run install-all
+```
 
-### `npm start`
+### הרצה מקומית
+```bash
+npm run dev
+```
 
-Runs the app in the development mode.\
-Open [http://localhost:3000](http://localhost:3000) to view it in your browser.
+### הרצה עם Docker
+```bash
+docker-compose up --build
+```
 
-The page will reload when you make changes.\
-You may also see any lint errors in the console.
+## 📁 מבנה הפרויקט
 
-### `npm test`
+```
+wolfit-gym/
+├── src/                 # React frontend
+├── backend/             # Node.js API server
+├── public/              # Static files
+├── database_schema.sql  # Database structure
+└── docs/               # Documentation
+```
 
-Launches the test runner in the interactive watch mode.\
-See the section about [running tests](https://facebook.github.io/create-react-app/docs/running-tests) for more information.
+## 🛠️ טכנולוגיות
 
-### `npm run build`
+### Frontend
+- React 19
+- Material-UI
+- GSAP Animations
+- Anime.js
 
-Builds the app for production to the `build` folder.\
-It correctly bundles React in production mode and optimizes the build for the best performance.
+### Backend
+- Node.js
+- Express.js
+- PostgreSQL
+- CORS
 
-The build is minified and the filenames include the hashes.\
-Your app is ready to be deployed!
+### Database
+- PostgreSQL
+- User management
+- Booking system
+- Preferences system
 
-See the section about [deployment](https://facebook.github.io/create-react-app/docs/deployment) for more information.
+## 🌐 העלאה לשרת
 
-### `npm run eject`
+### אפשרויות מומלצות:
+1. **Render.com** - הכי פשוט למתחילים
+2. **Railway.app** - מהיר ופשוט
+3. **Vercel + Supabase** - פרונט-אנד + מסד נתונים
 
-**Note: this is a one-way operation. Once you `eject`, you can't go back!**
+### הוראות מפורטות:
+- [הוראות העלאה מהירות](QUICK_DEPLOY.md)
+- [הוראות העלאה מפורטות](DEPLOYMENT_README.md)
+- [הוראות העלאה עם Docker](DOCKER_DEPLOY.md)
 
-If you aren't satisfied with the build tool and configuration choices, you can `eject` at any time. This command will remove the single build dependency from your project.
+## 📊 API Endpoints
 
-Instead, it will copy all the configuration files and the transitive dependencies (webpack, Babel, ESLint, etc) right into your project so you have full control over them. All of the commands except `eject` will still work, but they will point to the copied scripts so you can tweak them. At this point you're on your own.
+### Authentication
+- `POST /api/login` - התחברות
+- `POST /api/register` - הרשמה
 
-You don't have to ever use `eject`. The curated feature set is suitable for small and middle deployments, and you shouldn't feel obligated to use this feature. However we understand that this tool wouldn't be useful if you couldn't customize it when you are ready for it.
+### User Management
+- `GET /api/user-preferences/:userId` - קבלת העדפות
+- `PUT /api/save-user-preferences/:userId` - שמירת העדפות
 
-## Learn More
+### Booking System
+- `POST /api/book-fields` - הזמנת מגרשים
+- `POST /api/available-fields-for-workout` - בדיקת זמינות
 
-You can learn more in the [Create React App documentation](https://facebook.github.io/create-react-app/docs/getting-started).
+### Health Check
+- `GET /test` - בדיקת חיבור למסד נתונים
 
-To learn React, check out the [React documentation](https://reactjs.org/).
+## 🔧 פיתוח
 
-### Code Splitting
+### Scripts זמינים
+```bash
+npm start          # הרצת React app
+npm run dev        # הרצת frontend + backend
+npm run build      # בניית production
+npm test           # הרצת tests
+```
 
-This section has moved here: [https://facebook.github.io/create-react-app/docs/code-splitting](https://facebook.github.io/create-react-app/docs/code-splitting)
+### משתני סביבה
+צור קובץ `.env` בתיקיית `backend/`:
+```
+DB_HOST=localhost
+DB_PORT=5432
+DB_NAME=Wolfit
+DB_USER=postgres
+DB_PASSWORD=9526
+PORT=3001
+NODE_ENV=development
+```
 
-### Analyzing the Bundle Size
+## 📝 רישיון
 
-This section has moved here: [https://facebook.github.io/create-react-app/docs/analyzing-the-bundle-size](https://facebook.github.io/create-react-app/docs/analyzing-the-bundle-size)
+MIT License
 
-### Making a Progressive Web App
+## 🤝 תרומה
 
-This section has moved here: [https://facebook.github.io/create-react-app/docs/making-a-progressive-web-app](https://facebook.github.io/create-react-app/docs/making-a-progressive-web-app)
+1. Fork את הפרויקט
+2. צור branch חדש (`git checkout -b feature/amazing-feature`)
+3. Commit את השינויים (`git commit -m 'Add amazing feature'`)
+4. Push ל-branch (`git push origin feature/amazing-feature`)
+5. פתח Pull Request
 
-### Advanced Configuration
+## 📞 תמיכה
 
-This section has moved here: [https://facebook.github.io/create-react-app/docs/advanced-configuration](https://facebook.github.io/create-react-app/docs/advanced-configuration)
-
-### Deployment
-
-This section has moved here: [https://facebook.github.io/create-react-app/docs/deployment](https://facebook.github.io/create-react-app/docs/deployment)
-
-### `npm run build` fails to minify
-
-This section has moved here: [https://facebook.github.io/create-react-app/docs/troubleshooting#npm-run-build-fails-to-minify](https://facebook.github.io/create-react-app/docs/troubleshooting#npm-run-build-fails-to-minify)
+לשאלות ותמיכה, פנה אלינו דרך GitHub Issues.
