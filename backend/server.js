@@ -18,7 +18,10 @@ const pool = new Pool({
   database: process.env.DB_NAME || 'Wolfit',
   user: process.env.DB_USER || 'postgres',
   password: process.env.DB_PASSWORD || '9526',
-  ssl: { rejectUnauthorized: false },
+  ssl: {
+    rejectUnauthorized: false,
+    sslmode: 'require'
+  },
 });
 
 // בדיקת חיבור
