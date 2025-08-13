@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import MainMenu from './MainMenu';
 import './WelcomeScreen.css';
 
-function WelcomeScreen() {
+function WelcomeScreen({ user }) {
   const [scrollY, setScrollY] = useState(0);
 
   useEffect(() => {
@@ -38,7 +38,7 @@ function WelcomeScreen() {
   let content;
 
   if (visibleLines >= textLines.length) {
-    content = <MainMenu />
+    content = <MainMenu user={user}/>
   } else {
 
     content = (

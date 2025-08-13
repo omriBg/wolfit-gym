@@ -8,9 +8,50 @@ function App() {
   const [isLoggedIn, setIsLoggedIn] = useState(false);
   const [currentScreen, setCurrentScreen] = useState('login');
   const [userBasicData, setUserBasicData] = useState(null);
-  
-  const handleLogin = () => {
-    setIsLoggedIn(true);
+  const [userName, setUserName] = useState('');
+  const [password, setPassword] = useState('');
+  const [loginMessage, setLoginMessage] = useState(''); 
+  const [loggedInUser, setLoggedInUser] = useState(null);
+  const [isLoading, setIsLoading] = useState(false); 
+
+  const handleLogin = async () => {
+    if (!userName.trim() || !password.trim()) {
+      setLoginMessage('אנא מלא את כל השדות');
+      return;
+    }
+
+    setIsLoading(true); 
+    setLoginMessage(''); 
+
+    try {
+      const response = await fetch('http://localhost:3001/api/login', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          userName: userName.trim(),
+          password: password
+        })
+      });
+
+      const result = await response.json();
+      
+      if (result.success) {
+        console.log('התחברות הצליחה:', result.user);
+        setLoggedInUser(result.user); 
+        setIsLoggedIn(true);
+        setLoginMessage(''); 
+      }else {
+        setLoginMessage(result.message || 'שגיאה בהתחברות');
+      }
+      
+    } catch (error) {
+      console.error('שגיאה בחיבור לשרת:', error);
+      setLoginMessage('שגיאה בחיבור לשרת. נסה שוב.');
+    } finally {
+      setIsLoading(false); 
+    }
   };
 
   const handleGoToSignUp = () => {
@@ -22,27 +63,44 @@ function App() {
     console.log('חוזר למסך התחברות');
     setCurrentScreen('login');
     setUserBasicData(null);
+    setUserName('');
+    setPassword('');
+    setLoginMessage('');
   };
 
-  // כשמסיימים נתונים בסיסיים - עוברים למסך העדפות
   const handleSignUpContinue = (basicData) => {
     console.log('הושלמו נתונים בסיסיים:', basicData);
     setUserBasicData(basicData); 
     setCurrentScreen('signupPreferences');
   };
 
-  // כשמסיימים הרשמה מלאה - חוזרים למסך התחברות
-  const handleCompleteSignUp = (completeUserData) => {
+  const handleCompleteSignUp = async (completeUserData) => {
     console.log('ההרשמה הושלמה בהצלחה!');
     console.log('נתוני משתמש מלאים:', completeUserData);
     
-    // כאן נשמור במסד נתונים בעתיד
-    // לעכשיו רק נחזור למסך התחברות
-    alert('ההרשמה הושלמה בהצלחה! אתה יכול להתחבר עכשיו');
-    
-    // חזרה למסך התחברות
-    setCurrentScreen('login');
-    setUserBasicData(null);
+    try {
+      const response = await fetch('http://localhost:3001/api/register', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(completeUserData)
+      });
+      
+      const result = await response.json();
+      
+      if (result.success) {
+        alert('ההרשמה הושלמה בהצלחה! אתה יכול להתחבר עכשיו');
+        setCurrentScreen('login');
+        setUserBasicData(null);
+      } else {
+        alert('שגיאה בהרשמה: ' + result.message);
+      }
+      
+    } catch (error) {
+      console.error('שגיאה בהרשמה:', error);
+      alert('שגיאה בחיבור לשרת');
+    }
   };
 
   const handleBackToSignUp = () => {
@@ -51,7 +109,7 @@ function App() {
   };
 
   if (isLoggedIn) {
-    return <WelcomeScreen/>;
+    return <WelcomeScreen user={loggedInUser} />; 
   }
 
   if (currentScreen === 'signup') {
@@ -73,6 +131,7 @@ function App() {
     );
   }
 
+  // 🔥 מסך ההתחברות החדש עם State
   return (
     <div className="App">
       <div className="logo-container">
@@ -80,11 +139,45 @@ function App() {
       </div>
       
       <div className="login-form">
-        <input type="user name" placeholder="שם משתמש" />
-        <input type="password" placeholder="סיסמה" />
-        <button onClick={handleLogin}>כניסה</button>
+        <input 
+          type="text" 
+          placeholder="שם משתמש"
+          value={userName}
+          onChange={(e) => setUserName(e.target.value)}
+          disabled={isLoading}
+        />
+        <input 
+          type="password" 
+          placeholder="סיסמה"
+          value={password}
+          onChange={(e) => setPassword(e.target.value)}
+          disabled={isLoading}
+        />
+        
+        {/* הודעה למשתמש */}
+        {loginMessage && (
+          <p style={{ 
+            color: loginMessage.includes('שגיאה') ? '#ff6b6b' : '#b38ed8',
+            textAlign: 'center',
+            margin: '10px 0'
+          }}>
+            {loginMessage}
+          </p>
+        )}
+        
+        <button 
+          onClick={handleLogin}
+          disabled={isLoading}
+          style={{
+            opacity: isLoading ? 0.6 : 1,
+            cursor: isLoading ? 'not-allowed' : 'pointer'
+          }}
+        >
+          {isLoading ? 'מתחבר...' : 'כניסה'}
+        </button>
+        
         <p>אין לך חשבון?
-        <span 
+          <span 
             onClick={handleGoToSignUp}
             style={{
               color: '#b38ed8',

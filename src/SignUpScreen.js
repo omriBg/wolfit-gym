@@ -40,8 +40,8 @@ function SignUpScreen({ onBackToLogin, onSignUpComplete }) {
                     error = 'שם משתמש הוא שדה חובה';
                 } else if (value.length < 3) {
                     error = 'שם משתמש חייב להכיל לפחות 3 תווים';
-                } else if (!/^[a-zA-Z0-9א-ת\s]+$/.test(value)) {
-                    error = 'שם משתמש יכול להכיל רק אותיות, מספרים ורווחים';
+                } else if (!/^[a-zA-Z0-9\s]+$/.test(value)) {
+                    error = 'שם משתמש יכול להכיל רק אותיות באנגלית, מספרים ורווחים';
                 }
                 break;
                 
@@ -51,6 +51,9 @@ function SignUpScreen({ onBackToLogin, onSignUpComplete }) {
                 } else if (value.length < 6) {
                     error = 'סיסמה חייבת להכיל לפחות 6 תווים';
                 }
+                 else if (!/^[a-zA-Z0-9\s]+$/.test(value)) {
+                error = 'שם משתמש יכול להכיל רק אותיות באנגלית, מספרים ורווחים';
+                }
                 break;
                 
             case 'email':
@@ -59,6 +62,7 @@ function SignUpScreen({ onBackToLogin, onSignUpComplete }) {
                 } else if (!value.includes('@') || !value.includes('.')) {
                     error = 'אנא הזן כתובת אימייל תקינה';
                 }
+               
                 break;
                 
             case 'height':

@@ -1,17 +1,39 @@
 import React, { useState, useEffect } from 'react';
 import './EditUser.css'; // נשתמש באותו עיצוב
 
-const SPORTS_LIST = [
-  { id: 1, name: 'כדורגל', icon: '⚽' },
-  { id: 2, name: 'כדורסל', icon: '🏀' },
-  { id: 3, name: 'פינגפונג', icon: '🏓' },
-  { id: 4, name: 'ריקוד', icon: '💃' },
-  { id: 5, name: 'טיפוס', icon: '🧗' },
-  { id: 6, name: 'חדר כושר', icon: '🏋️' },
-  { id: 7, name: 'טניס', icon: '🎾' },
-  { id: 8, name: 'קורדינציה', icon: '🎯' },
-  { id: 9, name: 'אופניים', icon: '🚴' }
-];
+
+async function sendRegistrationToServer(userData) {
+    try {
+      const response = await fetch('http://localhost:3001/api/register', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(userData)
+      });
+      
+      const result = await response.json();
+      return result;
+    } catch (error) {
+      console.error('שגיאה בשליחה לשרת:', error);
+      return {
+        success: false,
+        message: 'שגיאה בחיבור לשרת'
+      };
+    }
+  }
+
+  const SPORTS_LIST = [
+    { id: 1, name: 'כדורגל', icon: '⚽' },        // Soccer
+    { id: 2, name: 'כדורסל', icon: '🏀' },       // Basketball  
+    { id: 3, name: 'טיפוס', icon: '🧗' },         // Climbing
+    { id: 4, name: 'חדר כושר', icon: '🏋️' },     // Strength Training
+    { id: 5, name: 'קורדינציה', icon: '🎯' },    // Coordination
+    { id: 6, name: 'טניס', icon: '🎾' },         // Tennis
+    { id: 7, name: 'פינגפונג', icon: '🏓' },     // Ping Pong
+    { id: 8, name: 'ריקוד', icon: '💃' },        // Dance
+    { id: 9, name: 'אופניים', icon: '🚴' }       // Cycling
+  ];
 
 function SignUpPreferences({ onBackClick, onCompleteSignUp, userBasicData }) {
   const [selectedSports, setSelectedSports] = useState([]);

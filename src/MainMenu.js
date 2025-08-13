@@ -3,7 +3,7 @@ import EditUser from './EditUser';
 import OrderTrain from './OrderTrain';
 import './MainMenu.css';
 
-function MainMenu() {
+function MainMenu({ user }) {
   const [isLoaded, setIsLoaded] = useState(false);
   const [hoveredButton, setHoveredButton] = useState(null);
   const [currentView, setCurrentView] = useState('menu'); // 'menu', 'editUser', 'workoutBooking'
@@ -32,9 +32,8 @@ function MainMenu() {
     setCurrentView('menu');
   };
 
-
   if (currentView === 'editUser') {
-    return <EditUser onBackClick={handleBackToMenu} />;
+    return <EditUser onBackClick={handleBackToMenu} currentUser={user} />; 
   }
 
 
