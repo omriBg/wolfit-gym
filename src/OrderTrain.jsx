@@ -126,7 +126,7 @@ function OrderTrain({ onBackClick, user }){
           />
         </div>
         {selectDate != null && (
-          <div style={{marginTop: '160px'}}>
+          <div style={{marginTop: window.innerWidth <= 768 ? '25px' : '160px'}}>
             <h3>בחר שעת התחלה</h3>
             <select 
               value={startTime || ''} 
@@ -152,7 +152,7 @@ function OrderTrain({ onBackClick, user }){
         )}
 
         {startTime && (
-          <div style={{marginTop: '30px'}}>
+          <div style={{marginTop: window.innerWidth <= 768 ? '25px' : '30px'}}>
             <h3>בחר שעת סיום</h3>
             <select 
               value={endTime || ''} 
