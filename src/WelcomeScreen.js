@@ -59,9 +59,8 @@ function WelcomeScreen({ user }) {
 
   let content;
 
-  // עבור לתפריט רק אחרי שעברנו את כל השורות + מרווח נוסף
-  if (visibleLines >= textLines.length && scrollY > totalScrollNeeded) {
-    content = <MainMenu user={user}/>
+  if (visibleLines >= textLines.length) {
+  content = <MainMenu user={user}/>
   } else {
     content = (
       <>
