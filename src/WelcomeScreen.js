@@ -54,8 +54,8 @@ function WelcomeScreen({ user }) {
 
   // חישוב מתי לעבור לתפריט - הרבה יותר מאוחר
   const totalScrollNeeded = isMobile ? 
-    50 + (textLines.length * 150) + 200 : // +200 מרווח נוסף במובייל
-    100 + (textLines.length * 300) + 400; // +400 מרווח נוסף בדסקטופ
+    50 + (textLines.length * 150) + 100 : // +200 מרווח נוסף במובייל
+    100 + (textLines.length * 300) + 300; // +400 מרווח נוסף בדסקטופ
 
   let content;
 

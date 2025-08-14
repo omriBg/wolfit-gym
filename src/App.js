@@ -141,7 +141,7 @@ function App() {
       <div className="login-form">
         <input 
           type="text" 
-          placeholder="שם. משתמש"  
+          placeholder="שם משתמש"  
           value={userName}
           onChange={(e) => setUserName(e.target.value)}
           disabled={isLoading}
