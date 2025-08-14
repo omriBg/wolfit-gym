@@ -623,12 +623,7 @@ function CreateWorkout({ user, selectedDate, startTime, endTime, onBackClick }) 
         )}
 
         <div className="action-buttons">
-          <button
-            className="test-button"
-            onClick={runTests}
-          >
-            🧪 בדוק נתונים
-          </button>
+      
 
           <button
             className="generate-button"
