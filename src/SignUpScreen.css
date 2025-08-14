@@ -55,7 +55,7 @@
   }
   
   .content {
-    padding: 60px 30px 30px 30px;
+    padding: 60px 20px 20px 20px;
     position: relative;
     z-index: 2;
     height: 100vh;
@@ -64,8 +64,8 @@
   }
   
   .content h1 {
-    font-size: 2.5rem;
-    margin-bottom: 10px;
+    font-size: 2rem;
+    margin-bottom: 8px;
     background: linear-gradient(45deg, #ffffff, #b38ed8);
     -webkit-background-clip: text;
     -webkit-text-fill-color: transparent;
@@ -73,17 +73,17 @@
   }
   
   .content p {
-    font-size: 1.2rem;
+    font-size: 1rem;
     opacity: 0.8;
-    margin-bottom: 40px;
+    margin-bottom: 30px;
   }
   
   .signup-form {
-    max-width: 400px;
+    max-width: 100%;
     margin: 0 auto;
     display: flex;
     flex-direction: column;
-    gap: 15px;
+    gap: 12px;
   }
   
   .form-group {
@@ -110,11 +110,11 @@
   
   .form-group input {
     width: 100%;
-    height: 50px;
-    padding: 15px 20px;
+    height: 45px;
+    padding: 12px 15px;
     font-size: 16px;
     border: 2px solid rgba(255, 255, 255, 0.2);
-    border-radius: 12px;
+    border-radius: 10px;
     background: rgba(255, 255, 255, 0.1);
     color: white;
     text-align: right;
@@ -325,22 +325,86 @@
   
   /* התאמה למובייל */
   @media (max-width: 768px) {
+    .signup-container {
+      background-size: 80%;
+    }
+    
     .signup-container .back-button {
-      top: 15px !important;
-      right: 15px !important;
-      padding: 6px 12px !important;
-      font-size: 12px !important;
+      top: 10px !important;
+      right: 10px !important;
+      padding: 4px 8px !important;
+      font-size: 11px !important;
     }
     
     .content {
-      padding: 60px 20px 20px 20px;
+      padding: 50px 15px 15px 15px;
     }
     
     .content h1 {
-      font-size: 2rem;
+      font-size: 1.8rem;
+      margin-bottom: 5px;
+    }
+    
+    .content p {
+      font-size: 0.9rem;
+      margin-bottom: 20px;
     }
     
     .signup-form {
       max-width: 100%;
+      gap: 10px;
+    }
+    
+    .form-group input {
+      height: 40px;
+      padding: 10px 12px;
+      font-size: 14px;
+    }
+    
+    .signup-button {
+      height: 45px;
+      font-size: 16px;
+      margin-top: 30px;
+    }
+    
+    .date-picker-toggle {
+      width: 40px;
+      height: 40px;
+      font-size: 14px;
+    }
+    
+    .date-selectors {
+      flex-direction: column;
+      gap: 8px;
+    }
+    
+    .date-selectors select {
+      height: 35px;
+      font-size: 14px;
+    }
+  }
+  
+  /* התאמה למסכים קטנים מאוד */
+  @media (max-width: 480px) {
+    .signup-container {
+      background-size: 90%;
+    }
+    
+    .content h1 {
+      font-size: 1.5rem;
+    }
+    
+    .content p {
+      font-size: 0.8rem;
+    }
+    
+    .form-group input {
+      height: 38px;
+      font-size: 13px;
+    }
+    
+    .signup-button {
+      height: 42px;
+      font-size: 15px;
     }
   }

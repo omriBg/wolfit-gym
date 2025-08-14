@@ -117,8 +117,10 @@ function SignUpScreen({ onBackToLogin, onSignUpComplete }) {
 
     const isFormValid = () => {
         const allFieldsFilled = userName.trim() && password && email && height && weight && birthdate;
+        const noErrors = Object.values(errors).every(error => !error);
         
         console.log('כל השדות מלאים:', allFieldsFilled);
+        console.log('אין שגיאות:', noErrors);
         console.log('ערכי השדות:', {
             userName: userName.trim(),
             password: password,
@@ -127,8 +129,9 @@ function SignUpScreen({ onBackToLogin, onSignUpComplete }) {
             weight: weight,
             birthdate: birthdate
         });
+        console.log('שגיאות:', errors);
         
-        return allFieldsFilled;
+        return allFieldsFilled && noErrors;
     };
 
     const handleContinue = () => {

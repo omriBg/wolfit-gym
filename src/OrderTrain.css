@@ -94,3 +94,59 @@
 .react-datepicker {
   transform: scale(1.2) !important;
 }
+
+/* התאמה למובייל */
+@media (max-width: 768px) {
+  .order-train-container {
+    background-size: 70%;
+  }
+  
+  .order-content {
+    padding: 60px 20px 20px 20px;
+  }
+  
+  .create-workout-button-container {
+    bottom: 30px;
+  }
+  
+  .create-workout-button {
+    width: 200px;
+    height: 50px;
+    font-size: 18px;
+  }
+  
+  .order-train-container .back-button {
+    top: 15px !important;
+    right: 15px !important;
+    padding: 6px 12px !important;
+    font-size: 12px !important;
+  }
+  
+  .react-datepicker {
+    transform: scale(1) !important;
+  }
+}
+
+/* התאמה למסכים קטנים מאוד */
+@media (max-width: 480px) {
+  .order-train-container {
+    background-size: 80%;
+  }
+  
+  .order-content {
+    padding: 50px 15px 15px 15px;
+  }
+  
+  .create-workout-button {
+    width: 180px;
+    height: 45px;
+    font-size: 16px;
+  }
+  
+  .order-train-container .back-button {
+    top: 10px !important;
+    right: 10px !important;
+    padding: 4px 8px !important;
+    font-size: 11px !important;
+  }
+}
