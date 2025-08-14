@@ -542,6 +542,263 @@
     font-size: 1.6rem !important;
   }
 }
+/* תיקון מובייל מלא למסך הברכה - WelcomeScreen.css */
+
+/* תיקונים כלליים למובייל */
+@media (max-width: 768px) {
+  .WelcomeScreen {
+    min-height: 100vh;
+    height: auto;
+    overflow-x: hidden;
+    /* וידוא גלילה טובה במובייל */
+    -webkit-overflow-scrolling: touch;
+    scroll-behavior: smooth;
+  }
+
+  /* תיקון לספייסר - הקטנה משמעותית במובייל אבל עם מספיק מקום */
+  .spacer {
+    height: 350vh !important; /* יותר מקום לגלילה - במקום 300vh */
+  }
+
+  /* תיקון ללוגו הראשי */
+  .main-logo2 {
+    width: 200px !important; /* במקום 250px */
+    transition: all 1.5s cubic-bezier(0.4, 0, 0.2, 1);
+  }
+  
+  .main-logo2.scrolled {
+    width: 50px !important; /* במקום 60px */
+    top: 10px !important;
+    left: 10px !important;
+  }
+
+  /* תיקון לקונטיינר הטקסט */
+  .text-container {
+    padding: 0 20px;
+    max-width: 90vw;
+    font-size: 2.2rem !important; /* במקום 3.5rem */
+    line-height: 1.2;
+  }
+
+  .text-line {
+    margin: 15px 0 !important; /* במקום 20px */
+    font-size: 2rem !important;
+    /* וידוא שהטקסט לא חורג */
+    word-wrap: break-word;
+    overflow-wrap: break-word;
+    hyphens: auto;
+  }
+
+  /* תיקון לאינדיקטור הגלילה הצדדי */
+  .scroll-indicator {
+    right: 15px !important; /* במקום 30px */
+    transform: translateY(-50%) scale(0.8);
+  }
+
+  .scroll-dot {
+    width: 10px !important;
+    height: 10px !important;
+  }
+
+  .scroll-line {
+    height: 60px !important; /* במקום 100px */
+    margin: 5px 0 !important;
+  }
+
+  /* תיקון לאינדיקטור התחתון */
+  .initial-scroll-indicator {
+    bottom: 30px !important; /* במקום 80px */
+  }
+
+  .advanced-scroll-indicator {
+    bottom: 20px !important; /* במקום 40px */
+  }
+
+  .scroll-arrow-container {
+    padding: 8px 12px !important;
+    font-size: 0.9rem;
+  }
+
+  .scroll-progress {
+    width: 80px !important; /* במקום 120px */
+    height: 2px !important;
+  }
+
+  .scroll-text {
+    font-size: 0.8rem !important;
+  }
+
+  /* תיקון לחישוב הגלילה במובייל */
+  .text-line.visible {
+    transform: translateY(0) scale(0.9); /* הקטנה קלה */
+  }
+}
+
+/* תיקונים למסכים קטנים מאוד */
+@media (max-width: 480px) {
+  .spacer {
+    height: 300vh !important; /* עוד יותר אבל עדיין מספיק */
+  }
+
+  .main-logo2 {
+    width: 150px !important;
+  }
+  
+  .main-logo2.scrolled {
+    width: 40px !important;
+    top: 8px !important;
+    left: 8px !important;
+  }
+
+  .text-container {
+    font-size: 1.8rem !important;
+    padding: 0 15px;
+  }
+
+  .text-line {
+    font-size: 1.6rem !important;
+    margin: 10px 0 !important;
+  }
+
+  .scroll-indicator {
+    right: 10px !important;
+    transform: translateY(-50%) scale(0.7);
+  }
+
+  .initial-scroll-indicator {
+    bottom: 20px !important;
+  }
+
+  .advanced-scroll-indicator {
+    bottom: 15px !important;
+  }
+
+  .scroll-progress {
+    width: 60px !important;
+  }
+}
+
+/* תיקון ל-MainMenu כשהוא מופיע */
+@media (max-width: 768px) {
+  .WelcomeScreen .main-menu {
+    margin-top: 20px;
+    padding: 20px 15px;
+  }
+
+  .WelcomeScreen .main-menu .menu-container {
+    gap: 1.5rem !important;
+  }
+
+  .WelcomeScreen .main-menu .brand-title {
+    font-size: 2rem !important;
+  }
+
+  .WelcomeScreen .main-menu .menu-button {
+    width: 100% !important;
+    max-width: 300px !important;
+    height: 55px !important;
+    font-size: 1rem !important;
+  }
+}
+
+/* תיקון לבעיות נוספות שעלולות להיות */
+@media (max-width: 768px) {
+  /* וידוא שאין overflow אופקי */
+  .WelcomeScreen * {
+    max-width: 100vw;
+    box-sizing: border-box;
+  }
+
+  /* תיקון לאנימציות שעלולות לגרום לבעיות */
+  .text-line {
+    transition: all 1.5s ease !important; /* במקום 2.5s */
+  }
+
+  .main-logo2 {
+    transition: all 1s cubic-bezier(0.4, 0, 0.2, 1) !important; /* במקום 2s */
+  }
+
+  /* וידוא שהגלילה עובדת חלק */
+  body {
+    overflow-x: hidden;
+    -webkit-overflow-scrolling: touch;
+  }
+
+  /* תיקון לבעיית המצב המוזר בסוף הגלילה */
+  .WelcomeScreen::after {
+    content: '';
+    display: block;
+    height: 100px; /* מרווח תחתון נוסף */
+    width: 100%;
+  }
+}
+
+/* תיקון חירום אם הגלילה עדיין לא עובדת */
+@media (max-width: 768px) {
+  .WelcomeScreen.mobile-fix {
+    height: auto !important;
+    min-height: 100vh !important;
+    overflow-y: auto !important;
+    overflow-x: hidden !important;
+    position: relative !important;
+  }
+
+  .spacer.mobile-fix {
+    height: 200vh !important;
+  }
+
+  /* גלילה חלקה יותר */
+  .text-container.mobile-fix {
+    position: sticky !important;
+    top: 50% !important;
+    transform: translateY(-50%) !important;
+  }
+}
+
+/* תיקון לבעיות ביצועים במובייל */
+@media (max-width: 768px) {
+  .text-line {
+    will-change: transform, opacity;
+    backface-visibility: hidden;
+    -webkit-backface-visibility: hidden;
+  }
+
+  .main-logo2 {
+    will-change: transform, width;
+    backface-visibility: hidden;
+    -webkit-backface-visibility: hidden;
+  }
+
+  /* הפחתת איכות האנימציות למען ביצועים */
+  .progress-bar::after {
+    animation-duration: 3s !important; /* במקום 2s */
+  }
+
+  .scroll-arrow {
+    animation-duration: 3s !important;
+  }
+}
+
+/* תיקון לבעיות עם viewport במובייל */
+@media (max-width: 768px) and (orientation: portrait) {
+  .spacer {
+    height: 280vh !important;
+  }
+}
+
+@media (max-width: 768px) and (orientation: landscape) {
+  .spacer {
+    height: 200vh !important;
+  }
+
+  .text-container {
+    font-size: 1.8rem !important;
+  }
+
+  .text-line {
+    font-size: 1.6rem !important;
+  }
+}
 /* הסתרת האינדיקטור כשמגיעים לתפריט */
 .advanced-scroll-indicator.hidden {
   opacity: 0;

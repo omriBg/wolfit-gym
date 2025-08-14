@@ -44,22 +44,23 @@ function WelcomeScreen({ user }) {
     if (!isScrolled) return 0;
     const scrollAfterLogo = scrollY - (isMobile ? 50 : 100);
     // התאמה למובייל - פחות גלילה לכל שורה
-    const lineDistance = isMobile ? 200 : 400;
+    const lineDistance = isMobile ? 150 : 300;
     const lineNumber = Math.floor(scrollAfterLogo / lineDistance);
-    console.log("scrollY:", scrollY, "isMobile:", isMobile, "visibleLines:", Math.min(lineNumber + 1, textLines.length));
-    return Math.min(lineNumber - 1);
+    console.log("scrollY:", scrollY, "isMobile:", isMobile, "visibleLines:", Math.min(lineNumber, textLines.length));
+    return Math.min(lineNumber, textLines.length);
   };
 
   const visibleLines = getVisibleLines();
 
-  // חישוב מתי לעבור לתפריט - מוקדם יותר במובייל
+  // חישוב מתי לעבור לתפריט - הרבה יותר מאוחר
   const totalScrollNeeded = isMobile ? 
-    50 + (textLines.length * 200) : 
-    100 + (textLines.length * 400);
+    50 + (textLines.length * 150) + 200 : // +200 מרווח נוסף במובייל
+    100 + (textLines.length * 300) + 400; // +400 מרווח נוסף בדסקטופ
 
   let content;
 
-  if (scrollY > totalScrollNeeded || visibleLines >= textLines.length) {
+  // עבור לתפריט רק אחרי שעברנו את כל השורות + מרווח נוסף
+  if (visibleLines >= textLines.length && scrollY > totalScrollNeeded) {
     content = <MainMenu user={user}/>
   } else {
     content = (
@@ -104,7 +105,7 @@ function WelcomeScreen({ user }) {
             <div 
               className="progress-bar" 
               style={{ 
-                width: `${Math.min((scrollY / totalScrollNeeded) * 100, 100)}%` 
+                width: `${Math.min((scrollY / (totalScrollNeeded * 0.8)) * 100, 100)}%` 
               }}
             ></div>
           </div>
