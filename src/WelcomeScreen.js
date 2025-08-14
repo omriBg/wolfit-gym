@@ -87,8 +87,8 @@ function WelcomeScreen({ user }) {
               className={`scroll-dot ${index === visibleLines ? 'active' : ''}`}
               onClick={() => {
                 // התאמת הגלילה למובייל
-                const baseScroll = isMobile ? 50 : 100;
-                const lineDistance = isMobile ? 150 : 300;
+                const baseScroll = isMobile ? 50 : 50;
+                const lineDistance = isMobile ? 150 : 200;
                 const targetScroll = baseScroll + (index * lineDistance);
                 window.scrollTo({ top: targetScroll, behavior: 'smooth' });
               }}
