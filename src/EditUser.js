@@ -313,7 +313,6 @@ function EditUser({ onBackClick, currentUser }) {
                       >
                         {preferenceMode === 'ranked' && (
                           <div className="ranking-display">
-                            <span className="rank-number">{getRankingIcon(rank)}</span>
                             <span className="sport-icon">{sport.icon}</span>
                             <span className="sport-name">{sport.name}</span>
                           </div>
