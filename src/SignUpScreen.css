@@ -4,16 +4,18 @@
     top: 0;
     left: 0;
     width: 100%;
-    height: 100%;
+    height: 100vh;
     color: white;
     box-sizing: border-box;
-    overflow-y: hidden;
+    overflow-y: auto;
+    overflow-x: hidden;
     z-index: 9999;
     background-image: url("../public/logo2.png");
     background-position: center center;
     background-repeat: no-repeat;
     background-size: 60%;
     background-attachment: fixed;
+    -webkit-overflow-scrolling: touch;
   }
   
   .signup-container::before {
@@ -58,9 +60,11 @@
     padding: 60px 20px 20px 20px;
     position: relative;
     z-index: 2;
-    height: 100vh;
-    overflow: hidden;
+    min-height: 100vh;
     text-align: center;
+    display: flex;
+    flex-direction: column;
+    justify-content: flex-start;
   }
   
   .content h1 {
@@ -84,6 +88,8 @@
     display: flex;
     flex-direction: column;
     gap: 12px;
+    flex: 1;
+    justify-content: center;
   }
   
   .form-group {
@@ -327,60 +333,77 @@
   @media (max-width: 768px) {
     .signup-container {
       background-size: 80%;
+      height: 100vh;
+      overflow-y: auto;
     }
     
     .signup-container .back-button {
-      top: 10px !important;
-      right: 10px !important;
-      padding: 4px 8px !important;
-      font-size: 11px !important;
+      top: env(safe-area-inset-top, 10px) !important;
+      right: env(safe-area-inset-right, 10px) !important;
+      padding: 6px 10px !important;
+      font-size: 12px !important;
+      border-radius: 5px !important;
     }
     
     .content {
-      padding: 50px 15px 15px 15px;
+      padding: calc(env(safe-area-inset-top, 0px) + 50px) 15px 15px 15px;
+      min-height: 100vh;
+      justify-content: flex-start;
     }
     
     .content h1 {
-      font-size: 1.8rem;
-      margin-bottom: 5px;
+      font-size: 1.6rem;
+      margin-bottom: 8px;
+      line-height: 1.2;
     }
     
     .content p {
       font-size: 0.9rem;
-      margin-bottom: 20px;
+      margin-bottom: 25px;
+      line-height: 1.4;
     }
     
     .signup-form {
       max-width: 100%;
-      gap: 10px;
+      gap: 12px;
+      padding: 0 5px;
     }
     
     .form-group input {
-      height: 40px;
-      padding: 10px 12px;
-      font-size: 14px;
+      height: 44px;
+      padding: 12px 15px;
+      font-size: 16px;
+      border-radius: 8px;
     }
     
     .signup-button {
-      height: 45px;
+      height: 48px;
       font-size: 16px;
-      margin-top: 30px;
+      margin-top: 25px;
+      border-radius: 8px;
     }
     
     .date-picker-toggle {
-      width: 40px;
-      height: 40px;
-      font-size: 14px;
+      width: 44px;
+      height: 44px;
+      font-size: 16px;
     }
     
     .date-selectors {
       flex-direction: column;
-      gap: 8px;
+      gap: 10px;
+      padding: 10px;
     }
     
     .date-selectors select {
-      height: 35px;
-      font-size: 14px;
+      height: 40px;
+      font-size: 16px;
+      border-radius: 6px;
+    }
+    
+    .error-message {
+      font-size: 0.75rem;
+      margin-top: 4px;
     }
   }
   
@@ -390,21 +413,60 @@
       background-size: 90%;
     }
     
+    .content {
+      padding: calc(env(safe-area-inset-top, 0px) + 40px) 10px 10px 10px;
+    }
+    
     .content h1 {
-      font-size: 1.5rem;
+      font-size: 1.4rem;
+      margin-bottom: 6px;
     }
     
     .content p {
-      font-size: 0.8rem;
+      font-size: 0.85rem;
+      margin-bottom: 20px;
+    }
+    
+    .signup-form {
+      gap: 10px;
+      padding: 0 2px;
     }
     
     .form-group input {
-      height: 38px;
-      font-size: 13px;
+      height: 42px;
+      font-size: 16px;
+      padding: 10px 12px;
     }
     
     .signup-button {
+      height: 45px;
+      font-size: 15px;
+      margin-top: 20px;
+    }
+    
+    .date-picker-toggle {
+      width: 42px;
       height: 42px;
       font-size: 15px;
+    }
+    
+    .date-selectors select {
+      height: 38px;
+      font-size: 15px;
+    }
+  }
+  
+  /* התאמה לאייפון X ומעלה */
+  @supports (padding: max(0px)) {
+    .signup-container .back-button {
+      top: max(10px, env(safe-area-inset-top)) !important;
+      right: max(10px, env(safe-area-inset-right)) !important;
+    }
+    
+    .content {
+      padding-top: max(50px, calc(env(safe-area-inset-top) + 30px));
+      padding-left: max(15px, env(safe-area-inset-left));
+      padding-right: max(15px, env(safe-area-inset-right));
+      padding-bottom: max(15px, env(safe-area-inset-bottom));
     }
   }

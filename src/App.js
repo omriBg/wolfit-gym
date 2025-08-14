@@ -3,7 +3,7 @@ import './App.css';
 import SignUpScreen from './SignUpScreen.js';
 import SignUpPreferences from './SignUpPreferences.js';
 import WelcomeScreen from './WelcomeScreen.js';
-
+import './mobile-fix.css';
 function App() {
   const [isLoggedIn, setIsLoggedIn] = useState(false);
   const [currentScreen, setCurrentScreen] = useState('login');
@@ -141,7 +141,7 @@ function App() {
       <div className="login-form">
         <input 
           type="text" 
-          placeholder="שם משתמש"
+          placeholder="שגם משתמש"  
           value={userName}
           onChange={(e) => setUserName(e.target.value)}
           disabled={isLoading}

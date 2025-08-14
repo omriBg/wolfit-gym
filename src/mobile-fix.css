@@ -1,0 +1,608 @@
+/* 
+   קובץ תיקון מובייל - לשמור בשם mobile-fix.css ולייבא לאפליקציה
+   או להעתיק את הקוד לתוך קבצי ה-CSS הקיימים
+*/
+
+/* Global Mobile Fixes */
+* {
+  box-sizing: border-box;
+}
+
+html, body {
+  overflow-x: hidden;
+  width: 100%;
+  max-width: 100vw;
+}
+
+/* תיקון למסך התחברות - App.css */
+@media (max-width: 768px) {
+  .App {
+    padding: 20px 15px;
+    min-height: 100vh;
+    overflow-x: hidden;
+  }
+
+  .login-logo {
+    width: 80%;
+    max-width: 300px;
+    margin-bottom: 20px;
+  }
+
+  .login-form {
+    width: 100%;
+    max-width: 300px;
+    padding: 0 10px;
+  }
+
+  .login-form input {
+    width: 100%;
+    max-width: 280px;
+    height: 45px;
+    font-size: 16px;
+    padding: 12px;
+  }
+
+  .login-form button {
+    width: 100%;
+    max-width: 280px;
+    height: 50px;
+    font-size: 16px;
+  }
+
+  .login-form p {
+    font-size: 14px;
+    text-align: center;
+    line-height: 1.4;
+  }
+}
+
+@media (max-width: 480px) {
+  .App {
+    padding: 15px 10px;
+  }
+
+  .login-logo {
+    width: 90%;
+    max-width: 250px;
+  }
+
+  .login-form input {
+    height: 42px;
+    font-size: 14px;
+    max-width: 260px;
+  }
+
+  .login-form button {
+    height: 45px;
+    font-size: 14px;
+    max-width: 260px;
+  }
+}
+
+/* תיקון למסך הרשמה - SignUpScreen.css */
+@media (max-width: 768px) {
+  .signup-container {
+    background-size: 60%;
+    overflow-y: auto;
+  }
+
+  .signup-container .back-button {
+    top: 15px !important;
+    right: 15px !important;
+    padding: 8px 12px !important;
+    font-size: 13px !important;
+  }
+
+  .content {
+    padding: 80px 20px 40px 20px;
+    overflow-y: auto;
+    height: auto;
+    min-height: 100vh;
+  }
+
+  .content h1 {
+    font-size: 1.8rem;
+    margin-bottom: 10px;
+  }
+
+  .signup-form {
+    max-width: 100%;
+    width: 100%;
+  }
+
+  .form-group input {
+    width: 100%;
+    height: 50px;
+    font-size: 16px;
+    padding: 15px;
+  }
+
+  .date-input-container {
+    flex-direction: column;
+    gap: 10px;
+  }
+
+  .date-input-container input {
+    border-radius: 10px;
+  }
+
+  .date-picker-toggle {
+    width: 100%;
+    height: 50px;
+    border-radius: 10px;
+    border: 2px solid rgba(255, 255, 255, 0.2);
+  }
+
+  .signup-button {
+    height: 55px;
+    font-size: 18px;
+    margin-top: 30px;
+  }
+}
+
+@media (max-width: 480px) {
+  .signup-container {
+    background-size: 70%;
+  }
+
+  .content {
+    padding: 70px 15px 30px 15px;
+  }
+
+  .content h1 {
+    font-size: 1.5rem;
+  }
+
+  .form-group input {
+    height: 45px;
+    font-size: 14px;
+  }
+
+  .signup-button {
+    height: 50px;
+    font-size: 16px;
+  }
+}
+
+/* תיקון לתפריט ראשי - MainMenu.css */
+@media (max-width: 768px) {
+  .menu-container {
+    gap: 2rem;
+    padding: 0 20px;
+  }
+
+  .brand-title {
+    font-size: 2.2rem;
+    letter-spacing: 3px;
+  }
+
+  .menu-button {
+    width: 100%;
+    max-width: 320px;
+    height: 65px;
+    font-size: 1.1rem;
+  }
+
+  .buttons-section {
+    width: 100%;
+    align-items: center;
+  }
+}
+
+@media (max-width: 480px) {
+  .menu-container {
+    gap: 1.5rem;
+    padding: 0 15px;
+  }
+
+  .brand-title {
+    font-size: 1.8rem;
+    letter-spacing: 2px;
+  }
+
+  .menu-button {
+    width: 100%;
+    max-width: 280px;
+    height: 55px;
+    font-size: 1rem;
+  }
+}
+
+/* תיקון לעריכת משתמש - EditUser.css */
+@media (max-width: 768px) {
+  .edit-user-container {
+    background-size: 50%;
+  }
+
+  .edit-user-container .back-button {
+    top: 15px !important;
+    right: 15px !important;
+    padding: 8px 12px !important;
+    font-size: 13px !important;
+  }
+
+  .content {
+    padding: 80px 20px 40px 20px;
+    overflow-y: auto;
+  }
+
+  .content h1 {
+    font-size: 1.8rem;
+  }
+
+  .preference-mode-selector {
+    flex-direction: column;
+    gap: 10px;
+    align-items: center;
+  }
+
+  .mode-button {
+    width: 100%;
+    max-width: 280px;
+    padding: 15px 20px;
+    font-size: 1rem;
+  }
+
+  .sports-container {
+    flex-direction: column;
+    gap: 20px;
+  }
+
+  .sports-column {
+    width: 100%;
+  }
+
+  .sport-item button {
+    width: 100%;
+    min-height: 50px;
+    font-size: 16px;
+    padding: 15px;
+  }
+
+  .ranked-sport-button {
+    flex-direction: column !important;
+    text-align: center !important;
+    gap: 10px !important;
+  }
+
+  .ranking-display {
+    flex-direction: column !important;
+    gap: 8px !important;
+  }
+
+  .ranking-controls {
+    justify-content: center;
+    margin-top: 10px;
+  }
+
+  .intensity-selector {
+    flex-direction: row;
+    justify-content: center;
+    flex-wrap: wrap;
+    gap: 10px;
+  }
+
+  .intensity-btn {
+    min-width: 80px;
+    padding: 15px 20px;
+  }
+}
+
+@media (max-width: 480px) {
+  .edit-user-container {
+    background-size: 60%;
+  }
+
+  .content {
+    padding: 70px 15px 30px 15px;
+  }
+
+  .content h1 {
+    font-size: 1.5rem;
+  }
+
+  .mode-button {
+    max-width: 250px;
+    font-size: 0.9rem;
+  }
+
+  .sport-item button {
+    min-height: 45px;
+    font-size: 14px;
+  }
+
+  .intensity-btn {
+    min-width: 70px;
+    padding: 12px 15px;
+  }
+}
+
+/* תיקון להזמנת אימון - OrderTrain.css */
+@media (max-width: 768px) {
+  .order-train-container {
+    background-size: 40%;
+  }
+
+  .order-train-container .back-button {
+    top: 15px !important;
+    right: 15px !important;
+    padding: 8px 12px !important;
+    font-size: 13px !important;
+  }
+
+  .order-content {
+    padding: 80px 20px 120px 20px;
+    overflow-y: auto;
+  }
+
+  .order-content h1 {
+    font-size: 1.8rem;
+    margin-bottom: 20px;
+  }
+
+  .order-content h3 {
+    font-size: 1.2rem;
+    margin: 20px 0 15px 0;
+  }
+
+  .order-content select {
+    width: 100%;
+    max-width: 200px;
+    padding: 12px;
+    font-size: 16px;
+    margin: 0 auto;
+    display: block;
+  }
+
+  .create-workout-button-container {
+    bottom: 20px;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 100%;
+    padding: 0 20px;
+  }
+
+  .create-workout-button {
+    width: 100%;
+    max-width: 300px;
+    height: 55px;
+    font-size: 18px;
+  }
+
+  /* תיקון לדייט פיקר */
+  .react-datepicker {
+    transform: none !important;
+    width: 100% !important;
+    max-width: 300px !important;
+    margin: 0 auto !important;
+    font-size: 14px !important;
+  }
+
+  .react-datepicker__month-container {
+    width: 100% !important;
+  }
+
+  .react-datepicker__day {
+    width: 35px !important;
+    height: 35px !important;
+    line-height: 35px !important;
+    margin: 1px !important;
+  }
+}
+
+@media (max-width: 480px) {
+  .order-train-container {
+    background-size: 50%;
+  }
+
+  .order-content {
+    padding: 70px 15px 100px 15px;
+  }
+
+  .order-content h1 {
+    font-size: 1.5rem;
+  }
+
+  .order-content h3 {
+    font-size: 1.1rem;
+  }
+
+  .create-workout-button {
+    max-width: 250px;
+    height: 50px;
+    font-size: 16px;
+  }
+
+  .react-datepicker__day {
+    width: 30px !important;
+    height: 30px !important;
+    line-height: 30px !important;
+  }
+}
+
+/* תיקון ליצירת אימון - CreateWorkout.css */
+@media (max-width: 768px) {
+  .create-workout-container {
+    background-size: 35%;
+  }
+
+  .create-workout-container .back-button {
+    top: 15px !important;
+    right: 15px !important;
+    padding: 8px 12px !important;
+    font-size: 13px !important;
+  }
+
+  .content {
+    padding: 80px 20px 40px 20px;
+    overflow-y: auto;
+  }
+
+  .content h1 {
+    font-size: 1.8rem;
+    margin-bottom: 30px;
+  }
+
+  .workout-info {
+    grid-template-columns: 1fr;
+    gap: 15px;
+  }
+
+  .info-card {
+    padding: 15px;
+  }
+
+  .info-card h3 {
+    font-size: 1.1rem;
+  }
+
+  .action-buttons {
+    flex-direction: column;
+    align-items: center;
+    gap: 15px;
+  }
+
+  .test-button, .generate-button {
+    width: 100%;
+    max-width: 280px;
+    padding: 15px 20px;
+    font-size: 16px;
+  }
+
+  .time-slot {
+    flex-direction: column;
+    text-align: center;
+    gap: 10px;
+    padding: 15px;
+  }
+
+  .time {
+    min-width: auto;
+    font-size: 1.1rem;
+  }
+
+  .field-info {
+    text-align: center;
+  }
+
+  .workout-result {
+    padding: 20px;
+  }
+
+  .workout-result h2 {
+    font-size: 1.5rem;
+  }
+}
+
+@media (max-width: 480px) {
+  .create-workout-container {
+    background-size: 40%;
+  }
+
+  .content {
+    padding: 70px 15px 30px 15px;
+  }
+
+  .content h1 {
+    font-size: 1.5rem;
+  }
+
+  .info-card {
+    padding: 12px;
+  }
+
+  .test-button, .generate-button {
+    max-width: 250px;
+    font-size: 14px;
+  }
+
+  .time-slot {
+    padding: 12px;
+  }
+
+  .workout-result {
+    padding: 15px;
+  }
+}
+
+/* תיקונים כלליים נוספים */
+@media (max-width: 768px) {
+  /* וידוא שכל הכפתורים נוחים למגע */
+  button {
+    min-height: 44px;
+    touch-action: manipulation;
+  }
+
+  /* וידוא שכל הטקסט קריא */
+  body {
+    font-size: 16px;
+    line-height: 1.5;
+  }
+
+  /* מניעת זום אוטומטי בשדות קלט */
+  input, select, textarea {
+    font-size: 16px !important;
+  }
+
+  /* וידוא שמודלים ופופאפים מתנהגים טוב */
+  .modal, .popup {
+    width: 100%;
+    max-width: 100vw;
+    margin: 0;
+    border-radius: 0;
+  }
+}
+
+/* תיקון לבעיות גלילה */
+@media (max-width: 768px) {
+  body {
+    overflow-x: hidden;
+    -webkit-overflow-scrolling: touch;
+  }
+
+  /* וידוא שכל הקונטיינרים לא חורגים מהמסך */
+  .container, .content, div {
+    max-width: 100vw;
+    overflow-x: hidden;
+  }
+
+  /* תיקון לאלמנטים עם position fixed */
+  [class*="container"] {
+    max-width: 100vw;
+    overflow-x: hidden;
+  }
+}
+
+/* תיקונים ספציפיים לבעיות נוספות */
+@media (max-width: 480px) {
+  /* הקטנת מרווחים */
+  .content, .container {
+    padding-left: 10px;
+    padding-right: 10px;
+  }
+
+  /* תיקון לכפתורי חזרה */
+  .back-button {
+    min-width: 60px !important;
+    min-height: 35px !important;
+  }
+
+  /* תיקון לכותרות */
+  h1 {
+    font-size: 1.5rem !important;
+    margin-bottom: 15px !important;
+  }
+
+  h2 {
+    font-size: 1.3rem !important;
+  }
+
+  h3 {
+    font-size: 1.1rem !important;
+  }
+
+  /* תיקון לרשימות ולמחירונים */
+  .list-item, .sport-item {
+    margin-bottom: 8px;
+  }
+}
