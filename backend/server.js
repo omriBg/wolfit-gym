@@ -134,6 +134,43 @@ app.post('/api/login', async (req, res) => {
       });
     }
   });
+
+  // API לבדיקת זמינות שם משתמש
+  app.post('/api/check-username', async (req, res) => {
+    try {
+      const { userName } = req.body;
+      
+      if (!userName || userName.trim().length < 3) {
+        return res.json({
+          success: false,
+          available: false,
+          message: 'שם משתמש חייב להכיל לפחות 3 תווים'
+        });
+      }
+      
+      // בדיקה אם שם המשתמש כבר קיים
+      const existingUser = await pool.query(
+        'SELECT idUser FROM "User" WHERE userName = $1',
+        [userName.trim()]
+      );
+      
+      const available = existingUser.rows.length === 0;
+      
+      res.json({
+        success: true,
+        available: available,
+        message: available ? 'שם משתמש זמין' : 'שם משתמש זה כבר תפוס'
+      });
+      
+    } catch (err) {
+      console.error('שגיאה בבדיקת שם משתמש:', err);
+      res.json({
+        success: false,
+        available: false,
+        message: 'שגיאה בשרת'
+      });
+    }
+  });
   
   // API להרשמת משתמש חדש
   app.post('/api/register', async (req, res) => {

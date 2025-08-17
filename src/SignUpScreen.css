@@ -98,6 +98,56 @@
     opacity: 0;
     transform: translateY(20px);
   }
+
+  .input-container {
+    position: relative;
+    display: flex;
+    align-items: center;
+  }
+
+  .username-checking,
+  .username-available,
+  .username-taken {
+    position: absolute;
+    right: 10px;
+    top: 50%;
+    transform: translateY(-50%);
+    font-size: 12px;
+    padding: 2px 6px;
+    border-radius: 3px;
+    white-space: nowrap;
+  }
+
+  .username-checking {
+    color: #ffa500;
+    display: flex;
+    align-items: center;
+    gap: 4px;
+  }
+
+  .username-available {
+    color: #4CAF50;
+    background-color: rgba(76, 175, 80, 0.1);
+  }
+
+  .username-taken {
+    color: #f44336;
+    background-color: rgba(244, 67, 54, 0.1);
+  }
+
+  .spinner {
+    width: 12px;
+    height: 12px;
+    border: 2px solid #ffa500;
+    border-top: 2px solid transparent;
+    border-radius: 50%;
+    animation: spin 1s linear infinite;
+  }
+
+  @keyframes spin {
+    0% { transform: rotate(0deg); }
+    100% { transform: rotate(360deg); }
+  }
   
   .form-group:nth-child(1) { animation-delay: 0.1s; }
   .form-group:nth-child(2) { animation-delay: 0.2s; }

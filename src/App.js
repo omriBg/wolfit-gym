@@ -21,9 +21,13 @@ function App() {
     }
 
     setIsLoading(true); 
-    setLoginMessage(''); 
+    setLoginMessage('מתחבר לשרת...'); 
 
     try {
+      // יצירת AbortController עם timeout של 30 שניות
+      const controller = new AbortController();
+      const timeoutId = setTimeout(() => controller.abort(), 30000);
+
       const response = await fetch('https://wolfit-gym-backend-ijvq.onrender.com/api/login', {
         method: 'POST',
         headers: {
@@ -32,8 +36,11 @@ function App() {
         body: JSON.stringify({
           userName: userName.trim(),
           password: password
-        })
+        }),
+        signal: controller.signal
       });
+
+      clearTimeout(timeoutId);
 
       const result = await response.json();
       
@@ -42,13 +49,17 @@ function App() {
         setLoggedInUser(result.user); 
         setIsLoggedIn(true);
         setLoginMessage(''); 
-      }else {
+      } else {
         setLoginMessage(result.message || 'שגיאה בהתחברות');
       }
       
     } catch (error) {
       console.error('שגיאה בחיבור לשרת:', error);
-      setLoginMessage('שגיאה בחיבור לשרת. נסה שוב.');
+      if (error.name === 'AbortError') {
+        setLoginMessage('השרת לא מגיב. נסה שוב (ייתכן שהוא "ישן" וצריך להתעורר)');
+      } else {
+        setLoginMessage('שגיאה בחיבור לשרת. נסה שוב.');
+      }
     } finally {
       setIsLoading(false); 
     }
@@ -170,10 +181,24 @@ function App() {
           disabled={isLoading}
           style={{
             opacity: isLoading ? 0.6 : 1,
-            cursor: isLoading ? 'not-allowed' : 'pointer'
+            cursor: isLoading ? 'not-allowed' : 'pointer',
+            position: 'relative'
           }}
         >
-          {isLoading ? 'מתחבר...' : 'כניסה'}
+          {isLoading ? (
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+              <div style={{
+                width: '16px',
+                height: '16px',
+                border: '2px solid #ffffff',
+                borderTop: '2px solid transparent',
+                borderRadius: '50%',
+                animation: 'spin 1s linear infinite',
+                marginLeft: '8px'
+              }}></div>
+              מתחבר...
+            </div>
+          ) : 'כניסה'}
         </button>
         
         <p>אין לך חשבון?

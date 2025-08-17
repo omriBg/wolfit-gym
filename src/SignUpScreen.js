@@ -13,6 +13,8 @@ function SignUpScreen({ onBackToLogin, onSignUpComplete }) {
     const [selectedMonth, setSelectedMonth] = useState('');
     const [selectedYear, setSelectedYear] = useState('');
     const [errors, setErrors] = useState({});
+    const [isCheckingUsername, setIsCheckingUsername] = useState(false);
+    const [usernameAvailable, setUsernameAvailable] = useState(null);
 
     const days = Array.from({length: 31}, (_, i) => i + 1);
     
@@ -96,6 +98,44 @@ function SignUpScreen({ onBackToLogin, onSignUpComplete }) {
         return error;
     };
 
+    const checkUsernameAvailability = async (username) => {
+        if (!username || username.length < 3) {
+            setUsernameAvailable(null);
+            return;
+        }
+
+        setIsCheckingUsername(true);
+        try {
+            const response = await fetch('https://wolfit-gym-backend-ijvq.onrender.com/api/check-username', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({ userName: username })
+            });
+
+            const result = await response.json();
+            setUsernameAvailable(result.available);
+            
+            if (!result.available) {
+                setErrors(prev => ({
+                    ...prev,
+                    userName: 'שם משתמש זה כבר תפוס'
+                }));
+            } else {
+                setErrors(prev => ({
+                    ...prev,
+                    userName: ''
+                }));
+            }
+        } catch (error) {
+            console.error('שגיאה בבדיקת שם משתמש:', error);
+            setUsernameAvailable(null);
+        } finally {
+            setIsCheckingUsername(false);
+        }
+    };
+
     const updateField = (fieldName, value, setter) => {
         setter(value);
         
@@ -113,6 +153,14 @@ function SignUpScreen({ onBackToLogin, onSignUpComplete }) {
             ...prev,
             [fieldName]: error
         }));
+
+        // בדיקת שם משתמש בזמן אמת
+        if (fieldName === 'userName') {
+            // בדיקה עם delay כדי לא לבדוק על כל תו
+            setTimeout(() => {
+                checkUsernameAvailability(value);
+            }, 500);
+        }
     };
 
     const isFormValid = () => {
@@ -173,20 +221,34 @@ function SignUpScreen({ onBackToLogin, onSignUpComplete }) {
             
             <div className="signup-form">
               <div className="form-group">
-                <input 
-                  type="text" 
-                  placeholder="שם משתמש"
-                  value={userName}
-                  onChange={(e) => updateField('userName', e.target.value, setUserName)}
-                  onBlur={(e) => {
-                    const error = validateField('userName', e.target.value);
-                    setErrors(prev => ({
-                      ...prev,
-                      userName: error
-                    }));
-                  }}
-                  className={errors.userName ? 'error' : ''}
-                />
+                <div className="input-container">
+                  <input 
+                    type="text" 
+                    placeholder="שם משתמש"
+                    value={userName}
+                    onChange={(e) => updateField('userName', e.target.value, setUserName)}
+                    onBlur={(e) => {
+                      const error = validateField('userName', e.target.value);
+                      setErrors(prev => ({
+                        ...prev,
+                        userName: error
+                      }));
+                    }}
+                    className={errors.userName ? 'error' : ''}
+                  />
+                  {isCheckingUsername && (
+                    <div className="username-checking">
+                      <div className="spinner"></div>
+                      בודק...
+                    </div>
+                  )}
+                  {!isCheckingUsername && usernameAvailable === true && userName.length >= 3 && (
+                    <div className="username-available">✓ זמין</div>
+                  )}
+                  {!isCheckingUsername && usernameAvailable === false && (
+                    <div className="username-taken">✗ תפוס</div>
+                  )}
+                </div>
                 {errors.userName && <div className="error-message">{errors.userName}</div>}
               </div>
               
