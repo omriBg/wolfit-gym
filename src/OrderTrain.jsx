@@ -12,9 +12,9 @@ function OrderTrain({ onBackClick, user }){
   const [showCreateWorkout, setShowCreateWorkout] = useState(false);
 
   useEffect(() => {
-    document.body.style.overflow = 'hidden';
+    // לא נחסום את הגלילה במסך הזמנת אימון
     return () => {
-      document.body.style.overflow = 'unset';
+      // רק נחזיר את הגלילה כשעוזבים
     };
   }, []);
 

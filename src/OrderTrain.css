@@ -10,6 +10,8 @@
   background-repeat: no-repeat;
   background-size: 50%; /* גודל שונה מEditUser */
   color: white;
+  overflow-y: auto; /* מאפשר גלילה */
+  overflow-x: hidden;
 }
 
 .order-train-container::before {
@@ -26,8 +28,9 @@
 .order-content {
   position: relative;
   z-index: 2;
-  padding: 80px 40px;
+  padding: 80px 40px 120px 40px; /* הוספת padding למטה כדי לתת מקום לכפתור */
   text-align: center;
+  min-height: 100vh; /* וידוא שהתוכן תופס את כל הגובה */
 }
 
 /* וידוא שהכפתור יהיה מעל הכל */
@@ -91,18 +94,62 @@
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2) !important;
 }
 
+/* התאמה כללית ל-select dropdowns */
+select {
+  -webkit-appearance: none;
+  -moz-appearance: none;
+  appearance: none;
+  background-image: url("data:image/svg+xml;charset=UTF-8,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='currentColor' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3e%3cpolyline points='6,9 12,15 18,9'%3e%3c/polyline%3e%3c/svg%3e");
+  background-repeat: no-repeat;
+  background-position: right 8px center;
+  background-size: 16px;
+  padding-right: 30px !important;
+  cursor: pointer;
+}
+
 .react-datepicker {
   transform: scale(1.2) !important;
+}
+
+/* התאמה למסכים גדולים */
+@media (min-width: 1200px) {
+  .order-train-container {
+    background-size: 40%;
+  }
+  
+  .order-content {
+    padding: 100px 60px 140px 60px;
+  }
+  
+  .create-workout-button {
+    width: 300px;
+    height: 60px;
+    font-size: 22px;
+  }
+}
+
+/* התאמה למסכים בינוניים */
+@media (min-width: 769px) and (max-width: 1199px) {
+  .order-train-container {
+    background-size: 45%;
+  }
+  
+  .order-content {
+    padding: 90px 50px 130px 50px;
+  }
 }
 
 /* התאמה למובייל */
 @media (max-width: 768px) {
   .order-train-container {
     background-size: 70%;
+    overflow-y: auto;
+    -webkit-overflow-scrolling: touch; /* גלילה חלקה באייפון */
   }
   
   .order-content {
-    padding: 60px 20px 20px 20px;
+    padding: 60px 20px 100px 20px; /* יותר מקום למטה */
+    min-height: 100vh;
   }
   
   .create-workout-button-container {
@@ -125,16 +172,31 @@
   .react-datepicker {
     transform: scale(1) !important;
   }
+  
+  /* וידוא שה-select dropdowns עובדים טוב במובייל */
+  select {
+    -webkit-appearance: none;
+    -moz-appearance: none;
+    appearance: none;
+    background-image: url("data:image/svg+xml;charset=UTF-8,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='currentColor' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3e%3cpolyline points='6,9 12,15 18,9'%3e%3c/polyline%3e%3c/svg%3e");
+    background-repeat: no-repeat;
+    background-position: right 8px center;
+    background-size: 16px;
+    padding-right: 30px !important;
+  }
 }
 
 /* התאמה למסכים קטנים מאוד */
 @media (max-width: 480px) {
   .order-train-container {
     background-size: 80%;
+    overflow-y: auto;
+    -webkit-overflow-scrolling: touch;
   }
   
   .order-content {
-    padding: 50px 15px 15px 15px;
+    padding: 50px 15px 80px 15px; /* יותר מקום למטה */
+    min-height: 100vh;
   }
   
   .create-workout-button {
@@ -148,5 +210,17 @@
     right: 10px !important;
     padding: 4px 8px !important;
     font-size: 11px !important;
+  }
+  
+  /* וידוא שה-select dropdowns עובדים טוב במסכים קטנים */
+  select {
+    -webkit-appearance: none;
+    -moz-appearance: none;
+    appearance: none;
+    background-image: url("data:image/svg+xml;charset=UTF-8,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='currentColor' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3e%3cpolyline points='6,9 12,15 18,9'%3e%3c/polyline%3e%3c/svg%3e");
+    background-repeat: no-repeat;
+    background-position: right 8px center;
+    background-size: 16px;
+    padding-right: 30px !important;
   }
 }
