@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import './EditUser.css'; // נשתמש באותו עיצוב
+import './SignUpPreferences.css';
 
 
 async function sendRegistrationToServer(userData) {

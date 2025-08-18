@@ -21,6 +21,7 @@
   top: 50%;
   left: 50%;
   transform: translate(-50%, -50%);
+  max-width: 90vw;
 }
 
 .main-logo2.scrolled {
@@ -62,6 +63,7 @@
 @media (max-width: 768px) {
   .main-logo2 {
     width: 250px;
+    max-width: 80vw;
   }
   
   .main-logo2.scrolled {
@@ -804,4 +806,46 @@
   opacity: 0;
   transform: translateX(-50%) translateY(20px);
   transition: all 0.5s ease;
+}
+
+/* התאמה למסכים גדולים */
+@media (min-width: 1200px) {
+  .main-logo2 {
+    width: 700px;
+  }
+  
+  .main-logo2.scrolled {
+    width: 100px;
+  }
+  
+  .text-container {
+    font-size: 2.5rem;
+  }
+  
+  .text-line {
+    font-size: 2.2rem;
+  }
+  
+  .welcome-text h1 {
+    font-size: 2.2rem;
+  }
+}
+
+/* התאמה למסכים בינוניים */
+@media (min-width: 769px) and (max-width: 1199px) {
+  .main-logo2 {
+    width: 500px;
+  }
+  
+  .main-logo2.scrolled {
+    width: 80px;
+  }
+  
+  .text-container {
+    font-size: 2rem;
+  }
+  
+  .text-line {
+    font-size: 1.8rem;
+  }
 }

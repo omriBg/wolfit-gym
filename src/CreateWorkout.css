@@ -340,3 +340,77 @@
       padding: 20px;
     }
   }
+  
+  /* התאמה למסכים גדולים */
+  @media (min-width: 1200px) {
+    .content {
+      padding: 100px 60px 40px 60px;
+    }
+    
+    .content h1 {
+      font-size: 3rem;
+    }
+    
+    .info-card {
+      padding: 30px;
+    }
+    
+    .workout-info {
+      grid-template-columns: repeat(3, 1fr);
+      gap: 30px;
+    }
+    
+    .test-button, .generate-button {
+      width: 200px;
+      height: 60px;
+      font-size: 1.2rem;
+    }
+    
+    .time-slot {
+      padding: 20px 25px;
+    }
+    
+    .time {
+      font-size: 1.4rem;
+      min-width: 100px;
+    }
+    
+    .field-info strong {
+      font-size: 1.3rem;
+    }
+    
+    .field-info span {
+      font-size: 1.1rem;
+    }
+  }
+  
+  /* התאמה למסכים בינוניים */
+  @media (min-width: 769px) and (max-width: 1199px) {
+    .content {
+      padding: 80px 40px 30px 40px;
+    }
+    
+    .content h1 {
+      font-size: 2.5rem;
+    }
+    
+    .workout-info {
+      grid-template-columns: repeat(2, 1fr);
+      gap: 25px;
+    }
+    
+    .test-button, .generate-button {
+      width: 180px;
+      height: 55px;
+      font-size: 1.1rem;
+    }
+    
+    .time-slot {
+      padding: 18px 22px;
+    }
+    
+    .time {
+      font-size: 1.3rem;
+      min-width: 90px;
+    }
+  }

@@ -7,6 +7,30 @@ body {
   -moz-osx-font-smoothing: grayscale;
   overflow-x: hidden;
   -webkit-overflow-scrolling: touch;
+  /* מניעת zoom לא רצוי במובייל */
+  touch-action: manipulation;
+  -webkit-tap-highlight-color: transparent;
+}
+
+/* התאמה כללית לכל המסכים */
+* {
+  box-sizing: border-box;
+}
+
+/* מניעת zoom על input focus במובייל */
+@media screen and (max-width: 768px) {
+  input, select, textarea {
+    font-size: 16px !important;
+    /* מניעת zoom באייפון */
+    transform: scale(1);
+    transform-origin: left top;
+  }
+  
+  /* וידוא שהטקסט קריא */
+  body {
+    font-size: 16px;
+    line-height: 1.4;
+  }
 }
 
 /* מניעת zoom על input focus במובייל */
@@ -20,6 +44,26 @@ body {
 @media screen and (max-width: 480px) {
   body {
     font-size: 14px;
+  }
+  
+  /* וידוא שהכפתורים ניתנים ללחיצה */
+  button {
+    min-height: 44px;
+    min-width: 44px;
+  }
+}
+
+/* התאמה למסכים בינוניים */
+@media screen and (min-width: 769px) and (max-width: 1024px) {
+  body {
+    font-size: 16px;
+  }
+}
+
+/* התאמה למסכים גדולים */
+@media screen and (min-width: 1025px) {
+  body {
+    font-size: 18px;
   }
 }
 

@@ -186,3 +186,43 @@
     gap: 1.5rem;
   }
 }
+
+/* התאמה למסכים גדולים */
+@media (min-width: 1200px) {
+  .brand-title {
+    font-size: 4.5rem;
+    letter-spacing: 8px;
+  }
+  
+  .menu-button {
+    width: 450px;
+    height: 80px;
+    font-size: 1.3rem;
+  }
+  
+  .menu-container {
+    gap: 5rem;
+  }
+  
+  .buttons-section {
+    gap: 2.5rem;
+  }
+}
+
+/* התאמה למסכים בינוניים */
+@media (min-width: 769px) and (max-width: 1199px) {
+  .brand-title {
+    font-size: 3rem;
+    letter-spacing: 5px;
+  }
+  
+  .menu-button {
+    width: 380px;
+    height: 75px;
+    font-size: 1.2rem;
+  }
+  
+  .menu-container {
+    gap: 4rem;
+  }
+}
