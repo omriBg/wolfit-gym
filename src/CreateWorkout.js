@@ -122,12 +122,15 @@ class HungarianAlgorithm {
     const assignment = new Array(this.n).fill(-1);
     const usedCols = new Set();
     
-    // לכל שורה, נבחר את העמודה עם הערך הנמוך ביותר שלא בשימוש
-    for (let i = 0; i < this.n; i++) {
+    console.log('=== אלגוריתם פשוט - מתמקד בזמנים אמיתיים ===');
+    
+    // רק לזמנים האמיתיים (לא זמני דמה)
+    for (let i = 0; i < this.timeSlots.length; i++) {
       let bestCol = -1;
       let bestValue = Infinity;
       
-      for (let j = 0; j < this.n; j++) {
+      // מחפש רק בספורט slots אמיתיים (לא דמה)
+      for (let j = 0; j < this.sportSlots.length; j++) {
         if (!usedCols.has(j) && this.matrix[i][j] < bestValue) {
           bestValue = this.matrix[i][j];
           bestCol = j;
@@ -137,14 +140,28 @@ class HungarianAlgorithm {
       if (bestCol !== -1) {
         assignment[i] = bestCol;
         usedCols.add(bestCol);
+        console.log(`זמן ${this.timeSlots[i]} (שורה ${i}): התאמה לספורט slot ${bestCol} (משקל ${bestValue})`);
+      } else {
+        console.log(`זמן ${this.timeSlots[i]} (שורה ${i}): לא נמצאה התאמה`);
       }
     }
     
-    const assignedCount = assignment.filter(val => val !== -1).length;
-    console.log(`התאמה עם ערכים נמוכים: ${assignedCount}/${this.n}`);
+    // לזמני הדמה - נשים התאמות פשוטות
+    for (let i = this.timeSlots.length; i < this.n; i++) {
+      for (let j = 0; j < this.n; j++) {
+        if (!usedCols.has(j)) {
+          assignment[i] = j;
+          usedCols.add(j);
+          break;
+        }
+      }
+    }
+    
+    const realTimeAssignedCount = assignment.slice(0, this.timeSlots.length).filter(val => val !== -1).length;
+    console.log(`התאמה פשוטה לזמנים אמיתיים: ${realTimeAssignedCount}/${this.timeSlots.length}`);
     
     this.assignment = assignment;
-    return assignedCount > 0;
+    return realTimeAssignedCount > 0;
   }
 
   improveAssignment() {
@@ -327,9 +344,23 @@ class WorkoutScheduler {
     console.log('התאמה:', assignment);
     console.log('מספר התאמות תקינות:', assignment.filter(val => val !== -1).length);
     
-    // אם Hungarian נכשל, נציג הודעה
-    if (assignment.filter(val => val !== -1).length === 0) {
-      console.log('=== Hungarian נכשל - זה לא אמור לקרות עם מטריצה ריבועית ===');
+    // בדיקה אם כל הזמנים האמיתיים התאימו
+    const realTimeAssignments = assignment.slice(0, this.timeSlots.length);
+    const successfulRealAssignments = realTimeAssignments.filter(val => val !== -1);
+    
+    console.log(`התאמות לזמנים אמיתיים: ${successfulRealAssignments.length}/${this.timeSlots.length}`);
+    
+    // אם לא כל הזמנים האמיתיים התאימו, ננסה אלגוריתם פשוט
+    if (successfulRealAssignments.length < this.timeSlots.length) {
+      console.log('=== לא כל הזמנים התאימו, מנסה אלגוריתם פשוט ===');
+      const simpleAssignment = this.findBestPartialAssignment();
+      console.log('התאמה פשוטה:', simpleAssignment);
+      
+      const result = this.parseAssignment(simpleAssignment);
+      console.log('=== תוצאה סופית (פשוטה) ===');
+      console.log('תוצאה:', result);
+      
+      return result;
     }
     
     const result = this.parseAssignment(assignment);
