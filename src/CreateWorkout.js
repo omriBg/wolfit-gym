@@ -372,6 +372,52 @@ class WorkoutScheduler {
       sportsUsage: Object.fromEntries(usedSports)
     };
   }
+
+  createSimpleAssignment() {
+    const assignment = new Array(this.n).fill(-1);
+    const usedCols = new Set();
+    
+    console.log('=== אלגוריתם פשוט - מתמקד בזמנים אמיתיים ===');
+    
+    // רק לזמנים האמיתיים (לא זמני דמה)
+    for (let i = 0; i < this.timeSlots.length; i++) {
+      let bestCol = -1;
+      let bestValue = Infinity;
+      
+      // מחפש רק בספורט slots אמיתיים (לא דמה)
+      for (let j = 0; j < this.sportSlots.length; j++) {
+        if (!usedCols.has(j) && this.matrix[i][j] < bestValue) {
+          bestValue = this.matrix[i][j];
+          bestCol = j;
+        }
+      }
+      
+      if (bestCol !== -1) {
+        assignment[i] = bestCol;
+        usedCols.add(bestCol);
+        console.log(`זמן ${this.timeSlots[i]} (שורה ${i}): התאמה לספורט slot ${bestCol} (משקל ${bestValue})`);
+      } else {
+        console.log(`זמן ${this.timeSlots[i]} (שורה ${i}): לא נמצאה התאמה`);
+      }
+    }
+    
+    // לזמני הדמה - נשים התאמות פשוטות
+    for (let i = this.timeSlots.length; i < this.n; i++) {
+      for (let j = 0; j < this.n; j++) {
+        if (!usedCols.has(j)) {
+          assignment[i] = j;
+          usedCols.add(j);
+          break;
+        }
+      }
+    }
+    
+    const realTimeAssignedCount = assignment.slice(0, this.timeSlots.length).filter(val => val !== -1).length;
+    console.log(`התאמה פשוטה לזמנים אמיתיים: ${realTimeAssignedCount}/${this.timeSlots.length}`);
+    
+    this.assignment = assignment;
+    return realTimeAssignedCount > 0;
+  }
 }
 
 function CreateWorkout({ user, selectedDate, startTime, endTime, onBackClick }) {
