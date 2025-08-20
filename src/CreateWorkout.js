@@ -14,6 +14,287 @@ const SPORT_MAPPING = {
   9: 'אופניים'      // Cycling
 };
 
+// Hungarian Algorithm Implementation
+class HungarianAlgorithm {
+  constructor(costMatrix) {
+    this.matrix = costMatrix.map(row => [...row]); // deep copy
+    this.n = this.matrix.length;
+    this.assignment = new Array(this.n).fill(-1);
+  }
+
+  solve() {
+    // Step 1: Subtract row minimums
+    this.subtractRowMinimums();
+    
+    // Step 2: Subtract column minimums
+    this.subtractColumnMinimums();
+    
+    // Step 3: Find optimal assignment
+    let iteration = 0;
+    while (!this.findOptimalAssignment() && iteration < 100) {
+      this.improveAssignment();
+      iteration++;
+    }
+    
+    return this.assignment;
+  }
+
+  subtractRowMinimums() {
+    for (let i = 0; i < this.n; i++) {
+      const minVal = Math.min(...this.matrix[i].filter(val => val !== Infinity));
+      if (minVal !== Infinity && minVal > 0) {
+        for (let j = 0; j < this.n; j++) {
+          if (this.matrix[i][j] !== Infinity) {
+            this.matrix[i][j] -= minVal;
+          }
+        }
+      }
+    }
+  }
+
+  subtractColumnMinimums() {
+    for (let j = 0; j < this.n; j++) {
+      const column = [];
+      for (let i = 0; i < this.n; i++) {
+        if (this.matrix[i][j] !== Infinity) {
+          column.push(this.matrix[i][j]);
+        }
+      }
+      const minVal = column.length > 0 ? Math.min(...column) : 0;
+      
+      if (minVal > 0) {
+        for (let i = 0; i < this.n; i++) {
+          if (this.matrix[i][j] !== Infinity) {
+            this.matrix[i][j] -= minVal;
+          }
+        }
+      }
+    }
+  }
+
+  findOptimalAssignment() {
+    const assignment = new Array(this.n).fill(-1);
+    const rowCovered = new Array(this.n).fill(false);
+    const colCovered = new Array(this.n).fill(false);
+
+    // Try to find assignment using zeros
+    for (let i = 0; i < this.n; i++) {
+      for (let j = 0; j < this.n; j++) {
+        if (this.matrix[i][j] === 0 && !rowCovered[i] && !colCovered[j]) {
+          assignment[i] = j;
+          rowCovered[i] = true;
+          colCovered[j] = true;
+        }
+      }
+    }
+
+    // Check if we have a complete assignment
+    const assignedCount = assignment.filter(val => val !== -1).length;
+    if (assignedCount === this.n) {
+      this.assignment = assignment;
+      return true;
+    }
+
+    return false;
+  }
+
+  improveAssignment() {
+    const rowCovered = new Array(this.n).fill(false);
+    const colCovered = new Array(this.n).fill(false);
+
+    // Mark rows and columns with zeros
+    for (let i = 0; i < this.n; i++) {
+      for (let j = 0; j < this.n; j++) {
+        if (this.matrix[i][j] === 0) {
+          rowCovered[i] = true;
+          colCovered[j] = true;
+        }
+      }
+    }
+
+    // Find minimum uncovered value
+    let minUncovered = Infinity;
+    for (let i = 0; i < this.n; i++) {
+      for (let j = 0; j < this.n; j++) {
+        if (!rowCovered[i] && !colCovered[j] && this.matrix[i][j] !== Infinity) {
+          minUncovered = Math.min(minUncovered, this.matrix[i][j]);
+        }
+      }
+    }
+
+    if (minUncovered !== Infinity && minUncovered > 0) {
+      // Subtract from uncovered elements, add to double-covered
+      for (let i = 0; i < this.n; i++) {
+        for (let j = 0; j < this.n; j++) {
+          if (!rowCovered[i] && !colCovered[j]) {
+            this.matrix[i][j] -= minUncovered;
+          } else if (rowCovered[i] && colCovered[j]) {
+            this.matrix[i][j] += minUncovered;
+          }
+        }
+      }
+    }
+  }
+}
+
+// Workout Scheduler Class
+class WorkoutScheduler {
+  constructor(timeSlots, fieldsByTime, userPreferences) {
+    this.timeSlots = timeSlots;
+    this.fieldsByTime = fieldsByTime;
+    this.userPreferences = userPreferences;
+    this.allFields = this.extractAllFields();
+    this.expandedFields = this.createExpandedFields();
+  }
+
+  extractAllFields() {
+    const fieldSet = new Set();
+    Object.values(this.fieldsByTime).forEach(fields => {
+      fields.forEach(field => {
+        fieldSet.add(JSON.stringify(field));
+      });
+    });
+    return Array.from(fieldSet).map(fieldStr => JSON.parse(fieldStr));
+  }
+
+  createExpandedFields() {
+    const expanded = [];
+    this.allFields.forEach(field => {
+      // גרסה 1 - שימוש ראשון
+      expanded.push({
+        ...field,
+        fieldId: field.id,
+        usage: 1,
+        expandedId: `${field.id}_1`
+      });
+      // גרסה 2 - שימוש שני
+      expanded.push({
+        ...field,
+        fieldId: field.id,
+        usage: 2,
+        expandedId: `${field.id}_2`
+      });
+    });
+    return expanded;
+  }
+
+  calculateWeight(timeSlot, expandedField) {
+    // בדיקה אם המגרש זמין באותו זמן
+    const availableFields = this.fieldsByTime[timeSlot] || [];
+    const isAvailable = availableFields.some(f => f.id === expandedField.fieldId);
+    
+    if (!isAvailable) {
+      return Infinity; // מגרש לא זמין
+    }
+
+    // חישוב משקל לפי העדיפות
+    const preferenceIndex = this.userPreferences.indexOf(expandedField.sportTypeId);
+    let weight;
+    
+    if (preferenceIndex !== -1) {
+      // מצא בהעדיפות - ככל שהאינדקס קטן יותר, המשקל קטן יותר
+      weight = preferenceIndex + 1; // עדיפות ראשונה = 1, שנייה = 2, וכו'
+    } else {
+      // לא בהעדיפות
+      weight = 9;
+    }
+
+    // הוספת עונש כפילות
+    if (expandedField.usage === 2) {
+      weight += 10;
+    }
+
+    return weight;
+  }
+
+  createCostMatrix() {
+    const numTimeSlots = this.timeSlots.length;
+    const numExpandedFields = this.expandedFields.length;
+    const matrixSize = Math.max(numTimeSlots, numExpandedFields);
+    
+    // יצירת מטריצה ריבועית
+    const matrix = Array(matrixSize).fill().map(() => Array(matrixSize).fill(0));
+
+    // מילוי המטריצה
+    for (let i = 0; i < matrixSize; i++) {
+      for (let j = 0; j < matrixSize; j++) {
+        if (i < numTimeSlots && j < numExpandedFields) {
+          // זמן אמיתי -> מגרש מורחב
+          matrix[i][j] = this.calculateWeight(this.timeSlots[i], this.expandedFields[j]);
+        } else if (i < numTimeSlots && j >= numExpandedFields) {
+          // זמן אמיתי -> זמן דמה
+          matrix[i][j] = Infinity;
+        } else {
+          // זמן דמה -> כל דבר
+          matrix[i][j] = 0;
+        }
+      }
+    }
+
+    return matrix;
+  }
+
+  solve() {
+    console.log('🧮 מתחיל אלגוריתם Hungarian...');
+    console.log(`📊 זמנים: ${this.timeSlots.length}, מגרשים: ${this.allFields.length}, מגרשים מורחבים: ${this.expandedFields.length}`);
+    
+    const costMatrix = this.createCostMatrix();
+    console.log('📋 מטריצת עלויות נוצרה:', costMatrix.length + 'x' + costMatrix[0].length);
+    
+    const hungarian = new HungarianAlgorithm(costMatrix);
+    const assignment = hungarian.solve();
+    
+    return this.parseAssignment(assignment);
+  }
+
+  parseAssignment(assignment) {
+    const result = [];
+    const usedFields = new Set();
+    
+    for (let i = 0; i < this.timeSlots.length; i++) {
+      const timeSlot = this.timeSlots[i];
+      const assignedFieldIndex = assignment[i];
+      
+      if (assignedFieldIndex !== -1 && assignedFieldIndex < this.expandedFields.length) {
+        const expandedField = this.expandedFields[assignedFieldIndex];
+        
+        // בדיקה שהמגרש באמת זמין
+        const availableFields = this.fieldsByTime[timeSlot] || [];
+        const originalField = availableFields.find(f => f.id === expandedField.fieldId);
+        
+        if (originalField) {
+          result.push({
+            time: timeSlot,
+            field: originalField,
+            usage: expandedField.usage,
+            weight: this.calculateWeight(timeSlot, expandedField)
+          });
+          usedFields.add(expandedField.fieldId);
+        } else {
+          result.push({
+            time: timeSlot,
+            field: null,
+            reason: 'שגיאה בהשמה'
+          });
+        }
+      } else {
+        result.push({
+          time: timeSlot,
+          field: null,
+          reason: 'לא נמצא מגרש מתאים'
+        });
+      }
+    }
+    
+    return {
+      slots: result,
+      totalSlots: result.length,
+      successfulSlots: result.filter(slot => slot.field !== null).length,
+      totalCost: result.reduce((sum, slot) => sum + (slot.weight || 0), 0)
+    };
+  }
+}
+
 function CreateWorkout({ user, selectedDate, startTime, endTime, onBackClick }) {
   const [isGenerating, setIsGenerating] = useState(false);
   const [workoutPlan, setWorkoutPlan] = useState(null);
@@ -33,13 +314,6 @@ function CreateWorkout({ user, selectedDate, startTime, endTime, onBackClick }) 
       endTime
     });
     
-    // בדיקת פורמט התאריך
-    console.log('📅 פורמט התאריך:', {
-      selectedDate,
-      type: typeof selectedDate,
-      length: selectedDate?.length
-    });
-    
     initializeWorkoutData();
   }, []);
 
@@ -53,7 +327,7 @@ function CreateWorkout({ user, selectedDate, startTime, endTime, onBackClick }) 
       setTimeSlots(slots);
       await loadAvailableFields(slots);
       
-      console.log('✅ טעינת נתונים הושלמה');
+      console.log('✅ טעינت נתונים הושלמה');
       
     } catch (err) {
       console.error('❌ שגיאה בטעינת נתונים:', err);
@@ -102,28 +376,9 @@ function CreateWorkout({ user, selectedDate, startTime, endTime, onBackClick }) 
     return slots;
   };
 
-  const createTimeSlotsForRange = (start, end) => {
-    const slots = [];
-    const [startHour, startMinute] = start.split(':').map(Number);
-    const [endHour, endMinute] = end.split(':').map(Number);
-    const startTotalMinutes = startHour * 60 + startMinute;
-    const endTotalMinutes = endHour * 60 + endMinute;
-    
-    for (let minutes = startTotalMinutes; minutes < endTotalMinutes; minutes += 15) {
-      const hours = Math.floor(minutes / 60);
-      const mins = minutes % 60;
-      const timeStr = `${hours.toString().padStart(2, '0')}:${mins.toString().padStart(2, '0')}`;
-      slots.push(timeStr);
-    }
-    
-    return slots;
-  };
-
   const loadAvailableFields = async (timeSlots) => {
     try {
       console.log('🏟️ טוען מגרשים זמינים...');
-      console.log('📅 תאריך:', selectedDate);
-      console.log('⏰ זמנים:', timeSlots);
       
       const response = await fetch('https://wolfit-gym-backend-ijvq.onrender.com/api/available-fields-for-workout', {
         method: 'POST',
@@ -136,22 +391,17 @@ function CreateWorkout({ user, selectedDate, startTime, endTime, onBackClick }) 
         })
       });
       
-      console.log('📥 תגובה מהשרת:', response.status);
-      
       if (response.ok) {
         const data = await response.json();
-        console.log('📋 נתונים מהשרת:', data);
         
         if (data.success) {
           setFieldsByTime(data.fieldsByTime);
           console.log('✅ מגרשים נטענו בהצלחה');
           return;
         } else {
-          console.error('❌ שגיאה מהשרת:', data.message);
           throw new Error(data.message);
         }
       } else {
-        console.error('❌ שגיאת HTTP:', response.status);
         throw new Error(`HTTP error! status: ${response.status}`);
       }
       
@@ -161,261 +411,19 @@ function CreateWorkout({ user, selectedDate, startTime, endTime, onBackClick }) 
     }
   };
 
-  const loadFieldsForTimeSlots = async (timeSlots, date) => {
-    try {
-      console.log('🏟️ טוען מגרשים זמינים לחלופות...');
-      console.log('📅 תאריך:', date);
-      console.log('⏰ זמנים:', timeSlots);
-      
-      const response = await fetch('https://wolfit-gym-backend-ijvq.onrender.com/api/available-fields-for-workout', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          date: date,
-          timeSlots: timeSlots
-        })
-      });
-      
-      if (response.ok) {
-        const data = await response.json();
-        if (data.success) {
-          console.log('✅ מגרשים לחלופות נטענו בהצלחה');
-          return data.fieldsByTime;
-        } else {
-          console.error('❌ שגיאה מהשרת:', data.message);
-          return {};
-        }
-      } else {
-        console.error('❌ שגיאת HTTP:', response.status);
-        return {};
-      }
-      
-    } catch (error) {
-      console.error('❌ שגיאה בטעינת מגרשים לחלופות:', error);
-      return {};
-    }
-  };
-
-  const calculateScore = (field, userPreferences, usedSports, selectedWorkout) => {
-    let score = 100; // ניקוד בסיס גבוה (רע)
-    
-    console.log(`🧮 מחשב ניקוד למגרש: ${field.name} (${field.sportType})`);
-    console.log(`📋 העדפות משתמש (IDs):`, userPreferences);
-    console.log(`🏷️ ID ספורט של המגרש:`, field.sportTypeId);
-    
-    // בדיקת עדיפות - השוואת ID-ים
-    const preferenceIndex = userPreferences.indexOf(field.sportTypeId);
-    if (preferenceIndex !== -1) {
-      score = preferenceIndex * 10; // עדיפות 1 = 0, עדיפות 2 = 10, וכו'
-      console.log(`✅ נמצא בעדיפות ${preferenceIndex + 1}, ניקוד בסיס: ${score}`);
-    } else {
-      console.log(`❌ לא נמצא בעדיפות (ID: ${field.sportTypeId}), ניקוד בסיס: ${score}`);
-    }
-    
-    // קנס כפילויות
-    const timesUsed = usedSports.filter(sportId => sportId === field.sportTypeId).length;
-    if (timesUsed > 0) {
-      score += 150;
-      console.log(`🔄 קנס כפילות: +150 (תמשנו ${timesUsed} פעמים), ניקוד כולל: ${score}`);
-    }
-    
-    // קנס רצף
-    if (selectedWorkout.length > 0) {
-      const lastWorkout = selectedWorkout[selectedWorkout.length - 1];
-      if (lastWorkout.field && lastWorkout.field.sportTypeId === field.sportTypeId) {
-        score += 30;
-        console.log(`⭐ קנס רצף: +30, ניקוד סופי: ${score}`);
-      }
-    }
-    
-    console.log(`📊 ניקוד סופי למגרש ${field.name}: ${score}`);
-    return score;
-  };
-
-  const runSmartAlgorithm = (timeSlots, fieldsByTime, userPreferences) => {
-    const selectedWorkout = [];
-    const usedSports = [];
-    
-    console.log('🧠 מתחיל אלגוריתם חכם...');
-    console.log('🎯 העדפות משתמש (IDs):', userPreferences);
-    
-    for (let i = 0; i < timeSlots.length; i++) {
-      const timeSlot = timeSlots[i];
-      const availableFields = fieldsByTime[timeSlot] || [];
-      
-      console.log(`\n⏰ מעבד זמן: ${timeSlot}`);
-      console.log(`🏟️ מגרשים זמינים: ${availableFields.length}`);
-      availableFields.forEach(field => {
-        console.log(`  - ${field.name} (${field.sportType}, ID: ${field.sportTypeId})`);
-      });
-      
-      if (availableFields.length === 0) {
-        console.log('❌ אין מגרשים זמינים בזמן זה');
-        selectedWorkout.push({
-          time: timeSlot,
-          field: null,
-          needsAlternative: true,
-          reason: 'אין מגרשים זמינים'
-        });
-        continue;
-      }
-      
-      let bestChoice = null;
-      let bestScore = 999;
-      
-      console.log('🔍 מחשב ניקודים:');
-      for (const field of availableFields) {
-        const score = calculateScore(field, userPreferences, usedSports, selectedWorkout);
-        
-        console.log(`${field.name}: ${score}`);
-        
-        if (score < bestScore) {
-          bestScore = score;
-          bestChoice = field;
-          console.log(`🥇 מגרש חדש בראש: ${field.name} עם ניקוד ${score}`);
-        }
-      }
-      
-      if (bestChoice) {
-        console.log(`✅ נבחר: ${bestChoice.name} (${bestChoice.sportType}) עם ניקוד ${bestScore}`);
-        selectedWorkout.push({
-          time: timeSlot,
-          field: bestChoice,
-          score: bestScore
-        });
-        usedSports.push(bestChoice.sportTypeId);
-        console.log(`📝 ספורטים שנוצרו עד כה:`, usedSports);
-      }
-    }
-    
-    return {
-      slots: selectedWorkout,
-      totalSlots: selectedWorkout.length,
-      successfulSlots: selectedWorkout.filter(slot => slot.field !== null).length
-    };
-  };
-
-  const adjustTime = (timeStr, minutesOffset) => {
-    const [hours, minutes] = timeStr.split(':').map(Number);
-    const totalMinutes = hours * 60 + minutes + minutesOffset;
-    const newHours = Math.floor(totalMinutes / 60);
-    const newMinutes = totalMinutes % 60;
-    return `${newHours.toString().padStart(2, '0')}:${newMinutes.toString().padStart(2, '0')}`;
-  };
-
-  const calculateDuration = (start, end) => {
-    const [startHours, startMinutes] = start.split(':').map(Number);
-    const [endHours, endMinutes] = end.split(':').map(Number);
-    const startTotal = startHours * 60 + startMinutes;
-    const endTotal = endHours * 60 + endMinutes;
-    return endTotal - startTotal;
-  };
-
-  const generateTimeAlternatives = (originalStart, originalEnd) => {
-    const alternatives = [];
-    const originalDuration = calculateDuration(originalStart, originalEnd);
-    
-    alternatives.push({
-      type: 'הקדמה קלה',
-      startTime: adjustTime(originalStart, -15),
-      endTime: adjustTime(originalEnd, -15)
-    });
-    
-    alternatives.push({
-      type: 'דחייה קלה',
-      startTime: adjustTime(originalStart, 15),
-      endTime: adjustTime(originalEnd, 15)
-    });
-    
-    alternatives.push({
-      type: 'הקדמה חזקה',
-      startTime: adjustTime(originalStart, -30),
-      endTime: adjustTime(originalEnd, -30)
-    });
-    
-    alternatives.push({
-      type: 'דחייה חזקה',
-      startTime: adjustTime(originalStart, 30),
-      endTime: adjustTime(originalEnd, 30)
-    });
-    
-    const minimumWorkout = 30;
-    const maxReduction = originalDuration - minimumWorkout;
-    
-    if (maxReduction >= 15) {
-      alternatives.push({
-        type: 'קיצור קל',
-        startTime: originalStart,
-        endTime: adjustTime(originalEnd, -15)
-      });
-    }
-    
-    if (maxReduction >= 30) {
-      alternatives.push({
-        type: 'קיצור חזק',
-        startTime: originalStart,
-        endTime: adjustTime(originalEnd, -30)
-      });
-    }
-    
-    return alternatives;
-  };
-
-  const isWorkoutValid = (workout) => {
-    if (!workout || !workout.slots) return false;
-    const validSlots = workout.slots.filter(slot => slot.field !== null);
-    return validSlots.length >= Math.ceil(workout.totalSlots * 0.7);
-  };
-
-  const createSmartWorkout = async () => {
-    console.log('🧠 מתחיל אלגוריתם חכם...');
+  const generateOptimalWorkout = () => {
+    console.log('🧠 מתחיל אלגוריתם אופטימלי...');
     
     if (timeSlots.length === 0 || Object.keys(fieldsByTime).length === 0) {
-      console.log('❌ אין נתונים זמינים לאלגוריתם');
+      console.log('❌ אין נתונים זמינים');
       return null;
     }
+
+    const scheduler = new WorkoutScheduler(timeSlots, fieldsByTime, userPreferences);
+    const result = scheduler.solve();
     
-    const originalWorkout = runSmartAlgorithm(timeSlots, fieldsByTime, userPreferences);
-    
-    if (isWorkoutValid(originalWorkout)) {
-      console.log('✅ אלגוריתם הצליח בזמן המקורי');
-      return originalWorkout;
-    }
-    
-    console.log('🔄 מחפש חלופות זמן...');
-    const alternatives = generateTimeAlternatives(startTime, endTime);
-    
-    for (const alternative of alternatives) {
-      console.log(`🕐 בודק חלופה: ${alternative.startTime} - ${alternative.endTime}`);
-      
-      try {
-        const altTimeSlots = createTimeSlotsForRange(alternative.startTime, alternative.endTime);
-        const altFieldsByTime = await loadFieldsForTimeSlots(altTimeSlots, selectedDate);
-        const altWorkout = runSmartAlgorithm(altTimeSlots, altFieldsByTime, userPreferences);
-        
-        if (isWorkoutValid(altWorkout)) {
-          console.log('✅ נמצאה חלופת זמן מתאימה');
-          return {
-            ...altWorkout,
-            isAlternative: true,
-            alternativeType: alternative.type,
-            originalTime: { startTime, endTime },
-            newTime: { startTime: alternative.startTime, endTime: alternative.endTime }
-          };
-        }
-      } catch (error) {
-        console.log(`❌ שגיאה בבדיקת חלופה: ${error.message}`);
-      }
-    }
-    
-    console.log('💡 מציע חלופות מוגבלות...');
-    return {
-      success: false,
-      alternatives: alternatives,
-      partialWorkout: originalWorkout
-    };
+    console.log('📊 תוצאות האלגוריתם:', result);
+    return result;
   };
 
   const generateWorkout = async () => {
@@ -428,15 +436,16 @@ function CreateWorkout({ user, selectedDate, startTime, endTime, onBackClick }) 
     setError('');
     
     try {
-      console.log('🚀 מתחיל ליצור תוכנית אימון...');
+      console.log('🚀 מתחיל ליצור תוכנית אימון אופטימלית...');
       
+      // הוספת השהיה קלה לUX
       await new Promise(resolve => setTimeout(resolve, 1000));
       
-      const smartWorkout = await createSmartWorkout();
+      const optimalWorkout = generateOptimalWorkout();
       
-      if (smartWorkout) {
-        setWorkoutPlan(smartWorkout);
-        console.log('✅ תוכנית אימון נוצרה בהצלחה');
+      if (optimalWorkout && optimalWorkout.successfulSlots > 0) {
+        setWorkoutPlan(optimalWorkout);
+        console.log('✅ תוכנית אימון אופטימלית נוצרה בהצלחה');
       } else {
         setError('לא הצליח ליצור תוכנית אימון מתאימה');
       }
@@ -451,7 +460,6 @@ function CreateWorkout({ user, selectedDate, startTime, endTime, onBackClick }) 
 
   const saveWorkoutToDatabase = async () => {
     if (!workoutPlan || !user || !user.id) {
-      console.error('❌ נתונים חסרים:', { workoutPlan: !!workoutPlan, user: !!user, userId: user?.id });
       setError('אין תוכנית אימון או משתמש לא מוגדר');
       return;
     }
@@ -461,14 +469,8 @@ function CreateWorkout({ user, selectedDate, startTime, endTime, onBackClick }) 
     setSaveSuccess(false);
 
     try {
-      console.log('💾 מתחיל לשמור אימון במסד הנתונים...');
-      console.log('👤 משתמש:', user);
-      console.log('📅 תאריך:', selectedDate);
-      console.log('🎯 תוכנית אימון:', workoutPlan);
-      
-      // הכנת הנתונים לשמירה
       const bookings = workoutPlan.slots
-        .filter(slot => slot.field !== null) // רק מגרשים שנבחרו
+        .filter(slot => slot.field !== null)
         .map(slot => ({
           idField: slot.field.id,
           bookingDate: selectedDate,
@@ -476,22 +478,17 @@ function CreateWorkout({ user, selectedDate, startTime, endTime, onBackClick }) 
           idUser: user.id
         }));
 
-      console.log('📋 נתונים לשמירה:', bookings);
-
       if (bookings.length === 0) {
-        setError('אין מגרשים לשמירה - כל המגרשים הם מנוחה');
+        setError('אין מגרשים לשמירה');
         setIsSaving(false);
         return;
       }
 
-      // שליחה לשרת
       const requestBody = {
         bookings: bookings,
         userId: user.id,
         date: selectedDate
       };
-
-      console.log('📤 שולח לשרת:', requestBody);
 
       const response = await fetch('https://wolfit-gym-backend-ijvq.onrender.com/api/book-fields', {
         method: 'POST',
@@ -501,28 +498,20 @@ function CreateWorkout({ user, selectedDate, startTime, endTime, onBackClick }) 
         body: JSON.stringify(requestBody)
       });
 
-      console.log('📥 תגובה מהשרת:', response.status, response.statusText);
-
       if (!response.ok) {
         throw new Error(`HTTP error! status: ${response.status}`);
       }
 
       const data = await response.json();
-      console.log('📋 נתונים מהשרת:', data);
 
       if (data.success) {
-        console.log('✅ האימון נשמר בהצלחה!');
         setSaveSuccess(true);
-        setError('');
-        
-        // אפשרות לחזרה לתפריט הראשי
         setTimeout(() => {
           if (onBackClick) {
             onBackClick();
           }
         }, 2000);
       } else {
-        console.error('❌ שגיאה בשמירת האימון:', data.message);
         setError(`שגיאה בשמירת האימון: ${data.message}`);
       }
 
@@ -532,24 +521,6 @@ function CreateWorkout({ user, selectedDate, startTime, endTime, onBackClick }) 
     } finally {
       setIsSaving(false);
     }
-  };
-
-  const runTests = () => {
-    console.log('🧪 הפעלת בדיקות:');
-    console.log('👤 משתמש:', user);
-    console.log('📅 תאריך:', selectedDate);
-    console.log('⏰ זמן:', `${startTime} - ${endTime}`);
-    console.log('🎯 העדפות:', userPreferences);
-    console.log('⏰ רבעי שעה:', timeSlots);
-    console.log('🏟️ מגרשים לפי זמן:', fieldsByTime);
-    
-    let totalFields = 0;
-    Object.values(fieldsByTime).forEach(fields => {
-      totalFields += fields.length;
-    });
-    console.log('📊 סך הכל מגרשים זמינים:', totalFields);
-    
-    alert('בדיקות הושלמו! בדוק את הקונסול לפרטים.');
   };
 
   const canCreateWorkout = () => {
@@ -575,7 +546,7 @@ function CreateWorkout({ user, selectedDate, startTime, endTime, onBackClick }) 
       </button>
       
       <div className="content">
-        <h1>🏋️ יוצר אימון מותאם אישית</h1>
+        <h1>🏋️ יוצר אימון מותאם אישית (אלגוריתם אופטימלי)</h1>
         
         <div className="workout-info">
           <div className="info-card">
@@ -623,33 +594,23 @@ function CreateWorkout({ user, selectedDate, startTime, endTime, onBackClick }) 
         )}
 
         <div className="action-buttons">
-      
-
           <button
             className="generate-button"
             onClick={generateWorkout}
             disabled={isGenerating || !canCreateWorkout()}
           >
-            {isGenerating ? '⏳ יוצר אימון...' : '🎯 צור תוכנית אימון חכמה'}
+            {isGenerating ? '⏳ יוצר אימון אופטימלי...' : '🎯 צור תוכנית אימון אופטימלית'}
           </button>
         </div>
 
         {workoutPlan && (
           <div className="workout-result">
-            <h2>✅ תוכנית האימון שלך</h2>
-            
-            {workoutPlan.isAlternative && (
-              <div className="warning">
-                🔄 הזמן המקורי שונה: {workoutPlan.alternativeType}
-                <br />
-                זמן מקורי: {workoutPlan.originalTime.startTime} - {workoutPlan.originalTime.endTime}
-                <br />
-                זמן חדש: {workoutPlan.newTime.startTime} - {workoutPlan.newTime.endTime}
-              </div>
-            )}
+            <h2>✅ תוכנית האימון האופטימלית שלך</h2>
             
             <div className="total-weight">
               הצלחנו ליצור {workoutPlan.successfulSlots} מתוך {workoutPlan.totalSlots} רבעי שעה
+              <br />
+              ניקוד כולל: {workoutPlan.totalCost} (ככל שקטן יותר - כך טוב יותר)
             </div>
             
             <div className="workout-timeline">
@@ -661,16 +622,17 @@ function CreateWorkout({ user, selectedDate, startTime, endTime, onBackClick }) 
                       <>
                         <strong>{slot.field.name}</strong>
                         <span>ספורט: {slot.field.sportType}</span>
-                        {slot.score !== undefined && (
+                        <span>שימוש: {slot.usage}/2</span>
+                        {slot.weight !== undefined && (
                           <span style={{fontSize: '0.8rem', opacity: 0.7}}>
-                            ניקוד: {slot.score}
+                            ניקוד: {slot.weight}
                           </span>
                         )}
                       </>
                     ) : (
                       <>
-                        <strong style={{color: '#ff6b6b'}}>מנוחה</strong>
-                        <span>{slot.reason || 'לא זמין'}</span>
+                        <strong style={{color: '#ff6b6b'}}>לא זמין</strong>
+                        <span>{slot.reason || 'לא נמצא מגרש'}</span>
                       </>
                     )}
                   </div>
