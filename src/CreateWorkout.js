@@ -99,9 +99,18 @@ class HungarianAlgorithm {
 
     // Check if we have a complete assignment
     const assignedCount = assignment.filter(val => val !== -1).length;
+    
+    // אם יש התאמה מושלמת - מעולה!
     if (assignedCount === this.n) {
       this.assignment = assignment;
       return true;
+    }
+    
+    // אם אין התאמה מושלמת, נחזיר התאמה חלקית
+    if (assignedCount > 0) {
+      console.log(`התאמה חלקית נמצאה: ${assignedCount}/${this.n}`);
+      this.assignment = assignment;
+      return true; // נחזיר true כדי לעצור את הלולאה
     }
 
     return false;
@@ -228,6 +237,8 @@ class WorkoutScheduler {
     const numSportSlots = this.sportSlots.length;
     const matrixSize = Math.max(numTimeSlots, numSportSlots);
     
+    console.log(`יצירת מטריצה ${matrixSize}x${matrixSize} (${numTimeSlots} זמנים אמיתיים + ${matrixSize - numTimeSlots} זמני דמה)`);
+    
     // יצירת מטריצה ריבועית
     const matrix = Array(matrixSize).fill().map(() => Array(matrixSize).fill(0));
 
@@ -238,15 +249,19 @@ class WorkoutScheduler {
           // זמן אמיתי -> ספורט slot
           matrix[i][j] = this.calculateWeight(this.timeSlots[i], this.sportSlots[j]);
         } else if (i < numTimeSlots && j >= numSportSlots) {
-          // זמן אמיתי -> זמן דמה
+          // זמן אמיתי -> ספורט דמה (לא רלוונטי)
           matrix[i][j] = Infinity;
+        } else if (i >= numTimeSlots && j < numSportSlots) {
+          // זמן דמה -> ספורט אמיתי (משקל 0 - לא משפיע)
+          matrix[i][j] = 0;
         } else {
-          // זמן דמה -> כל דבר
+          // זמן דמה -> ספורט דמה (משקל 0)
           matrix[i][j] = 0;
         }
       }
     }
 
+    console.log('מטריצה נוצרה עם זמני דמה');
     return matrix;
   }
 
@@ -281,6 +296,11 @@ class WorkoutScheduler {
     console.log('התאמה:', assignment);
     console.log('מספר התאמות תקינות:', assignment.filter(val => val !== -1).length);
     
+    // אם Hungarian נכשל, נציג הודעה
+    if (assignment.filter(val => val !== -1).length === 0) {
+      console.log('=== Hungarian נכשל - זה לא אמור לקרות עם מטריצה ריבועית ===');
+    }
+    
     const result = this.parseAssignment(assignment);
     console.log('=== תוצאה סופית ===');
     console.log('תוצאה:', result);
@@ -302,9 +322,13 @@ class WorkoutScheduler {
     const result = [];
     const usedSports = new Map(); // ספירת שימושים לכל ספורט
     
+    console.log('מעבד התאמה עם זמני דמה:', assignment);
+    
     for (let i = 0; i < this.timeSlots.length; i++) {
       const timeSlot = this.timeSlots[i];
       const assignedSlotIndex = assignment[i];
+      
+      console.log(`זמן ${timeSlot} (שורה ${i}): התאמה לספורט slot ${assignedSlotIndex}`);
       
       if (assignedSlotIndex !== -1 && assignedSlotIndex < this.sportSlots.length) {
         const sportSlot = this.sportSlots[assignedSlotIndex];
@@ -324,12 +348,16 @@ class WorkoutScheduler {
             usage: currentUsage + 1,
             weight: this.calculateWeight(timeSlot, sportSlot)
           });
+          
+          console.log(`✅ זמן ${timeSlot}: ${sportSlot.sportName} במגרש ${selectedField.name}`);
         } else {
           result.push({
             time: timeSlot,
             field: null,
             reason: 'לא נמצא מגרש מתאים'
           });
+          
+          console.log(`❌ זמן ${timeSlot}: לא נמצא מגרש ל-${sportSlot.sportName}`);
         }
       } else {
         result.push({
@@ -337,8 +365,13 @@ class WorkoutScheduler {
           field: null,
           reason: 'לא נמצא שיבוץ אופטימלי'
         });
+        
+        console.log(`❌ זמן ${timeSlot}: לא התאים לספורט`);
       }
     }
+    
+    // התעלם מזמני הדמה (שורות מעל this.timeSlots.length)
+    console.log(`התעלמות מ-${assignment.length - this.timeSlots.length} זמני דמה`);
     
     return {
       slots: result,
