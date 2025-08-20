@@ -115,10 +115,10 @@ class HungarianAlgorithm {
 
     // אם אין התאמה בכלל, ננסה למצוא התאמה עם ערכים נמוכים
     console.log('אין התאמה עם אפסים, מחפש התאמה עם ערכים נמוכים...');
-    return this.findBestPartialAssignment();
+    return this.createSimpleAssignment();
   }
 
-  findBestPartialAssignment() {
+  createSimpleAssignment() {
     const assignment = new Array(this.n).fill(-1);
     const usedCols = new Set();
     
@@ -353,7 +353,7 @@ class WorkoutScheduler {
     // אם לא כל הזמנים האמיתיים התאימו, ננסה אלגוריתם פשוט
     if (successfulRealAssignments.length < this.timeSlots.length) {
       console.log('=== לא כל הזמנים התאימו, מנסה אלגוריתם פשוט ===');
-      const simpleAssignment = this.findBestPartialAssignment();
+      const simpleAssignment = this.createSimpleAssignment();
       console.log('התאמה פשוטה:', simpleAssignment);
       
       const result = this.parseAssignment(simpleAssignment);
