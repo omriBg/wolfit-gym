@@ -137,62 +137,65 @@ class HungarianAlgorithm {
   }
 }
 
-// Workout Scheduler Class
+// Workout Scheduler Class with Sport-Based Grouping
 class WorkoutScheduler {
   constructor(timeSlots, fieldsByTime, userPreferences) {
     this.timeSlots = timeSlots;
     this.fieldsByTime = fieldsByTime;
     this.userPreferences = userPreferences;
-    this.allFields = this.extractAllFields();
-    this.expandedFields = this.createExpandedFields();
+    this.sportSlots = this.createSportSlots();
   }
 
-  extractAllFields() {
-    const fieldSet = new Set();
+  createSportSlots() {
+    const sportSlots = [];
+    
+    // יצירת רשימת ספורטים ייחודיים
+    const uniqueSports = new Set();
     Object.values(this.fieldsByTime).forEach(fields => {
       fields.forEach(field => {
-        fieldSet.add(JSON.stringify(field));
+        uniqueSports.add(field.sportTypeId);
       });
     });
-    return Array.from(fieldSet).map(fieldStr => JSON.parse(fieldStr));
-  }
-
-  createExpandedFields() {
-    const expanded = [];
-    this.allFields.forEach(field => {
-      // גרסה 1 - שימוש ראשון
-      expanded.push({
-        ...field,
-        fieldId: field.id,
-        usage: 1,
-        expandedId: `${field.id}_1`
-      });
-      // גרסה 2 - שימוש שני
-      expanded.push({
-        ...field,
-        fieldId: field.id,
-        usage: 2,
-        expandedId: `${field.id}_2`
-      });
-    });
-    return expanded;
-  }
-
-  calculateWeight(timeSlot, expandedField) {
-    // בדיקה אם המגרש זמין באותו זמן
-    const availableFields = this.fieldsByTime[timeSlot] || [];
-    const isAvailable = availableFields.some(f => f.id === expandedField.fieldId);
     
-    if (!isAvailable) {
-      return Infinity; // מגרש לא זמין
+    // לכל ספורט, יצירת 2 "slotים" (שימוש ראשון ושני)
+    Array.from(uniqueSports).forEach(sportTypeId => {
+      // שימוש ראשון
+      sportSlots.push({
+        sportTypeId: sportTypeId,
+        sportName: SPORT_MAPPING[sportTypeId] || `ספורט ${sportTypeId}`,
+        usage: 1,
+        slotId: `${sportTypeId}_1`
+      });
+      
+      // שימוש שני
+      sportSlots.push({
+        sportTypeId: sportTypeId,
+        sportName: SPORT_MAPPING[sportTypeId] || `ספורט ${sportTypeId}`,
+        usage: 2,
+        slotId: `${sportTypeId}_2`
+      });
+    });
+    
+    return sportSlots;
+  }
+
+  calculateWeight(timeSlot, sportSlot) {
+    // בדיקה אם יש מגרש מהסוג הזה זמין באותו זמן
+    const availableFields = this.fieldsByTime[timeSlot] || [];
+    const hasAvailableField = availableFields.some(field => 
+      field.sportTypeId === sportSlot.sportTypeId
+    );
+    
+    if (!hasAvailableField) {
+      return Infinity; // אין מגרש מהסוג הזה זמין
     }
 
     // חישוב משקל לפי העדיפות
-    const preferenceIndex = this.userPreferences.indexOf(expandedField.sportTypeId);
+    const preferenceIndex = this.userPreferences.indexOf(sportSlot.sportTypeId);
     let weight;
     
     if (preferenceIndex !== -1) {
-      // מצא בהעדיפות - ככל שהאינדקס קטן יותר, המשקל קטן יותר
+      // מצא בהעדיפות
       weight = preferenceIndex + 1; // עדיפות ראשונה = 1, שנייה = 2, וכו'
     } else {
       // לא בהעדיפות
@@ -200,7 +203,7 @@ class WorkoutScheduler {
     }
 
     // הוספת עונש כפילות
-    if (expandedField.usage === 2) {
+    if (sportSlot.usage === 2) {
       weight += 10;
     }
 
@@ -209,8 +212,8 @@ class WorkoutScheduler {
 
   createCostMatrix() {
     const numTimeSlots = this.timeSlots.length;
-    const numExpandedFields = this.expandedFields.length;
-    const matrixSize = Math.max(numTimeSlots, numExpandedFields);
+    const numSportSlots = this.sportSlots.length;
+    const matrixSize = Math.max(numTimeSlots, numSportSlots);
     
     // יצירת מטריצה ריבועית
     const matrix = Array(matrixSize).fill().map(() => Array(matrixSize).fill(0));
@@ -218,10 +221,10 @@ class WorkoutScheduler {
     // מילוי המטריצה
     for (let i = 0; i < matrixSize; i++) {
       for (let j = 0; j < matrixSize; j++) {
-        if (i < numTimeSlots && j < numExpandedFields) {
-          // זמן אמיתי -> מגרש מורחב
-          matrix[i][j] = this.calculateWeight(this.timeSlots[i], this.expandedFields[j]);
-        } else if (i < numTimeSlots && j >= numExpandedFields) {
+        if (i < numTimeSlots && j < numSportSlots) {
+          // זמן אמיתי -> ספורט slot
+          matrix[i][j] = this.calculateWeight(this.timeSlots[i], this.sportSlots[j]);
+        } else if (i < numTimeSlots && j >= numSportSlots) {
           // זמן אמיתי -> זמן דמה
           matrix[i][j] = Infinity;
         } else {
@@ -235,11 +238,11 @@ class WorkoutScheduler {
   }
 
   solve() {
-    console.log('🧮 מתחיל אלגוריתם Hungarian...');
-    console.log(`📊 זמנים: ${this.timeSlots.length}, מגרשים: ${this.allFields.length}, מגרשים מורחבים: ${this.expandedFields.length}`);
+    console.log('מתחיל אלגוריתם Hungarian עם קיבוץ ספורטים...');
+    console.log(`זמנים: ${this.timeSlots.length}, ספורט slots: ${this.sportSlots.length}`);
     
     const costMatrix = this.createCostMatrix();
-    console.log('📋 מטריצת עלויות נוצרה:', costMatrix.length + 'x' + costMatrix[0].length);
+    console.log('מטריצת עלויות נוצרה:', costMatrix.length + 'x' + costMatrix[0].length);
     
     const hungarian = new HungarianAlgorithm(costMatrix);
     const assignment = hungarian.solve();
@@ -247,41 +250,54 @@ class WorkoutScheduler {
     return this.parseAssignment(assignment);
   }
 
+  findBestFieldForSport(timeSlot, sportTypeId) {
+    const availableFields = this.fieldsByTime[timeSlot] || [];
+    const suitableFields = availableFields.filter(field => 
+      field.sportTypeId === sportTypeId
+    );
+    
+    // אם יש מגרשים מתאימים, בחר את הראשון (אפשר להוסיף לוגיקה נוספת)
+    return suitableFields.length > 0 ? suitableFields[0] : null;
+  }
+
   parseAssignment(assignment) {
     const result = [];
-    const usedFields = new Set();
+    const usedSports = new Map(); // ספירת שימושים לכל ספורט
     
     for (let i = 0; i < this.timeSlots.length; i++) {
       const timeSlot = this.timeSlots[i];
-      const assignedFieldIndex = assignment[i];
+      const assignedSlotIndex = assignment[i];
       
-      if (assignedFieldIndex !== -1 && assignedFieldIndex < this.expandedFields.length) {
-        const expandedField = this.expandedFields[assignedFieldIndex];
+      if (assignedSlotIndex !== -1 && assignedSlotIndex < this.sportSlots.length) {
+        const sportSlot = this.sportSlots[assignedSlotIndex];
         
-        // בדיקה שהמגרש באמת זמין
-        const availableFields = this.fieldsByTime[timeSlot] || [];
-        const originalField = availableFields.find(f => f.id === expandedField.fieldId);
+        // מציאת מגרש ספציפי לספורט הזה
+        const selectedField = this.findBestFieldForSport(timeSlot, sportSlot.sportTypeId);
         
-        if (originalField) {
+        if (selectedField) {
+          // עדכון ספירת השימושים
+          const currentUsage = usedSports.get(sportSlot.sportTypeId) || 0;
+          usedSports.set(sportSlot.sportTypeId, currentUsage + 1);
+          
           result.push({
             time: timeSlot,
-            field: originalField,
-            usage: expandedField.usage,
-            weight: this.calculateWeight(timeSlot, expandedField)
+            field: selectedField,
+            sportType: sportSlot.sportName,
+            usage: currentUsage + 1,
+            weight: this.calculateWeight(timeSlot, sportSlot)
           });
-          usedFields.add(expandedField.fieldId);
         } else {
           result.push({
             time: timeSlot,
             field: null,
-            reason: 'שגיאה בהשמה'
+            reason: 'לא נמצא מגרש מתאים'
           });
         }
       } else {
         result.push({
           time: timeSlot,
           field: null,
-          reason: 'לא נמצא מגרש מתאים'
+          reason: 'לא נמצא שיבוץ אופטימלי'
         });
       }
     }
@@ -290,7 +306,8 @@ class WorkoutScheduler {
       slots: result,
       totalSlots: result.length,
       successfulSlots: result.filter(slot => slot.field !== null).length,
-      totalCost: result.reduce((sum, slot) => sum + (slot.weight || 0), 0)
+      totalCost: result.reduce((sum, slot) => sum + (slot.weight || 0), 0),
+      sportsUsage: Object.fromEntries(usedSports)
     };
   }
 }
@@ -307,7 +324,7 @@ function CreateWorkout({ user, selectedDate, startTime, endTime, onBackClick }) 
   const [saveSuccess, setSaveSuccess] = useState(false);
 
   useEffect(() => {
-    console.log('🚀 CreateWorkout נטען עם:', {
+    console.log('CreateWorkout נטען עם:', {
       user: user?.userName,
       selectedDate,
       startTime,
@@ -327,10 +344,10 @@ function CreateWorkout({ user, selectedDate, startTime, endTime, onBackClick }) 
       setTimeSlots(slots);
       await loadAvailableFields(slots);
       
-      console.log('✅ טעינت נתונים הושלמה');
+      console.log('טעינת נתונים הושלמה');
       
     } catch (err) {
-      console.error('❌ שגיאה בטעינת נתונים:', err);
+      console.error('שגיאה בטעינת נתונים:', err);
       setError('שגיאה בטעינת נתונים. אנא נסה שוב.');
     } finally {
       setLoading(false);
@@ -353,7 +370,7 @@ function CreateWorkout({ user, selectedDate, startTime, endTime, onBackClick }) 
         setUserPreferences([]);
       }
     } catch (error) {
-      console.error('❌ שגיאה בטעינת העדפות:', error);
+      console.error('שגיאה בטעינת העדפות:', error);
       setUserPreferences([]);
       throw error;
     }
@@ -378,7 +395,7 @@ function CreateWorkout({ user, selectedDate, startTime, endTime, onBackClick }) 
 
   const loadAvailableFields = async (timeSlots) => {
     try {
-      console.log('🏟️ טוען מגרשים זמינים...');
+      console.log('טוען מגרשים זמינים...');
       
       const response = await fetch('https://wolfit-gym-backend-ijvq.onrender.com/api/available-fields-for-workout', {
         method: 'POST',
@@ -396,7 +413,7 @@ function CreateWorkout({ user, selectedDate, startTime, endTime, onBackClick }) 
         
         if (data.success) {
           setFieldsByTime(data.fieldsByTime);
-          console.log('✅ מגרשים נטענו בהצלחה');
+          console.log('מגרשים נטענו בהצלחה');
           return;
         } else {
           throw new Error(data.message);
@@ -406,23 +423,23 @@ function CreateWorkout({ user, selectedDate, startTime, endTime, onBackClick }) 
       }
       
     } catch (error) {
-      console.error('❌ שגיאה בטעינת מגרשים:', error);
+      console.error('שגיאה בטעינת מגרשים:', error);
       throw error;
     }
   };
 
   const generateOptimalWorkout = () => {
-    console.log('🧠 מתחיל אלגוריתם אופטימלי...');
+    console.log('מתחיל אלגוריתם אופטימלי עם קיבוץ ספורטים...');
     
     if (timeSlots.length === 0 || Object.keys(fieldsByTime).length === 0) {
-      console.log('❌ אין נתונים זמינים');
+      console.log('אין נתונים זמינים');
       return null;
     }
 
     const scheduler = new WorkoutScheduler(timeSlots, fieldsByTime, userPreferences);
     const result = scheduler.solve();
     
-    console.log('📊 תוצאות האלגוריתם:', result);
+    console.log('תוצאות האלגוריתם:', result);
     return result;
   };
 
@@ -436,7 +453,7 @@ function CreateWorkout({ user, selectedDate, startTime, endTime, onBackClick }) 
     setError('');
     
     try {
-      console.log('🚀 מתחיל ליצור תוכנית אימון אופטימלית...');
+      console.log('מתחיל ליצור תוכנית אימון אופטימלית...');
       
       // הוספת השהיה קלה לUX
       await new Promise(resolve => setTimeout(resolve, 1000));
@@ -445,13 +462,13 @@ function CreateWorkout({ user, selectedDate, startTime, endTime, onBackClick }) 
       
       if (optimalWorkout && optimalWorkout.successfulSlots > 0) {
         setWorkoutPlan(optimalWorkout);
-        console.log('✅ תוכנית אימון אופטימלית נוצרה בהצלחה');
+        console.log('תוכנית אימון אופטימלית נוצרה בהצלחה');
       } else {
         setError('לא הצליח ליצור תוכנית אימון מתאימה');
       }
       
     } catch (error) {
-      console.error('❌ שגיאה ביצירת אימון:', error);
+      console.error('שגיאה ביצירת אימון:', error);
       setError('שגיאה ביצירת האימון. אנא נסה שוב.');
     } finally {
       setIsGenerating(false);
@@ -516,7 +533,7 @@ function CreateWorkout({ user, selectedDate, startTime, endTime, onBackClick }) 
       }
 
     } catch (error) {
-      console.error('❌ שגיאה בשמירת האימון:', error);
+      console.error('שגיאה בשמירת האימון:', error);
       setError(`שגיאה בשמירת האימון: ${error.message}`);
     } finally {
       setIsSaving(false);
@@ -532,7 +549,7 @@ function CreateWorkout({ user, selectedDate, startTime, endTime, onBackClick }) 
       <div className="create-workout-container">
         <button className="back-button" onClick={onBackClick}>חזרה</button>
         <div className="content">
-          <h1>⏳ טוען נתונים...</h1>
+          <h1>טוען נתונים...</h1>
           <p>אנא המתן בזמן שאנו טוענים את המידע הדרוש ליצירת האימון</p>
         </div>
       </div>
@@ -546,11 +563,11 @@ function CreateWorkout({ user, selectedDate, startTime, endTime, onBackClick }) 
       </button>
       
       <div className="content">
-        <h1>🏋️ יוצר אימון מותאם אישית (אלגוריתם אופטימלי)</h1>
+        <h1>יוצר אימון מותאם אישית (אלגוריתם אופטימלי עם קיבוץ ספורטים)</h1>
         
         <div className="workout-info">
           <div className="info-card">
-            <h3>📅 פרטי האימון</h3>
+            <h3>פרטי האימון</h3>
             <p><strong>תאריך:</strong> {selectedDate}</p>
             <p><strong>שעה:</strong> {startTime} - {endTime}</p>
             <p><strong>משתמש:</strong> {user.userName}</p>
@@ -558,7 +575,7 @@ function CreateWorkout({ user, selectedDate, startTime, endTime, onBackClick }) 
           </div>
           
           <div className="info-card">
-            <h3>🎯 העדפות המשתמש</h3>
+            <h3>העדפות המשתמש</h3>
             {userPreferences.length > 0 ? (
               <p>ספורטים מועדפים: {userPreferences.map((sportId, index) => 
                 `${index + 1}. ${SPORT_MAPPING[sportId] || sportId}`
@@ -569,7 +586,7 @@ function CreateWorkout({ user, selectedDate, startTime, endTime, onBackClick }) 
           </div>
           
           <div className="info-card">
-            <h3>🏟️ מגרשים זמינים</h3>
+            <h3>מגרשים זמינים</h3>
             <p>נמצאו מגרשים ל-{Object.keys(fieldsByTime).length} רבעי שעה</p>
             {Object.entries(fieldsByTime).slice(0, 3).map(([time, fields]) => (
               <div key={time} className="time-fields">
@@ -599,19 +616,30 @@ function CreateWorkout({ user, selectedDate, startTime, endTime, onBackClick }) 
             onClick={generateWorkout}
             disabled={isGenerating || !canCreateWorkout()}
           >
-            {isGenerating ? '⏳ יוצר אימון אופטימלי...' : '🎯 צור תוכנית אימון אופטימלית'}
+            {isGenerating ? 'יוצר אימון אופטימלי...' : 'צור תוכנית אימון אופטימלית (ללא כפילות ספורט)'}
           </button>
         </div>
 
         {workoutPlan && (
           <div className="workout-result">
-            <h2>✅ תוכנית האימון האופטימלית שלך</h2>
+            <h2>תוכנית האימון האופטימלית שלך</h2>
             
             <div className="total-weight">
               הצלחנו ליצור {workoutPlan.successfulSlots} מתוך {workoutPlan.totalSlots} רבעי שעה
               <br />
               ניקוד כולל: {workoutPlan.totalCost} (ככל שקטן יותר - כך טוב יותר)
             </div>
+
+            {workoutPlan.sportsUsage && (
+              <div className="sports-summary">
+                <h3>סיכום שימוש בספורטים:</h3>
+                {Object.entries(workoutPlan.sportsUsage).map(([sportId, count]) => (
+                  <div key={sportId}>
+                    {SPORT_MAPPING[sportId] || `ספורט ${sportId}`}: {count} פעמים
+                  </div>
+                ))}
+              </div>
+            )}
             
             <div className="workout-timeline">
               {workoutPlan.slots.map((slot, index) => (
@@ -621,7 +649,7 @@ function CreateWorkout({ user, selectedDate, startTime, endTime, onBackClick }) 
                     {slot.field ? (
                       <>
                         <strong>{slot.field.name}</strong>
-                        <span>ספורט: {slot.field.sportType}</span>
+                        <span>ספורט: {slot.sportType}</span>
                         <span>שימוש: {slot.usage}/2</span>
                         {slot.weight !== undefined && (
                           <span style={{fontSize: '0.8rem', opacity: 0.7}}>
@@ -650,7 +678,7 @@ function CreateWorkout({ user, selectedDate, startTime, endTime, onBackClick }) 
                 borderRadius: '8px',
                 border: '1px solid rgba(81, 207, 102, 0.3)'
               }}>
-                ✅ האימון נשמר בהצלחה! מעביר אותך לתפריט הראשי...
+                האימון נשמר בהצלחה! מעביר אותך לתפריט הראשי...
               </div>
             ) : (
               <div className="action-buttons" style={{ marginTop: '20px' }}>
@@ -663,7 +691,7 @@ function CreateWorkout({ user, selectedDate, startTime, endTime, onBackClick }) 
                     borderColor: '#51cf66'
                   }}
                 >
-                  {isSaving ? '⏳ שומר אימון...' : '💾 אישור ושמירת האימון'}
+                  {isSaving ? 'שומר אימון...' : 'אישור ושמירת האימון'}
                 </button>
               </div>
             )}
