@@ -14,48 +14,70 @@ const SPORT_MAPPING = {
   9: 'אופניים'      // Cycling
 };
 
-// Hungarian Algorithm Implementation
+// Hungarian Algorithm Implementation - נוסח מתוקן
 class HungarianAlgorithm {
-  constructor(costMatrix) {
-    this.matrix = costMatrix.map(row => [...row]); // deep copy
+  constructor(costMatrix, numRealRows = null, numRealCols = null) {
+    this.originalMatrix = costMatrix.map(row => [...row]);
+    this.matrix = costMatrix.map(row => [...row]);
     this.n = this.matrix.length;
+    this.numRealRows = numRealRows || this.n;
+    this.numRealCols = numRealCols || this.n;
     this.assignment = new Array(this.n).fill(-1);
+    
+    // החלפת Infinity במספר גדול כדי שהאלגוריתם יעבוד
+    this.replaceInfinityWithLargeNumber();
+  }
+
+  replaceInfinityWithLargeNumber() {
+    const LARGE_NUMBER = 9999;
+    for (let i = 0; i < this.n; i++) {
+      for (let j = 0; j < this.n; j++) {
+        if (this.matrix[i][j] === Infinity) {
+          this.matrix[i][j] = LARGE_NUMBER;
+        }
+      }
+    }
   }
 
   solve() {
-    console.log('=== Hungarian Algorithm Debug ===');
-    console.log('מטריצה מקורית:', this.matrix);
+    console.log('מתחיל Hungarian Algorithm מתוקן...');
+    console.log('גודל מטריצה:', this.n + 'x' + this.n);
+    console.log('זמנים אמיתיים:', this.numRealRows);
+    console.log('ספורט slots אמיתיים:', this.numRealCols);
     
     // Step 1: Subtract row minimums
     this.subtractRowMinimums();
-    console.log('אחרי חיסור מינימום שורות:', this.matrix);
     
-    // Step 2: Subtract column minimums
+    // Step 2: Subtract column minimums  
     this.subtractColumnMinimums();
-    console.log('אחרי חיסור מינימום עמודות:', this.matrix);
     
-    // Step 3: Find optimal assignment
+    // Step 3: Find assignment
     let iteration = 0;
-    while (!this.findOptimalAssignment() && iteration < 100) {
+    const maxIterations = Math.min(50, this.n * 2);
+    
+    while (!this.findOptimalAssignment() && iteration < maxIterations) {
       this.improveAssignment();
       iteration++;
-      console.log(`איטרציה ${iteration}:`, this.matrix);
     }
     
     console.log('מספר איטרציות:', iteration);
     console.log('התאמה סופית:', this.assignment);
+    
+    // בדיקת תקינות ההתאמה לזמנים האמיתיים
+    const realAssignments = this.assignment.slice(0, this.numRealRows);
+    const validRealAssignments = realAssignments.filter(val => val !== -1 && val < this.numRealCols).length;
+    
+    console.log(`התאמות תקינות לזמנים אמיתיים: ${validRealAssignments}/${this.numRealRows}`);
     
     return this.assignment;
   }
 
   subtractRowMinimums() {
     for (let i = 0; i < this.n; i++) {
-      const minVal = Math.min(...this.matrix[i].filter(val => val !== Infinity));
-      if (minVal !== Infinity && minVal > 0) {
+      const minVal = Math.min(...this.matrix[i]);
+      if (minVal > 0) {
         for (let j = 0; j < this.n; j++) {
-          if (this.matrix[i][j] !== Infinity) {
-            this.matrix[i][j] -= minVal;
-          }
+          this.matrix[i][j] -= minVal;
         }
       }
     }
@@ -63,117 +85,85 @@ class HungarianAlgorithm {
 
   subtractColumnMinimums() {
     for (let j = 0; j < this.n; j++) {
-      const column = [];
-      for (let i = 0; i < this.n; i++) {
-        if (this.matrix[i][j] !== Infinity) {
-          column.push(this.matrix[i][j]);
-        }
-      }
-      const minVal = column.length > 0 ? Math.min(...column) : 0;
-      
+      const column = this.matrix.map(row => row[j]);
+      const minVal = Math.min(...column);
       if (minVal > 0) {
         for (let i = 0; i < this.n; i++) {
-          if (this.matrix[i][j] !== Infinity) {
-            this.matrix[i][j] -= minVal;
-          }
+          this.matrix[i][j] -= minVal;
         }
       }
     }
   }
 
   findOptimalAssignment() {
+    // Simple greedy assignment on zeros
     const assignment = new Array(this.n).fill(-1);
-    const rowCovered = new Array(this.n).fill(false);
-    const colCovered = new Array(this.n).fill(false);
+    const rowUsed = new Array(this.n).fill(false);
+    const colUsed = new Array(this.n).fill(false);
 
-    // Try to find assignment using zeros
+    // מעבר ראשון: התאמות חד-משמעיות
     for (let i = 0; i < this.n; i++) {
-      for (let j = 0; j < this.n; j++) {
-        if (this.matrix[i][j] === 0 && !rowCovered[i] && !colCovered[j]) {
-          assignment[i] = j;
-          rowCovered[i] = true;
-          colCovered[j] = true;
-        }
-      }
-    }
-
-    // Check if we have a complete assignment
-    const assignedCount = assignment.filter(val => val !== -1).length;
-    
-    // אם יש התאמה מושלמת - מעולה!
-    if (assignedCount === this.n) {
-      this.assignment = assignment;
-      return true;
-    }
-    
-    // אם יש התאמה חלקית - נחזיר אותה
-    if (assignedCount > 0) {
-      console.log(`התאמה חלקית נמצאה: ${assignedCount}/${this.n}`);
-      this.assignment = assignment;
-      return true; // נחזיר true כדי לעצור את הלולאה
-    }
-
-    // אם אין התאמה בכלל, ננסה למצוא התאמה עם ערכים נמוכים
-    console.log('אין התאמה עם אפסים, מחפש התאמה עם ערכים נמוכים...');
-    return this.createSimpleAssignment();
-  }
-
-  createSimpleAssignment() {
-    const assignment = new Array(this.n).fill(-1);
-    const usedCols = new Set();
-    
-    console.log('=== אלגוריתם פשוט - מתמקד בזמנים אמיתיים ===');
-    
-    // רק לזמנים האמיתיים (לא זמני דמה)
-    for (let i = 0; i < this.timeSlots.length; i++) {
-      let bestCol = -1;
-      let bestValue = Infinity;
+      if (rowUsed[i]) continue;
       
-      // מחפש רק בספורט slots אמיתיים (לא דמה)
-      for (let j = 0; j < this.sportSlots.length; j++) {
-        if (!usedCols.has(j) && this.matrix[i][j] < bestValue) {
-          bestValue = this.matrix[i][j];
-          bestCol = j;
+      const zerosInRow = [];
+      for (let j = 0; j < this.n; j++) {
+        if (this.matrix[i][j] === 0 && !colUsed[j]) {
+          zerosInRow.push(j);
         }
       }
       
-      if (bestCol !== -1) {
-        assignment[i] = bestCol;
-        usedCols.add(bestCol);
-        console.log(`זמן ${this.timeSlots[i]} (שורה ${i}): התאמה לספורט slot ${bestCol} (משקל ${bestValue})`);
-      } else {
-        console.log(`זמן ${this.timeSlots[i]} (שורה ${i}): לא נמצאה התאמה`);
+      if (zerosInRow.length === 1) {
+        const j = zerosInRow[0];
+        assignment[i] = j;
+        rowUsed[i] = true;
+        colUsed[j] = true;
       }
     }
-    
-    // לזמני הדמה - נשים התאמות פשוטות
-    for (let i = this.timeSlots.length; i < this.n; i++) {
+
+    // מעבר שני: השלמת התאמות
+    for (let i = 0; i < this.n; i++) {
+      if (rowUsed[i]) continue;
+      
       for (let j = 0; j < this.n; j++) {
-        if (!usedCols.has(j)) {
+        if (this.matrix[i][j] === 0 && !colUsed[j]) {
           assignment[i] = j;
-          usedCols.add(j);
+          rowUsed[i] = true;
+          colUsed[j] = true;
           break;
         }
       }
     }
+
+    // בדיקה אם יש התאמה מושלמת
+    const assignedCount = assignment.filter(val => val !== -1).length;
     
-    const realTimeAssignedCount = assignment.slice(0, this.timeSlots.length).filter(val => val !== -1).length;
-    console.log(`התאמה פשוטה לזמנים אמיתיים: ${realTimeAssignedCount}/${this.timeSlots.length}`);
+    if (assignedCount === this.n) {
+      this.assignment = assignment;
+      return true;
+    }
+
+    // בדיקה אם לפחות כל הזמנים האמיתיים התאימו
+    const realAssignedCount = assignment.slice(0, this.numRealRows).filter(val => val !== -1).length;
     
-    this.assignment = assignment;
-    return realTimeAssignedCount > 0;
+    if (realAssignedCount === this.numRealRows) {
+      this.assignment = assignment;
+      return true;
+    }
+
+    return false;
   }
 
   improveAssignment() {
-    const rowCovered = new Array(this.n).fill(false);
-    const colCovered = new Array(this.n).fill(false);
+    // Cover all zeros with minimum number of lines
+    const rowCover = new Array(this.n).fill(false);
+    const colCover = new Array(this.n).fill(false);
 
-    // Mark rows and columns with zeros
+    // Mark covered rows and columns based on zeros
     for (let i = 0; i < this.n; i++) {
       for (let j = 0; j < this.n; j++) {
         if (this.matrix[i][j] === 0) {
-          rowCovered[i] = true;
-          colCovered[j] = true;
+          rowCover[i] = true;
+          colCover[j] = true;
         }
       }
     }
@@ -182,19 +172,19 @@ class HungarianAlgorithm {
     let minUncovered = Infinity;
     for (let i = 0; i < this.n; i++) {
       for (let j = 0; j < this.n; j++) {
-        if (!rowCovered[i] && !colCovered[j] && this.matrix[i][j] !== Infinity) {
+        if (!rowCover[i] && !colCover[j]) {
           minUncovered = Math.min(minUncovered, this.matrix[i][j]);
         }
       }
     }
 
-    if (minUncovered !== Infinity && minUncovered > 0) {
-      // Subtract from uncovered elements, add to double-covered
+    if (minUncovered > 0 && minUncovered !== Infinity) {
+      // Subtract from uncovered, add to double-covered
       for (let i = 0; i < this.n; i++) {
         for (let j = 0; j < this.n; j++) {
-          if (!rowCovered[i] && !colCovered[j]) {
+          if (!rowCover[i] && !colCover[j]) {
             this.matrix[i][j] -= minUncovered;
-          } else if (rowCovered[i] && colCovered[j]) {
+          } else if (rowCover[i] && colCover[j]) {
             this.matrix[i][j] += minUncovered;
           }
         }
@@ -203,29 +193,34 @@ class HungarianAlgorithm {
   }
 }
 
-// Workout Scheduler Class with Sport-Based Grouping
+// Workout Scheduler Class - נוסח מתוקן
 class WorkoutScheduler {
   constructor(timeSlots, fieldsByTime, userPreferences) {
     this.timeSlots = timeSlots;
     this.fieldsByTime = fieldsByTime;
     this.userPreferences = userPreferences;
     this.sportSlots = this.createSportSlots();
+    
+    console.log('WorkoutScheduler נוצר:');
+    console.log('זמנים:', this.timeSlots);
+    console.log('ספורט slots:', this.sportSlots);
+    console.log('העדפות:', this.userPreferences);
   }
 
   createSportSlots() {
-    const sportSlots = [];
-    
-    // יצירת רשימת ספורטים ייחודיים
     const uniqueSports = new Set();
+    
+    // איסוף כל הספורטים הייחודיים
     Object.values(this.fieldsByTime).forEach(fields => {
       fields.forEach(field => {
         uniqueSports.add(field.sportTypeId);
       });
     });
+
+    const sportSlots = [];
     
-    // לכל ספורט, יצירת 2 "slotים" (שימוש ראשון ושני)
+    // יצירת 2 slots לכל ספורט
     Array.from(uniqueSports).forEach(sportTypeId => {
-      // שימוש ראשון
       sportSlots.push({
         sportTypeId: sportTypeId,
         sportName: SPORT_MAPPING[sportTypeId] || `ספורט ${sportTypeId}`,
@@ -233,7 +228,6 @@ class WorkoutScheduler {
         slotId: `${sportTypeId}_1`
       });
       
-      // שימוש שני
       sportSlots.push({
         sportTypeId: sportTypeId,
         sportName: SPORT_MAPPING[sportTypeId] || `ספורט ${sportTypeId}`,
@@ -241,40 +235,27 @@ class WorkoutScheduler {
         slotId: `${sportTypeId}_2`
       });
     });
-    
+
     return sportSlots;
   }
 
   calculateWeight(timeSlot, sportSlot) {
-    // בדיקה אם יש מגרש מהסוג הזה זמין באותו זמן
     const availableFields = this.fieldsByTime[timeSlot] || [];
     const hasAvailableField = availableFields.some(field => 
       field.sportTypeId === sportSlot.sportTypeId
     );
     
     if (!hasAvailableField) {
-      console.log(`❌ אין מגרש זמין: זמן ${timeSlot}, ספורט ${sportSlot.sportName} (ID: ${sportSlot.sportTypeId})`);
-      return Infinity; // אין מגרש מהסוג הזה זמין
+      return Infinity; // אין מגרש זמין
     }
 
-    // חישוב משקל לפי העדיפות
+    // חישוב משקל בסיסי לפי העדיפות
     const preferenceIndex = this.userPreferences.indexOf(sportSlot.sportTypeId);
-    let weight;
-    
-    if (preferenceIndex !== -1) {
-      // מצא בהעדיפות
-      weight = preferenceIndex + 1; // עדיפות ראשונה = 1, שנייה = 2, וכו'
-      console.log(`✅ מגרש זמין: זמן ${timeSlot}, ספורט ${sportSlot.sportName}, עדיפות ${preferenceIndex + 1}, משקל ${weight}`);
-    } else {
-      // לא בהעדיפות
-      weight = 9;
-      console.log(`⚠️ מגרש זמין: זמן ${timeSlot}, ספורט ${sportSlot.sportName}, לא בהעדיפות, משקל ${weight}`);
-    }
+    let weight = preferenceIndex !== -1 ? (preferenceIndex + 1) : 9;
 
-    // הוספת עונש כפילות
+    // עונש כפילות
     if (sportSlot.usage === 2) {
       weight += 10;
-      console.log(`🔄 שימוש שני: משקל עודכן ל-${weight}`);
     }
 
     return weight;
@@ -285,89 +266,42 @@ class WorkoutScheduler {
     const numSportSlots = this.sportSlots.length;
     const matrixSize = Math.max(numTimeSlots, numSportSlots);
     
-    console.log(`יצירת מטריצה ${matrixSize}x${matrixSize} (${numTimeSlots} זמנים אמיתיים + ${matrixSize - numTimeSlots} זמני דמה)`);
-    
-    // יצירת מטריצה ריבועית
+    console.log(`יוצר מטריצה ${matrixSize}x${matrixSize}`);
+    console.log(`זמנים אמיתיים: ${numTimeSlots}, ספורט slots: ${numSportSlots}`);
+
     const matrix = Array(matrixSize).fill().map(() => Array(matrixSize).fill(0));
 
     // מילוי המטריצה
     for (let i = 0; i < matrixSize; i++) {
       for (let j = 0; j < matrixSize; j++) {
         if (i < numTimeSlots && j < numSportSlots) {
-          // זמן אמיתי -> ספורט slot
+          // זמן אמיתי → ספורט slot אמיתי
           matrix[i][j] = this.calculateWeight(this.timeSlots[i], this.sportSlots[j]);
-        } else if (i < numTimeSlots && j >= numSportSlots) {
-          // זמן אמיתי -> ספורט דמה (לא רלוונטי)
+        } else if (i < numTimeSlots) {
+          // זמן אמיתי → ספורט דמה (אסור)
           matrix[i][j] = Infinity;
-        } else if (i >= numTimeSlots && j < numSportSlots) {
-          // זמן דמה -> ספורט אמיתי (משקל 0 - לא משפיע)
-          matrix[i][j] = 0;
         } else {
-          // זמן דמה -> ספורט דמה (משקל 0)
+          // זמן דמה → כל דבר (לא משפיע)
           matrix[i][j] = 0;
         }
       }
     }
 
-    console.log('מטריצה נוצרה עם זמני דמה');
     return matrix;
   }
 
   solve() {
-    console.log('=== DEBUG: מתחיל אלגוריתם Hungarian עם קיבוץ ספורטים ===');
-    console.log(`זמנים: ${this.timeSlots.length}, ספורט slots: ${this.sportSlots.length}`);
-    
-    // הדפסת פרטי הזמנים
-    console.log('זמנים:', this.timeSlots);
-    
-    // הדפסת פרטי הספורט slots
-    console.log('ספורט slots:', this.sportSlots);
-    
-    // הדפסת מגרשים זמינים
-    console.log('מגרשים זמינים לפי זמן:', this.fieldsByTime);
+    console.log('מתחיל פתרון בעיית השמה...');
     
     const costMatrix = this.createCostMatrix();
-    console.log('=== מטריצת עלויות ===');
-    console.log('גודל מטריצה:', costMatrix.length + 'x' + costMatrix[0].length);
-    console.log('מטריצה מלאה:', costMatrix);
+    const hungarian = new HungarianAlgorithm(
+      costMatrix, 
+      this.timeSlots.length, 
+      this.sportSlots.length
+    );
     
-    // בדיקת ערכים במטריצה
-    const hasInfinity = costMatrix.some(row => row.some(val => val === Infinity));
-    const hasNegative = costMatrix.some(row => row.some(val => val < 0));
-    console.log('יש Infinity במטריצה:', hasInfinity);
-    console.log('יש ערכים שליליים:', hasNegative);
-    
-    const hungarian = new HungarianAlgorithm(costMatrix);
     const assignment = hungarian.solve();
-    
-    console.log('=== תוצאת Hungarian ===');
-    console.log('התאמה:', assignment);
-    console.log('מספר התאמות תקינות:', assignment.filter(val => val !== -1).length);
-    
-    // בדיקה אם כל הזמנים האמיתיים התאימו
-    const realTimeAssignments = assignment.slice(0, this.timeSlots.length);
-    const successfulRealAssignments = realTimeAssignments.filter(val => val !== -1);
-    
-    console.log(`התאמות לזמנים אמיתיים: ${successfulRealAssignments.length}/${this.timeSlots.length}`);
-    
-    // אם לא כל הזמנים האמיתיים התאימו, ננסה אלגוריתם פשוט
-    if (successfulRealAssignments.length < this.timeSlots.length) {
-      console.log('=== לא כל הזמנים התאימו, מנסה אלגוריתם פשוט ===');
-      const simpleAssignment = this.createSimpleAssignment();
-      console.log('התאמה פשוטה:', simpleAssignment);
-      
-      const result = this.parseAssignment(simpleAssignment);
-      console.log('=== תוצאה סופית (פשוטה) ===');
-      console.log('תוצאה:', result);
-      
-      return result;
-    }
-    
-    const result = this.parseAssignment(assignment);
-    console.log('=== תוצאה סופית ===');
-    console.log('תוצאה:', result);
-    
-    return result;
+    return this.parseAssignment(assignment);
   }
 
   findBestFieldForSport(timeSlot, sportTypeId) {
@@ -376,30 +310,26 @@ class WorkoutScheduler {
       field.sportTypeId === sportTypeId
     );
     
-    // אם יש מגרשים מתאימים, בחר את הראשון (אפשר להוסיף לוגיקה נוספת)
     return suitableFields.length > 0 ? suitableFields[0] : null;
   }
 
   parseAssignment(assignment) {
     const result = [];
-    const usedSports = new Map(); // ספירת שימושים לכל ספורט
+    const usedSports = new Map();
     
-    console.log('מעבד התאמה עם זמני דמה:', assignment);
-    
+    console.log('מעבד תוצאות השמה...');
+
     for (let i = 0; i < this.timeSlots.length; i++) {
       const timeSlot = this.timeSlots[i];
       const assignedSlotIndex = assignment[i];
       
-      console.log(`זמן ${timeSlot} (שורה ${i}): התאמה לספורט slot ${assignedSlotIndex}`);
+      console.log(`זמן ${timeSlot}: התאמה ל-slot ${assignedSlotIndex}`);
       
       if (assignedSlotIndex !== -1 && assignedSlotIndex < this.sportSlots.length) {
         const sportSlot = this.sportSlots[assignedSlotIndex];
-        
-        // מציאת מגרש ספציפי לספורט הזה
         const selectedField = this.findBestFieldForSport(timeSlot, sportSlot.sportTypeId);
         
         if (selectedField) {
-          // עדכון ספירת השימושים
           const currentUsage = usedSports.get(sportSlot.sportTypeId) || 0;
           usedSports.set(sportSlot.sportTypeId, currentUsage + 1);
           
@@ -411,35 +341,34 @@ class WorkoutScheduler {
             weight: this.calculateWeight(timeSlot, sportSlot)
           });
           
-          console.log(`✅ זמן ${timeSlot}: ${sportSlot.sportName} במגרש ${selectedField.name}`);
+          console.log(`✅ ${timeSlot}: ${sportSlot.sportName} במגרש ${selectedField.name}`);
         } else {
           result.push({
             time: timeSlot,
             field: null,
             reason: 'לא נמצא מגרש מתאים'
           });
-          
-          console.log(`❌ זמן ${timeSlot}: לא נמצא מגרש ל-${sportSlot.sportName}`);
+          console.log(`❌ ${timeSlot}: לא נמצא מגרש ל-${sportSlot.sportName}`);
         }
       } else {
         result.push({
           time: timeSlot,
           field: null,
-          reason: 'לא נמצא שיבוץ אופטימלי'
+          reason: 'לא נמצא שיבוץ'
         });
-        
-        console.log(`❌ זמן ${timeSlot}: לא התאים לספורט`);
+        console.log(`❌ ${timeSlot}: לא נמצא שיבוץ`);
       }
     }
-    
-    // התעלם מזמני הדמה (שורות מעל this.timeSlots.length)
-    console.log(`התעלמות מ-${assignment.length - this.timeSlots.length} זמני דמה`);
-    
+
+    const totalCost = result
+      .filter(slot => slot.weight !== undefined)
+      .reduce((sum, slot) => sum + slot.weight, 0);
+
     return {
       slots: result,
       totalSlots: result.length,
       successfulSlots: result.filter(slot => slot.field !== null).length,
-      totalCost: result.reduce((sum, slot) => sum + (slot.weight || 0), 0),
+      totalCost: totalCost,
       sportsUsage: Object.fromEntries(usedSports)
     };
   }
@@ -562,17 +491,24 @@ function CreateWorkout({ user, selectedDate, startTime, endTime, onBackClick }) 
   };
 
   const generateOptimalWorkout = () => {
-    console.log('מתחיל אלגוריתם אופטימלי עם קיבוץ ספורטים...');
+    console.log('מתחיל יצירת אימון אופטימלי...');
     
     if (timeSlots.length === 0 || Object.keys(fieldsByTime).length === 0) {
       console.log('אין נתונים זמינים');
       return null;
     }
 
+    // בדיקה שיש מגרשים זמינים
+    const totalFields = Object.values(fieldsByTime).flat().length;
+    if (totalFields === 0) {
+      console.log('אין מגרשים זמינים בכלל');
+      return null;
+    }
+
     const scheduler = new WorkoutScheduler(timeSlots, fieldsByTime, userPreferences);
     const result = scheduler.solve();
     
-    console.log('תוצאות האלגוריתם:', result);
+    console.log('תוצאת אלגוריתם אופטימלי:', result);
     return result;
   };
 
@@ -586,38 +522,16 @@ function CreateWorkout({ user, selectedDate, startTime, endTime, onBackClick }) 
     setError('');
     
     try {
-      console.log('=== מתחיל ליצור תוכנית אימון אופטימלית ===');
-      console.log('זמנים:', timeSlots);
-      console.log('מגרשים זמינים:', fieldsByTime);
-      console.log('העדפות משתמש:', userPreferences);
+      console.log('מתחיל ליצור תוכנית אימון אופטימלית...');
       
-      // בדיקת זמינות כללית
-      const totalAvailableFields = Object.values(fieldsByTime)
-        .reduce((sum, fields) => sum + fields.length, 0);
-      console.log('סה"כ מגרשים זמינים:', totalAvailableFields);
-      
-      if (totalAvailableFields === 0) {
-        setError('אין מגרשים זמינים בזמן שבחרת. אנא בחר זמן אחר.');
-        setIsGenerating(false);
-        return;
-      }
-      
-      // הוספת השהיה קלה לUX
       await new Promise(resolve => setTimeout(resolve, 1000));
       
       const optimalWorkout = generateOptimalWorkout();
       
-      console.log('תוצאת האלגוריתם:', optimalWorkout);
-      
       if (optimalWorkout && optimalWorkout.successfulSlots > 0) {
         setWorkoutPlan(optimalWorkout);
-        console.log('✅ תוכנית אימון אופטימלית נוצרה בהצלחה');
+        console.log('תוכנית אימון אופטימלית נוצרה בהצלחה');
       } else {
-        console.log('❌ האלגוריתם לא הצליח ליצור תוכנית');
-        console.log('סיבות אפשריות:');
-        console.log('- אין מגרשים מתאימים לספורט המועדף');
-        console.log('- האלגוריתם Hungarian נכשל');
-        console.log('- מטריצת העלויות לא תקינה');
         setError('לא הצליח ליצור תוכנית אימון מתאימה');
       }
       
@@ -717,7 +631,7 @@ function CreateWorkout({ user, selectedDate, startTime, endTime, onBackClick }) 
       </button>
       
       <div className="content">
-        <h1>יוצר אימון מותאם אישית (אלגוריתם אופטימלי עם קיבוץ ספורטים)</h1>
+        <h1>יוצר אימון אופטימלי (Hungarian Algorithm)</h1>
         
         <div className="workout-info">
           <div className="info-card">
@@ -770,7 +684,7 @@ function CreateWorkout({ user, selectedDate, startTime, endTime, onBackClick }) 
             onClick={generateWorkout}
             disabled={isGenerating || !canCreateWorkout()}
           >
-            {isGenerating ? 'יוצר אימון אופטימלי...' : 'צור תוכנית אימון אופטימלית (ללא כפילות ספורט)'}
+            {isGenerating ? 'יוצר אימון אופטימלי...' : 'צור תוכנית אימון אופטימלית'}
           </button>
         </div>
 
@@ -784,7 +698,7 @@ function CreateWorkout({ user, selectedDate, startTime, endTime, onBackClick }) 
               ניקוד כולל: {workoutPlan.totalCost} (ככל שקטן יותר - כך טוב יותר)
             </div>
 
-            {workoutPlan.sportsUsage && (
+            {workoutPlan.sportsUsage && Object.keys(workoutPlan.sportsUsage).length > 0 && (
               <div className="sports-summary">
                 <h3>סיכום שימוש בספורטים:</h3>
                 {Object.entries(workoutPlan.sportsUsage).map(([sportId, count]) => (
