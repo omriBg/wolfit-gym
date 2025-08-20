@@ -23,18 +23,27 @@ class HungarianAlgorithm {
   }
 
   solve() {
+    console.log('=== Hungarian Algorithm Debug ===');
+    console.log('מטריצה מקורית:', this.matrix);
+    
     // Step 1: Subtract row minimums
     this.subtractRowMinimums();
+    console.log('אחרי חיסור מינימום שורות:', this.matrix);
     
     // Step 2: Subtract column minimums
     this.subtractColumnMinimums();
+    console.log('אחרי חיסור מינימום עמודות:', this.matrix);
     
     // Step 3: Find optimal assignment
     let iteration = 0;
     while (!this.findOptimalAssignment() && iteration < 100) {
       this.improveAssignment();
       iteration++;
+      console.log(`איטרציה ${iteration}:`, this.matrix);
     }
+    
+    console.log('מספר איטרציות:', iteration);
+    console.log('התאמה סופית:', this.assignment);
     
     return this.assignment;
   }
@@ -187,6 +196,7 @@ class WorkoutScheduler {
     );
     
     if (!hasAvailableField) {
+      console.log(`❌ אין מגרש זמין: זמן ${timeSlot}, ספורט ${sportSlot.sportName} (ID: ${sportSlot.sportTypeId})`);
       return Infinity; // אין מגרש מהסוג הזה זמין
     }
 
@@ -197,14 +207,17 @@ class WorkoutScheduler {
     if (preferenceIndex !== -1) {
       // מצא בהעדיפות
       weight = preferenceIndex + 1; // עדיפות ראשונה = 1, שנייה = 2, וכו'
+      console.log(`✅ מגרש זמין: זמן ${timeSlot}, ספורט ${sportSlot.sportName}, עדיפות ${preferenceIndex + 1}, משקל ${weight}`);
     } else {
       // לא בהעדיפות
       weight = 9;
+      console.log(`⚠️ מגרש זמין: זמן ${timeSlot}, ספורט ${sportSlot.sportName}, לא בהעדיפות, משקל ${weight}`);
     }
 
     // הוספת עונש כפילות
     if (sportSlot.usage === 2) {
       weight += 10;
+      console.log(`🔄 שימוש שני: משקל עודכן ל-${weight}`);
     }
 
     return weight;
@@ -238,16 +251,41 @@ class WorkoutScheduler {
   }
 
   solve() {
-    console.log('מתחיל אלגוריתם Hungarian עם קיבוץ ספורטים...');
+    console.log('=== DEBUG: מתחיל אלגוריתם Hungarian עם קיבוץ ספורטים ===');
     console.log(`זמנים: ${this.timeSlots.length}, ספורט slots: ${this.sportSlots.length}`);
     
+    // הדפסת פרטי הזמנים
+    console.log('זמנים:', this.timeSlots);
+    
+    // הדפסת פרטי הספורט slots
+    console.log('ספורט slots:', this.sportSlots);
+    
+    // הדפסת מגרשים זמינים
+    console.log('מגרשים זמינים לפי זמן:', this.fieldsByTime);
+    
     const costMatrix = this.createCostMatrix();
-    console.log('מטריצת עלויות נוצרה:', costMatrix.length + 'x' + costMatrix[0].length);
+    console.log('=== מטריצת עלויות ===');
+    console.log('גודל מטריצה:', costMatrix.length + 'x' + costMatrix[0].length);
+    console.log('מטריצה מלאה:', costMatrix);
+    
+    // בדיקת ערכים במטריצה
+    const hasInfinity = costMatrix.some(row => row.some(val => val === Infinity));
+    const hasNegative = costMatrix.some(row => row.some(val => val < 0));
+    console.log('יש Infinity במטריצה:', hasInfinity);
+    console.log('יש ערכים שליליים:', hasNegative);
     
     const hungarian = new HungarianAlgorithm(costMatrix);
     const assignment = hungarian.solve();
     
-    return this.parseAssignment(assignment);
+    console.log('=== תוצאת Hungarian ===');
+    console.log('התאמה:', assignment);
+    console.log('מספר התאמות תקינות:', assignment.filter(val => val !== -1).length);
+    
+    const result = this.parseAssignment(assignment);
+    console.log('=== תוצאה סופית ===');
+    console.log('תוצאה:', result);
+    
+    return result;
   }
 
   findBestFieldForSport(timeSlot, sportTypeId) {
@@ -453,17 +491,38 @@ function CreateWorkout({ user, selectedDate, startTime, endTime, onBackClick }) 
     setError('');
     
     try {
-      console.log('מתחיל ליצור תוכנית אימון אופטימלית...');
+      console.log('=== מתחיל ליצור תוכנית אימון אופטימלית ===');
+      console.log('זמנים:', timeSlots);
+      console.log('מגרשים זמינים:', fieldsByTime);
+      console.log('העדפות משתמש:', userPreferences);
+      
+      // בדיקת זמינות כללית
+      const totalAvailableFields = Object.values(fieldsByTime)
+        .reduce((sum, fields) => sum + fields.length, 0);
+      console.log('סה"כ מגרשים זמינים:', totalAvailableFields);
+      
+      if (totalAvailableFields === 0) {
+        setError('אין מגרשים זמינים בזמן שבחרת. אנא בחר זמן אחר.');
+        setIsGenerating(false);
+        return;
+      }
       
       // הוספת השהיה קלה לUX
       await new Promise(resolve => setTimeout(resolve, 1000));
       
       const optimalWorkout = generateOptimalWorkout();
       
+      console.log('תוצאת האלגוריתם:', optimalWorkout);
+      
       if (optimalWorkout && optimalWorkout.successfulSlots > 0) {
         setWorkoutPlan(optimalWorkout);
-        console.log('תוכנית אימון אופטימלית נוצרה בהצלחה');
+        console.log('✅ תוכנית אימון אופטימלית נוצרה בהצלחה');
       } else {
+        console.log('❌ האלגוריתם לא הצליח ליצור תוכנית');
+        console.log('סיבות אפשריות:');
+        console.log('- אין מגרשים מתאימים לספורט המועדף');
+        console.log('- האלגוריתם Hungarian נכשל');
+        console.log('- מטריצת העלויות לא תקינה');
         setError('לא הצליח ליצור תוכנית אימון מתאימה');
       }
       
