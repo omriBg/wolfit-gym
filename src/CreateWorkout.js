@@ -106,14 +106,45 @@ class HungarianAlgorithm {
       return true;
     }
     
-    // אם אין התאמה מושלמת, נחזיר התאמה חלקית
+    // אם יש התאמה חלקית - נחזיר אותה
     if (assignedCount > 0) {
       console.log(`התאמה חלקית נמצאה: ${assignedCount}/${this.n}`);
       this.assignment = assignment;
       return true; // נחזיר true כדי לעצור את הלולאה
     }
 
-    return false;
+    // אם אין התאמה בכלל, ננסה למצוא התאמה עם ערכים נמוכים
+    console.log('אין התאמה עם אפסים, מחפש התאמה עם ערכים נמוכים...');
+    return this.findBestPartialAssignment();
+  }
+
+  findBestPartialAssignment() {
+    const assignment = new Array(this.n).fill(-1);
+    const usedCols = new Set();
+    
+    // לכל שורה, נבחר את העמודה עם הערך הנמוך ביותר שלא בשימוש
+    for (let i = 0; i < this.n; i++) {
+      let bestCol = -1;
+      let bestValue = Infinity;
+      
+      for (let j = 0; j < this.n; j++) {
+        if (!usedCols.has(j) && this.matrix[i][j] < bestValue) {
+          bestValue = this.matrix[i][j];
+          bestCol = j;
+        }
+      }
+      
+      if (bestCol !== -1) {
+        assignment[i] = bestCol;
+        usedCols.add(bestCol);
+      }
+    }
+    
+    const assignedCount = assignment.filter(val => val !== -1).length;
+    console.log(`התאמה עם ערכים נמוכים: ${assignedCount}/${this.n}`);
+    
+    this.assignment = assignment;
+    return assignedCount > 0;
   }
 
   improveAssignment() {
