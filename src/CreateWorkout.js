@@ -502,6 +502,7 @@ class CompleteOptimalWorkoutScheduler {
     
     const result = [];
     const sportsUsageCount = {};
+    const usedSportOptions = new Set(); // מניעת כפילות
     let totalScore = 0;
     
     for (let i = 0; i < this.timeSlots.length; i++) {
@@ -514,13 +515,14 @@ class CompleteOptimalWorkoutScheduler {
         const sportOption = this.sportOptions[assignedOptionIndex];
         const currentUsage = sportsUsageCount[sportOption.sportId] || 0;
         
-        // בדיקה אם השמה תקינה (לא חורגת ממגבלות)
-        if (currentUsage < this.maxUsagePerSport) {
+        // בדיקה אם השמה תקינה (לא חורגת ממגבלות ולא כפילות)
+        if (currentUsage < this.maxUsagePerSport && !usedSportOptions.has(assignedOptionIndex)) {
           const selectedField = this.findOptimalField(timeSlot, sportOption.sportId);
           const score = this.calculatePreciseScore(timeSlot, sportOption.sportId, currentUsage);
           
           if (selectedField && score > 0) {
             sportsUsageCount[sportOption.sportId] = currentUsage + 1;
+            usedSportOptions.add(assignedOptionIndex); // סימון כשימוש
             totalScore += score;
             
             result.push({
@@ -547,10 +549,12 @@ class CompleteOptimalWorkoutScheduler {
           result.push({
             time: timeSlot,
             field: null,
-            reason: `חרג ממגבלת שימוש ב-${SPORT_MAPPING[sportOption.sportId]}`,
+            reason: currentUsage >= this.maxUsagePerSport ? 
+              `חרג ממגבלת שימוש ב-${SPORT_MAPPING[sportOption.sportId]}` : 
+              'ספורט זה כבר שומש',
             isOptimal: false
           });
-          console.log(`⚠️ ${timeSlot}: חרג ממגבלות שימוש`);
+          console.log(`⚠️ ${timeSlot}: ${currentUsage >= this.maxUsagePerSport ? 'חרג ממגבלות שימוש' : 'ספורט כבר שומש'}`);
         }
       } else {
         result.push({
