@@ -384,7 +384,7 @@ class CompleteOptimalWorkoutScheduler {
   }
 
   // חישוב ניקוד מדויק לכל שילוב זמן-ספורט
-  calculatePreciseScore(timeSlot, sportId, currentUsage = 0) {
+  calculatePreciseScore(timeSlot, sportId, currentUsage = 0, priority = 1) {
     const availableFields = this.fieldsByTime[timeSlot] || [];
     const hasAvailableField = availableFields.some(field => 
       field.sportTypeId === sportId && field.isAvailable !== false
@@ -402,9 +402,15 @@ class CompleteOptimalWorkoutScheduler {
       score += (this.userPreferences.length - preferenceIndex) * 500;
     }
     
-    // עונש הולך וגדל על שימוש חוזר
-    const usagePenalty = currentUsage * currentUsage * 100;
-    score -= usagePenalty;
+    // עונש חזק על עדיפות נמוכה (גיוון חשוב!)
+    const priorityPenalty = (priority - 1) * 2000;
+    score -= priorityPenalty;
+    
+    // עונש על שימוש חוזר (רק אם זה לא עדיפות ראשונה)
+    if (priority > 1) {
+      const usagePenalty = currentUsage * currentUsage * 100;
+      score -= usagePenalty;
+    }
     
     // בונוס לאיכות המגרש
     const bestField = availableFields
@@ -428,15 +434,41 @@ class CompleteOptimalWorkoutScheduler {
     
     const numTimeSlots = this.timeSlots.length;
     
-    // יוצר "אפשרויות ספורט" - רק ספורט אחד לכל זמן (גיוון מקסימלי)
+    // יוצר "אפשרויות ספורט" - עם עדיפות לגיוון
     const sportOptions = [];
     
+    // קודם כל - כל ספורט פעם ראשונה (גיוון מקסימלי)
     for (const sportId of this.availableSports) {
       sportOptions.push({
         sportId,
-        usage: 0, // תמיד שימוש ראשון
+        usage: 0,
         id: `${sportId}_1`,
-        name: `${SPORT_MAPPING[sportId]}`
+        name: `${SPORT_MAPPING[sportId]} (ראשון)`,
+        priority: 1 // עדיפות גבוהה
+      });
+    }
+    
+    // אחר כך - ספורטים לא אהובים (אם אין ברירה)
+    for (const sportId of this.availableSports) {
+      if (!this.userPreferences.includes(sportId)) {
+        sportOptions.push({
+          sportId,
+          usage: 1,
+          id: `${sportId}_2`,
+          name: `${SPORT_MAPPING[sportId]} (לא אהוב)`,
+          priority: 2 // עדיפות נמוכה
+        });
+      }
+    }
+    
+    // לבסוף - חזרה על ספורטים אהובים (רק אם אין ברירה)
+    for (const sportId of this.userPreferences) {
+      sportOptions.push({
+        sportId,
+        usage: 1,
+        id: `${sportId}_3`,
+        name: `${SPORT_MAPPING[sportId]} (חוזר)`,
+        priority: 3 // עדיפות נמוכה ביותר
       });
     }
     
@@ -453,7 +485,7 @@ class CompleteOptimalWorkoutScheduler {
           // זמן אמיתי ← אפשרות ספורט אמיתית
           const timeSlot = this.timeSlots[i];
           const sportOption = sportOptions[j];
-          const score = this.calculatePreciseScore(timeSlot, sportOption.sportId, sportOption.usage);
+          const score = this.calculatePreciseScore(timeSlot, sportOption.sportId, sportOption.usage, sportOption.priority);
           
           // המרה לעלות: ניקוד גבוה = עלות נמוכה
           costMatrix[i][j] = score === -1 ? 999999 : (10000 - score);
@@ -513,7 +545,7 @@ class CompleteOptimalWorkoutScheduler {
         const sportOption = this.sportOptions[assignedOptionIndex];
         const currentUsage = sportsUsageCount[sportOption.sportId] || 0;
         
-        // בדיקה אם השמה תקינה (לא כפילות - כל ספורט רק פעם אחת)
+        // בדיקה אם השמה תקינה (לא כפילות באותה אופציה)
         if (!usedSportOptions.has(assignedOptionIndex)) {
           const selectedField = this.findOptimalField(timeSlot, sportOption.sportId);
           const score = this.calculatePreciseScore(timeSlot, sportOption.sportId, currentUsage);
