@@ -428,18 +428,16 @@ class CompleteOptimalWorkoutScheduler {
     
     const numTimeSlots = this.timeSlots.length;
     
-    // יוצר "אפשרויות ספורט" - כל ספורט עם רמות שימוש שונות
+    // יוצר "אפשרויות ספורט" - רק ספורט אחד לכל זמן (גיוון מקסימלי)
     const sportOptions = [];
     
     for (const sportId of this.availableSports) {
-      for (let usage = 0; usage < this.maxUsagePerSport; usage++) {
-        sportOptions.push({
-          sportId,
-          usage,
-          id: `${sportId}_${usage}`,
-          name: `${SPORT_MAPPING[sportId]} (שימוש ${usage + 1})`
-        });
-      }
+      sportOptions.push({
+        sportId,
+        usage: 0, // תמיד שימוש ראשון
+        id: `${sportId}_1`,
+        name: `${SPORT_MAPPING[sportId]}`
+      });
     }
     
     const matrixSize = Math.max(numTimeSlots, sportOptions.length);
@@ -515,8 +513,8 @@ class CompleteOptimalWorkoutScheduler {
         const sportOption = this.sportOptions[assignedOptionIndex];
         const currentUsage = sportsUsageCount[sportOption.sportId] || 0;
         
-        // בדיקה אם השמה תקינה (לא חורגת ממגבלות ולא כפילות)
-        if (currentUsage < this.maxUsagePerSport && !usedSportOptions.has(assignedOptionIndex)) {
+        // בדיקה אם השמה תקינה (לא כפילות - כל ספורט רק פעם אחת)
+        if (!usedSportOptions.has(assignedOptionIndex)) {
           const selectedField = this.findOptimalField(timeSlot, sportOption.sportId);
           const score = this.calculatePreciseScore(timeSlot, sportOption.sportId, currentUsage);
           
@@ -549,12 +547,10 @@ class CompleteOptimalWorkoutScheduler {
           result.push({
             time: timeSlot,
             field: null,
-            reason: currentUsage >= this.maxUsagePerSport ? 
-              `חרג ממגבלת שימוש ב-${SPORT_MAPPING[sportOption.sportId]}` : 
-              'ספורט זה כבר שומש',
+            reason: 'ספורט זה כבר שומש',
             isOptimal: false
           });
-          console.log(`⚠️ ${timeSlot}: ${currentUsage >= this.maxUsagePerSport ? 'חרג ממגבלות שימוש' : 'ספורט כבר שומש'}`);
+          console.log(`⚠️ ${timeSlot}: ספורט כבר שומש`);
         }
       } else {
         result.push({
