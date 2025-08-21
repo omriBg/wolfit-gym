@@ -1086,14 +1086,14 @@ function CreateWorkout({ user, selectedDate, startTime, endTime, onBackClick }) 
           <div className="workout-result" style={{ marginTop: '30px' }}>
             <h2>🏆 התוכנית האופטימלית שלך</h2>
             
-            <div className="optimization-info" style={{
-              background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
-              color: 'white',
-              padding: '20px',
-              borderRadius: '12px',
-              margin: '20px 0',
-              textAlign: 'center'
-            }}>
+                         <div className="optimization-info" style={{
+               background: 'linear-gradient(135deg, #8b5cf6 0%, #7c3aed 100%)',
+               color: 'white',
+               padding: '20px',
+               borderRadius: '12px',
+               margin: '20px 0',
+               textAlign: 'center'
+             }}>
               <h3 style={{ margin: '0 0 15px 0' }}>📊 סטטיסטיקות אופטימליות</h3>
               <div style={{ display: 'flex', justifyContent: 'space-around', flexWrap: 'wrap', gap: '20px' }}>
                 <div>
@@ -1112,23 +1112,23 @@ function CreateWorkout({ user, selectedDate, startTime, endTime, onBackClick }) 
             </div>
 
             {workoutPlan.sportsUsage && Object.keys(workoutPlan.sportsUsage).length > 0 && (
-              <div className="sports-summary" style={{
-                background: 'rgba(81, 207, 102, 0.1)',
-                padding: '15px',
-                borderRadius: '8px',
-                border: '1px solid rgba(81, 207, 102, 0.3)',
-                margin: '20px 0'
-              }}>
+                             <div className="sports-summary" style={{
+                 background: 'rgba(139, 92, 246, 0.1)',
+                 padding: '15px',
+                 borderRadius: '8px',
+                 border: '1px solid rgba(139, 92, 246, 0.3)',
+                 margin: '20px 0'
+               }}>
                 <h3 style={{ margin: '0 0 15px 0' }}>📈 פילוג ספורטים אופטימלי:</h3>
                 <div style={{ display: 'flex', flexWrap: 'wrap', gap: '15px' }}>
                   {Object.entries(workoutPlan.sportsUsage).map(([sportId, count]) => (
-                    <div key={sportId} style={{
-                      background: 'white',
-                      padding: '10px 15px',
-                      borderRadius: '20px',
-                      border: '1px solid rgba(81, 207, 102, 0.5)',
-                      fontSize: '14px'
-                    }}>
+                                         <div key={sportId} style={{
+                       background: 'white',
+                       padding: '10px 15px',
+                       borderRadius: '20px',
+                       border: '1px solid rgba(139, 92, 246, 0.5)',
+                       fontSize: '14px'
+                     }}>
                       <strong>{SPORT_MAPPING[sportId] || `ספורט ${sportId}`}:</strong> {count} פעמים
                     </div>
                   ))}
@@ -1139,15 +1139,15 @@ function CreateWorkout({ user, selectedDate, startTime, endTime, onBackClick }) 
             <div className="workout-timeline">
               <h3>⏰ לוח זמנים מפורט:</h3>
               {workoutPlan.slots.map((slot, index) => (
-                <div key={index} className="time-slot" style={{
-                  display: 'flex',
-                  alignItems: 'center',
-                  padding: '15px',
-                  margin: '10px 0',
-                  border: slot.field ? '2px solid #51cf66' : '2px solid #ff6b6b',
-                  borderRadius: '8px',
-                  background: slot.field ? 'rgba(81, 207, 102, 0.05)' : 'rgba(255, 107, 107, 0.05)'
-                }}>
+                                 <div key={index} className="time-slot" style={{
+                   display: 'flex',
+                   alignItems: 'center',
+                   padding: '15px',
+                   margin: '10px 0',
+                   border: slot.field ? '2px solid #8b5cf6' : '2px solid #ff6b6b',
+                   borderRadius: '8px',
+                   background: slot.field ? 'rgba(139, 92, 246, 0.05)' : 'rgba(255, 107, 107, 0.05)'
+                 }}>
                   <div className="time" style={{
                     minWidth: '80px',
                     fontWeight: 'bold',
@@ -1158,17 +1158,17 @@ function CreateWorkout({ user, selectedDate, startTime, endTime, onBackClick }) 
                   <div className="field-info" style={{ flex: 1, marginRight: '15px' }}>
                     {slot.field ? (
                       <>
-                        <div style={{ fontWeight: 'bold', fontSize: '16px', color: '#51cf66' }}>
-                          ✅ {slot.field.name}
-                        </div>
-                        <div style={{ fontSize: '14px', color: '#666', marginTop: '5px' }}>
-                          🏃 ספורט: {slot.sportType} | 
-                          🔄 שימוש: {slot.usage}/2 | 
-                          {slot.score && (
-                            <span> 🎯 ניקוד: {slot.score}</span>
-                          )}
-                          {slot.isOptimal && <span style={{ color: '#51cf66' }}> | ⭐ אופטימלי</span>}
-                        </div>
+                                                 <div style={{ fontWeight: 'bold', fontSize: '16px', color: '#8b5cf6' }}>
+                           ✅ {slot.field.name}
+                         </div>
+                         <div style={{ fontSize: '14px', color: '#666', marginTop: '5px' }}>
+                           🏃 ספורט: {slot.sportType} | 
+                           🔄 שימוש: {slot.usage}/2 | 
+                           {slot.score && (
+                             <span> 🎯 ניקוד: {slot.score}</span>
+                           )}
+                           {slot.isOptimal && <span style={{ color: '#8b5cf6' }}> | ⭐ אופטימלי</span>}
+                         </div>
                       </>
                     ) : (
                       <>
@@ -1186,15 +1186,15 @@ function CreateWorkout({ user, selectedDate, startTime, endTime, onBackClick }) 
             </div>
 
             {saveSuccess ? (
-              <div style={{ 
-                color: '#51cf66', 
-                textAlign: 'center', 
-                margin: '30px 0',
-                padding: '20px',
-                background: 'rgba(81, 207, 102, 0.1)',
-                borderRadius: '12px',
-                border: '2px solid rgba(81, 207, 102, 0.3)'
-              }}>
+                               <div style={{ 
+                   color: '#8b5cf6', 
+                   textAlign: 'center', 
+                   margin: '30px 0',
+                   padding: '20px',
+                   background: 'rgba(139, 92, 246, 0.1)',
+                   borderRadius: '12px',
+                   border: '2px solid rgba(139, 92, 246, 0.3)'
+                 }}>
                 <h3>🎉 האימון האופטימלי נשמר בהצלחה!</h3>
                 <p>מעביר אותך לתפריט הראשי בעוד רגעים...</p>
               </div>
@@ -1204,17 +1204,17 @@ function CreateWorkout({ user, selectedDate, startTime, endTime, onBackClick }) 
                   className="save-button"
                   onClick={saveWorkoutToDatabase}
                   disabled={isSaving}
-                  style={{ 
-                    background: isSaving ? '#ccc' : 'linear-gradient(135deg, #51cf66 0%, #4ecdc4 100%)',
-                    color: 'white',
-                    border: 'none',
-                    padding: '15px 40px',
-                    borderRadius: '8px',
-                    fontSize: '16px',
-                    fontWeight: 'bold',
-                    cursor: isSaving ? 'not-allowed' : 'pointer',
-                    transition: 'all 0.3s ease'
-                  }}
+                                     style={{ 
+                     background: isSaving ? '#ccc' : 'linear-gradient(135deg, #8b5cf6 0%, #7c3aed 100%)',
+                     color: 'white',
+                     border: 'none',
+                     padding: '15px 40px',
+                     borderRadius: '8px',
+                     fontSize: '16px',
+                     fontWeight: 'bold',
+                     cursor: isSaving ? 'not-allowed' : 'pointer',
+                     transition: 'all 0.3s ease'
+                   }}
                 >
                   {isSaving ? '💾 שומר אימון...' : '✅ אישור ושמירת האימון האופטימלי'}
                 </button>
