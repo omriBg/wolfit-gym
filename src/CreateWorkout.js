@@ -246,6 +246,7 @@ class WorkoutScheduler {
     );
     
     if (!hasAvailableField) {
+      console.log(`❌ ${timeSlot}: אין מגרש זמין ל-${sportSlot.sportName} (${sportSlot.sportTypeId})`);
       return Infinity; // אין מגרש זמין
     }
 
@@ -258,6 +259,7 @@ class WorkoutScheduler {
       weight += 10;
     }
 
+    console.log(`✅ ${timeSlot}: ${sportSlot.sportName} (${sportSlot.sportTypeId}) - משקל ${weight}`);
     return weight;
   }
 
@@ -268,6 +270,7 @@ class WorkoutScheduler {
     
     console.log(`יוצר מטריצה ${matrixSize}x${matrixSize}`);
     console.log(`זמנים אמיתיים: ${numTimeSlots}, ספורט slots: ${numSportSlots}`);
+    console.log('מגרשים זמינים:', this.fieldsByTime);
 
     const matrix = Array(matrixSize).fill().map(() => Array(matrixSize).fill(0));
 
