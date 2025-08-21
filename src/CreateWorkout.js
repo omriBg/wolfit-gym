@@ -67,11 +67,14 @@ class OptimalHungarianAlgorithm {
     
     // Subtract row minimums
     for (let i = 0; i < this.n; i++) {
-      const minVal = Math.min(...this.matrix[i].filter(val => val < Infinity));
-      if (minVal > 0 && minVal < Infinity) {
-        for (let j = 0; j < this.n; j++) {
-          if (this.matrix[i][j] < Infinity) {
-            this.matrix[i][j] -= minVal;
+      const finiteValues = this.matrix[i].filter(val => val < Infinity);
+      if (finiteValues.length > 0) {
+        const minVal = Math.min(...finiteValues);
+        if (minVal > 0) {
+          for (let j = 0; j < this.n; j++) {
+            if (this.matrix[i][j] < Infinity) {
+              this.matrix[i][j] -= minVal;
+            }
           }
         }
       }
