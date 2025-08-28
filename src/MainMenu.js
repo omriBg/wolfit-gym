@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import EditUser from './EditUser';
 import OrderTrain from './OrderTrain';
+import StartWorkout from './StartWorkout';
 import './MainMenu.css';
 
 function MainMenu({ user }) {
@@ -23,6 +24,9 @@ function MainMenu({ user }) {
       case 'workout-booking':
         setCurrentView('workoutBooking');
         break;
+      case 'start-workout':
+        setCurrentView('startWorkout');
+        break;
       default:
         setCurrentView('menu');
     }
@@ -38,6 +42,10 @@ function MainMenu({ user }) {
 
   if (currentView === 'workoutBooking') {
     return <OrderTrain onBackClick={handleBackToMenu} user={user} />;
+  }
+
+  if (currentView === 'startWorkout') {
+    return <StartWorkout onBackClick={handleBackToMenu} user={user} />;
   }
 
   return (
@@ -73,6 +81,20 @@ function MainMenu({ user }) {
               onClick={() => handleButtonClick('workout-booking')}
             >
               <span className="button-text">הזמנת אימון</span>
+              <div className="button-line"></div>
+            </button>
+          </div>
+          
+          <div 
+            className={`button-wrapper ${hoveredButton === 'start-workout' ? 'hovered' : ''}`}
+            onMouseEnter={() => setHoveredButton('start-workout')}
+            onMouseLeave={() => setHoveredButton(null)}
+          >
+            <button 
+              className="menu-button start-workout"
+              onClick={() => handleButtonClick('start-workout')}
+            >
+              <span className="button-text">התחל אימון</span>
               <div className="button-line"></div>
             </button>
           </div>

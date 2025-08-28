@@ -1,0 +1,87 @@
+.start-workout {
+  padding: 20px;
+  text-align: center;
+  color: white;
+  background-color: #000000;
+  min-height: 100vh;
+}
+
+.header {
+  display: flex;
+  align-items: center;
+  margin-bottom: 30px;
+}
+
+.back-button {
+  background: none;
+  border: none;
+  color: white;
+  font-size: 1.2rem;
+  cursor: pointer;
+  padding: 10px;
+  margin-right: 20px;
+  transition: color 0.3s ease;
+}
+
+.back-button:hover {
+  color: #ccc;
+}
+
+.workout-content {
+  max-width: 600px;
+  margin: 0 auto;
+}
+
+.workout-content p {
+  font-size: 1.2rem;
+  margin: 15px 0;
+  line-height: 1.6;
+}
+
+.start-button {
+  background: linear-gradient(45deg, #ff6b6b, #ee5a24);
+  border: none;
+  color: white;
+  padding: 15px 30px;
+  font-size: 1.2rem;
+  border-radius: 25px;
+  cursor: pointer;
+  margin-top: 20px;
+  transition: all 0.3s ease;
+  font-weight: bold;
+}
+
+.start-button:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 5px 15px rgba(255, 107, 107, 0.4);
+}
+
+/* התאמה למובייל */
+@media (max-width: 768px) {
+  .start-workout {
+    padding: 15px;
+  }
+  
+  .header {
+    flex-direction: column;
+    gap: 15px;
+  }
+  
+  .back-button {
+    margin-right: 0;
+    margin-bottom: 10px;
+  }
+  
+  .workout-content {
+    padding: 0 10px;
+  }
+  
+  .workout-content p {
+    font-size: 1rem;
+  }
+  
+  .start-button {
+    font-size: 1rem;
+    padding: 12px 25px;
+  }
+}
