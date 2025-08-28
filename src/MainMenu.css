@@ -77,17 +77,18 @@
 
 .menu-button {
   position: relative;
-  width: 350px;
-  height: 70px;
-  background: transparent;
-  border: 1px solid rgba(255, 255, 255, 0.2);
-  color: #ffffff;
-  font-size: 1.1rem;
-  font-weight: 400;
+  width: 350px !important;
+  height: 70px !important;
+  background: transparent !important;
+  border: 1px solid rgba(255, 255, 255, 0.2) !important;
+  color: #ffffff !important;
+  font-size: 1.1rem !important;
+  font-weight: 400 !important;
   cursor: pointer;
   transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
   overflow: hidden;
   letter-spacing: 1px;
+  max-width: none !important;
 }
 
 .menu-button:hover {
@@ -131,6 +132,22 @@
   box-shadow: 0 0 30px rgba(255, 107, 107, 0.1);
 }
 
+.start-workout {
+  width: 350px !important;
+  height: 70px !important;
+  background: transparent !important;
+  border: 1px solid rgba(255, 255, 255, 0.2) !important;
+  color: #ffffff !important;
+  font-size: 1.1rem !important;
+  font-weight: 400 !important;
+  max-width: none !important;
+}
+
+.start-workout:hover {
+  border-color: rgba(46, 204, 113, 0.5);
+  box-shadow: 0 0 30px rgba(46, 204, 113, 0.1);
+}
+
 @keyframes slideInDown {
   from {
     opacity: 0;
@@ -160,9 +177,17 @@
   }
   
   .menu-button {
-    width: 280px;
-    height: 60px;
-    font-size: 1rem;
+    width: 280px !important;
+    height: 60px !important;
+    font-size: 1rem !important;
+    max-width: none !important;
+  }
+  
+  .start-workout {
+    width: 280px !important;
+    height: 60px !important;
+    font-size: 1rem !important;
+    max-width: none !important;
   }
   
   .menu-container {
@@ -177,9 +202,17 @@
   }
   
   .menu-button {
-    width: 250px;
-    height: 55px;
-    font-size: 0.9rem;
+    width: 250px !important;
+    height: 55px !important;
+    font-size: 0.9rem !important;
+    max-width: none !important;
+  }
+  
+  .start-workout {
+    width: 250px !important;
+    height: 55px !important;
+    font-size: 0.9rem !important;
+    max-width: none !important;
   }
   
   .buttons-section {
@@ -195,9 +228,17 @@
   }
   
   .menu-button {
-    width: 450px;
-    height: 80px;
-    font-size: 1.3rem;
+    width: 450px !important;
+    height: 80px !important;
+    font-size: 1.3rem !important;
+    max-width: none !important;
+  }
+  
+  .start-workout {
+    width: 450px !important;
+    height: 80px !important;
+    font-size: 1.3rem !important;
+    max-width: none !important;
   }
   
   .menu-container {
@@ -217,9 +258,17 @@
   }
   
   .menu-button {
-    width: 380px;
-    height: 75px;
-    font-size: 1.2rem;
+    width: 380px !important;
+    height: 75px !important;
+    font-size: 1.2rem !important;
+    max-width: none !important;
+  }
+  
+  .start-workout {
+    width: 380px !important;
+    height: 75px !important;
+    font-size: 1.2rem !important;
+    max-width: none !important;
   }
   
   .menu-container {
