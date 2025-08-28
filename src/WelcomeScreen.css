@@ -66,173 +66,17 @@
   text-shadow: 0 0 10px rgba(255, 255, 255, 0.2);
 }
 
-.scroll-indicator {
-  position: fixed;
-  right: 30px;
-  top: 50%;
-  transform: translateY(-50%);
-  z-index: 1000;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 10px;
-}
 
-.scroll-dot {
-  width: 12px;
-  height: 12px;
-  border-radius: 50%;
-  background: rgba(255, 255, 255, 0.3);
-  transition: all 0.3s ease;
-  cursor: pointer;
-}
 
-.scroll-dot.active {
-  background: rgba(255, 255, 255, 0.8);
-  box-shadow: 0 0 20px rgba(255, 255, 255, 0.5);
-  transform: scale(1.2);
-}
-
-.scroll-line {
-  width: 2px;
-  height: 100px;
-  background: linear-gradient(to bottom, transparent, rgba(255, 255, 255, 0.3), transparent);
-  margin: 10px 0;
-}
-
-/* אינדיקטור גלילה למסך הראשוני */
-.initial-scroll-indicator {
-  position: fixed;
-  bottom: 80px;
-  left: 50%;
-  transform: translateX(-50%);
-  z-index: 1000;
-  opacity: 0;
-  animation: fadeInScrollIndicator 2s ease 1s forwards;
-}
-
-.initial-scroll-indicator .scroll-arrow {
-  font-size: 1.2rem;
-  color: rgba(255, 255, 255, 0.6);
-  animation: bounceArrow 2s infinite;
-  filter: blur(0.5px);
-}
-
-/* אינדיקטור גלילה מתקדם */
-.advanced-scroll-indicator {
-  position: fixed;
-  bottom: 40px;
-  left: 50%;
-  transform: translateX(-50%);
-  z-index: 1000;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 10px;
-  opacity: 0;
-  animation: fadeInScrollIndicator 2s ease 1s forwards;
-}
-
-@keyframes fadeInScrollIndicator {
-  to {
-    opacity: 1;
-  }
-}
-
-.scroll-arrow-container {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 8px;
-  padding: 10px 15px;
-  background: rgba(255, 255, 255, 0.05);
-  border: 1px solid rgba(255, 255, 255, 0.2);
-  border-radius: 20px;
-  backdrop-filter: blur(15px);
-  transition: all 0.3s ease;
-  filter: blur(0.3px);
-}
-
-.scroll-arrow-container:hover {
-  background: rgba(255, 255, 255, 0.08);
-  transform: translateY(-2px);
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
-}
-
-.scroll-arrow {
-  font-size: 1.2rem;
-  animation: bounceArrow 2s infinite;
-  color: rgba(255, 255, 255, 0.7);
-  filter: blur(0.2px);
-}
-
-@keyframes bounceArrow {
-  0%, 20%, 50%, 80%, 100% {
-    transform: translateY(0);
-  }
-  40% {
-    transform: translateY(-10px);
-  }
-  60% {
-    transform: translateY(-5px);
-  }
-}
-
-.scroll-text {
-  font-size: 0.9rem;
-  color: rgba(255, 255, 255, 0.8);
-  font-weight: 500;
-  letter-spacing: 1px;
-}
-
-.scroll-progress {
-  width: 120px;
-  height: 3px;
-  background: rgba(255, 255, 255, 0.15);
-  border-radius: 2px;
-  overflow: hidden;
-  position: relative;
-  filter: blur(0.2px);
-}
-
-.progress-bar {
-  height: 100%;
-  background: linear-gradient(90deg, #4CAF50, #8BC34A, #CDDC39);
-  border-radius: 2px;
-  transition: width 0.3s ease;
-  position: relative;
-  overflow: hidden;
-}
-
-.progress-bar::after {
-  content: '';
-  position: absolute;
-  top: 0;
-  left: -100%;
-  width: 100%;
-  height: 100%;
-  background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.4), transparent);
-  animation: shimmer 2s infinite;
-}
-
-@keyframes shimmer {
-  0% {
-    left: -100%;
-  }
-  100% {
-    left: 100%;
-  }
-}
-
-/* אנימציות משופרות לאנימציית הגלילה האוטומטית */
+/* אנימציות משופרות לאנימציית הגלילה האוטומטית - מהירות יותר */
 @keyframes textSlideIn {
   0% {
     opacity: 0;
-    transform: translateY(50px) scale(0.9);
+    transform: translateY(30px) scale(0.95);
   }
   50% {
-    opacity: 0.8;
-    transform: translateY(10px) scale(1.05);
+    opacity: 0.9;
+    transform: translateY(5px) scale(1.02);
   }
   100% {
     opacity: 1;
@@ -247,7 +91,7 @@
   }
   100% {
     opacity: 0;
-    transform: translateY(-50px) scale(0.9);
+    transform: translateY(-30px) scale(0.95);
   }
 }
 
@@ -294,14 +138,14 @@
 }
 
 .WelcomeScreen.transitioning {
-  animation: smoothTransition 1.5s ease forwards;
+  animation: smoothTransition 1s ease forwards;
 }
 
 /* אנימציה להופעת התפריט הראשי */
 @keyframes menuSlideIn {
   0% {
     opacity: 0;
-    transform: translateY(50px);
+    transform: translateY(30px);
   }
   100% {
     opacity: 1;
@@ -310,28 +154,28 @@
 }
 
 .WelcomeScreen .main-menu {
-  animation: menuSlideIn 1s ease forwards;
+  animation: menuSlideIn 0.8s ease forwards;
 }
 
-/* אנימציה אוטומטית לטקסטים */
+/* אנימציה אוטומטית לטקסטים - מהירה יותר */
 .text-line.auto-animate {
-  animation: textSlideIn 1.5s ease forwards;
+  animation: textSlideIn 0.8s ease forwards;
 }
 
 .text-line.auto-fade-out {
-  animation: textSlideOut 1s ease forwards;
+  animation: textSlideOut 0.6s ease forwards;
 }
 
-/* אנימציה אוטומטית ללוגו */
+/* אנימציה אוטומטית ללוגו - מהירה יותר */
 .main-logo2.auto-shrink {
-  animation: logoShrink 2s ease forwards;
+  animation: logoShrink 1.2s ease forwards;
 }
 
 /* הסתרת האינדיקטור כשמגיעים לתפריט */
 .advanced-scroll-indicator.hidden {
   opacity: 0;
   transform: translateX(-50%) translateY(20px);
-  transition: all 0.5s ease;
+  transition: all 0.3s ease;
 }
 
 /* תיקונים למובייל */
@@ -382,42 +226,7 @@
     transform: translateY(0) scale(0.9);
   }
 
-  .scroll-indicator {
-    right: 15px !important;
-    transform: translateY(-50%) scale(0.8);
-  }
 
-  .scroll-dot {
-    width: 10px !important;
-    height: 10px !important;
-  }
-
-  .scroll-line {
-    height: 60px !important;
-    margin: 5px 0 !important;
-  }
-
-  .initial-scroll-indicator {
-    bottom: 30px !important;
-  }
-
-  .advanced-scroll-indicator {
-    bottom: 20px !important;
-  }
-
-  .scroll-arrow-container {
-    padding: 8px 12px !important;
-    font-size: 0.9rem;
-  }
-
-  .scroll-progress {
-    width: 80px !important;
-    height: 2px !important;
-  }
-
-  .scroll-text {
-    font-size: 0.8rem !important;
-  }
 
   /* תיקון ל-MainMenu */
   .WelcomeScreen .main-menu {
@@ -499,13 +308,7 @@
     -webkit-backface-visibility: hidden;
   }
 
-  .progress-bar::after {
-    animation-duration: 3s !important;
-  }
 
-  .scroll-arrow {
-    animation-duration: 3s !important;
-  }
 }
 
 /* תיקונים למסכים קטנים מאוד */
@@ -534,22 +337,7 @@
     margin: 10px 0 !important;
   }
 
-  .scroll-indicator {
-    right: 10px !important;
-    transform: translateY(-50%) scale(0.7);
-  }
 
-  .initial-scroll-indicator {
-    bottom: 20px !important;
-  }
-
-  .advanced-scroll-indicator {
-    bottom: 15px !important;
-  }
-
-  .scroll-progress {
-    width: 60px !important;
-  }
 }
 
 /* התאמה למסכים גדולים */
