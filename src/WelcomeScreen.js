@@ -7,6 +7,9 @@ import './WelcomeScreen.css';
 function WelcomeScreen({ user }) {
   const [scrollY, setScrollY] = useState(0);
   const [isMobile, setIsMobile] = useState(false);
+  const [autoScroll, setAutoScroll] = useState(false);
+  const [currentLineIndex, setCurrentLineIndex] = useState(0);
+  const [showMainMenu, setShowMainMenu] = useState(false);
 
   useEffect(() => {
     // זיהוי מובייל
@@ -23,13 +26,46 @@ function WelcomeScreen({ user }) {
 
     window.addEventListener('scroll', handleScroll);
     
+    // אנימציה אוטומטית של הטקסטים
+    const startAutoScroll = () => {
+      setAutoScroll(true);
+      let lineIndex = 0;
+      const textLines = [
+        "WOLFit",
+        "אתה יודע למה הגעת",
+        "אתה יודע מה מחכה לך",
+        "אתה יודע איך זה מרגיש לצאת מפה",
+        "הגיע הזמן לשבור את השיא של אתמול",
+        "Play Different, Train Better"
+      ];
+      
+      const interval = setInterval(() => {
+        if (lineIndex < textLines.length) {
+          setCurrentLineIndex(lineIndex);
+          lineIndex++;
+        } else {
+          clearInterval(interval);
+          // המעבר האוטומטי למסך הבא
+          setTimeout(() => {
+            setShowMainMenu(true);
+          }, 2000);
+        }
+      }, 1500); // כל 1.5 שניות
+
+      return () => clearInterval(interval);
+    };
+
+    // התחלת האנימציה האוטומטית אחרי 2 שניות
+    const autoScrollTimer = setTimeout(startAutoScroll, 2000);
+    
     return () => {
       window.removeEventListener('scroll', handleScroll);
       window.removeEventListener('resize', checkMobile);
+      clearTimeout(autoScrollTimer);
     };
   }, []);
 
-  const isScrolled = scrollY > (isMobile ? 50 : 100); // פחות גלילה במובייל
+  const isScrolled = scrollY > (isMobile ? 50 : 100);
 
   const textLines = [
     "WOLFit",
@@ -41,26 +77,27 @@ function WelcomeScreen({ user }) {
   ];
 
   const getVisibleLines = () => {
+    if (autoScroll) {
+      return currentLineIndex;
+    }
     if (!isScrolled) return 0;
     const scrollAfterLogo = scrollY - (isMobile ? 50 : 100);
-    // התאמה למובייל - פחות גלילה לכל שורה
     const lineDistance = isMobile ? 150 : 300;
     const lineNumber = Math.floor(scrollAfterLogo / lineDistance);
-    console.log("scrollY:", scrollY, "isMobile:", isMobile, "visibleLines:", Math.min(lineNumber, textLines.length));
     return Math.min(lineNumber, textLines.length);
   };
 
   const visibleLines = getVisibleLines();
 
-  // חישוב מתי לעבור לתפריט - הרבה יותר מאוחר
+  // חישוב מתי לעבור לתפריט
   const totalScrollNeeded = isMobile ? 
-    50 + (textLines.length * 150) + 100 : // +200 מרווח נוסף במובייל
-    100 + (textLines.length * 300) + 300; // +400 מרווח נוסף בדסקטופ
+    50 + (textLines.length * 150) + 100 :
+    100 + (textLines.length * 300) + 300;
 
   let content;
 
-  if (visibleLines >= textLines.length) {
-  content = <MainMenu user={user}/>
+  if (showMainMenu || visibleLines >= textLines.length) {
+    content = <MainMenu user={user}/>
   } else {
     content = (
       <>
@@ -69,8 +106,11 @@ function WelcomeScreen({ user }) {
             <div 
               key={index} 
               className={`text-line ${
-                index === visibleLines ? 'visible' : 
-                index < visibleLines ? 'fade-out' : ''
+                autoScroll ? 
+                  (index === currentLineIndex ? 'auto-animate' : 
+                   index < currentLineIndex ? 'auto-fade-out' : '') :
+                  (index === visibleLines ? 'visible' : 
+                   index < visibleLines ? 'fade-out' : '')
               }`}
             >
               {line}
@@ -85,7 +125,6 @@ function WelcomeScreen({ user }) {
               key={index}
               className={`scroll-dot ${index === visibleLines ? 'active' : ''}`}
               onClick={() => {
-                // התאמת הגלילה למובייל
                 const baseScroll = isMobile ? 50 : 50;
                 const lineDistance = isMobile ? 150 : 200;
                 const targetScroll = baseScroll + (index * lineDistance);
@@ -114,15 +153,15 @@ function WelcomeScreen({ user }) {
   }
 
   return (
-    <div className={`WelcomeScreen ${isMobile ? 'mobile-fix' : ''}`}>
+    <div className={`WelcomeScreen ${isMobile ? 'mobile-fix' : ''} ${autoScroll ? 'auto-shrink' : ''}`}>
       <img
         src="/logo2.png"
         alt="WOLFit Logo2"
-        className={`main-logo2 ${isScrolled ? 'scrolled' : ''}`}
+        className={`main-logo2 ${isScrolled || autoScroll ? 'scrolled' : ''} ${autoScroll ? 'auto-shrink' : ''}`}
       />
       
       {/* אינדיקטור גלילה למסך הראשוני */}
-      {!isScrolled && (
+      {!isScrolled && !autoScroll && (
         <div className="initial-scroll-indicator">
           <div className="scroll-arrow">⬇</div>
         </div>
@@ -130,7 +169,7 @@ function WelcomeScreen({ user }) {
       
       <div className={`spacer ${isMobile ? 'mobile-fix' : ''}`}></div>
 
-      {isScrolled && content}
+      {(isScrolled || autoScroll) && content}
     </div>
   );
 }
