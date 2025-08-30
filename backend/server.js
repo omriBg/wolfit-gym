@@ -18,10 +18,10 @@ const pool = new Pool({
   database: process.env.DB_NAME || 'Wolfit',
   user: process.env.DB_USER || 'postgres',
   password: process.env.DB_PASSWORD || '9526',
-  ssl: {
+  ssl: process.env.NODE_ENV === 'production' ? {
     rejectUnauthorized: false,
     sslmode: 'require'
-  },
+  } : false,
 });
 
 // בדיקת חיבור
@@ -509,22 +509,22 @@ app.get('/api/future-workouts/:userId', async (req, res) => {
     // שאילתה לקבלת כל האימונים העתידיים
     const workoutsQuery = `
       SELECT 
-        bf.idBooking,
-        bf.bookingDate,
-        bf.startTime,
-        f.idField,
-        f.fieldName,
-        f.sportType,
-        st.sportName
-      FROM BookField bf
-      JOIN Field f ON bf.idField = f.idField
-      JOIN SportTypes st ON f.sportType = st.sportType
-      WHERE bf.idUser = $1 
+        bf.idfield,
+        bf.bookingdate,
+        bf.starttime,
+        f.idfield,
+        f.fieldname,
+        f.sporttype,
+        st.sportname
+      FROM bookfield bf
+      JOIN field f ON bf.idfield = f.idfield
+      JOIN sporttypes st ON f.sporttype = st.sporttype
+      WHERE bf.iduser = $1 
         AND (
-          bf.bookingDate > $2 
-          OR (bf.bookingDate = $2 AND bf.startTime > $3)
+          bf.bookingdate > $2 
+          OR (bf.bookingdate = $2 AND bf.starttime > $3)
         )
-      ORDER BY bf.bookingDate, bf.startTime
+      ORDER BY bf.bookingdate, bf.starttime
     `;
     
     const result = await pool.query(workoutsQuery, [userId, currentDate, currentTime]);
@@ -551,7 +551,7 @@ app.get('/api/future-workouts/:userId', async (req, res) => {
       const endTime = `${endHours.toString().padStart(2, '0')}:${endMins.toString().padStart(2, '0')}`;
       
       return {
-        id: row.idbooking,
+        id: row.idfield + '_' + row.bookingdate + '_' + row.starttime, // יצירת מזהה ייחודי
         date: row.bookingdate,
         startTime: startTime,
         endTime: endTime,
