@@ -45,7 +45,7 @@ function StartWorkout({ onBackClick, user }) {
             return dateA - dateB;
           });
           
-          // חלוקה לפי תאריך ויצירת אימונים נפרדים
+          // חלוקה לפי תאריך ויצירת אימונים רציפים
           const workoutsByDate = {};
           sortedWorkouts.forEach(workout => {
             const dateKey = workout.date;
@@ -57,19 +57,19 @@ function StartWorkout({ onBackClick, user }) {
             const lastWorkoutGroup = workoutsByDate[dateKey][workoutsByDate[dateKey].length - 1];
             if (lastWorkoutGroup && lastWorkoutGroup.length > 0) {
               const lastSlot = lastWorkoutGroup[lastWorkoutGroup.length - 1];
-              const lastEndTime = new Date(dateKey + ' ' + lastSlot.endTime);
+              const lastStartTime = new Date(dateKey + ' ' + lastSlot.startTime);
               const currentStartTime = new Date(dateKey + ' ' + workout.startTime);
-              const timeDiff = (currentStartTime - lastEndTime) / (1000 * 60); // הפרש בדקות
+              const timeDiff = (currentStartTime - lastStartTime) / (1000 * 60); // הפרש בדקות
               
-              console.log(`בדיקת רציפות: ${lastSlot.endTime} -> ${workout.startTime}, הפרש: ${timeDiff} דקות`);
+              console.log(`בדיקת רציפות: ${lastSlot.startTime} -> ${workout.startTime}, הפרש: ${timeDiff} דקות`);
               
-              // אם ההפרש הוא 0 דקות (רציף) או 15 דקות (המשך טבעי), זה אותו אימון
-              if (timeDiff <= 15) {
-                // המשך של האימון הקיים
-                console.log(`ממשיך אימון קיים (${timeDiff} דקות)`);
+              // אם ההפרש הוא 15 דקות (רבע שעה), זה אותו אימון
+              if (timeDiff === 15) {
+                // המשך של האימון הקיים - רציף
+                console.log(`ממשיך אימון קיים (רציף - 15 דקות)`);
                 lastWorkoutGroup.push(workout);
               } else {
-                // אימון חדש - פער של יותר מ-15 דקות
+                // אימון חדש - יש פער אחר
                 console.log(`יוצר אימון חדש (הפרש ${timeDiff} דקות)`);
                 workoutsByDate[dateKey].push([workout]);
               }
