@@ -61,16 +61,21 @@ function StartWorkout({ onBackClick, user }) {
               const currentStartTime = new Date(dateKey + ' ' + workout.startTime);
               const timeDiff = (currentStartTime - lastEndTime) / (1000 * 60); // הפרש בדקות
               
+              console.log(`בדיקת רציפות: ${lastSlot.endTime} -> ${workout.startTime}, הפרש: ${timeDiff} דקות`);
+              
               // אם ההפרש הוא 0 דקות (רציף) או 15 דקות (המשך טבעי), זה אותו אימון
               if (timeDiff <= 15) {
                 // המשך של האימון הקיים
+                console.log(`ממשיך אימון קיים (${timeDiff} דקות)`);
                 lastWorkoutGroup.push(workout);
               } else {
                 // אימון חדש - פער של יותר מ-15 דקות
+                console.log(`יוצר אימון חדש (הפרש ${timeDiff} דקות)`);
                 workoutsByDate[dateKey].push([workout]);
               }
             } else {
               // אימון ראשון ביום
+              console.log(`יוצר אימון ראשון ביום`);
               workoutsByDate[dateKey].push([workout]);
             }
           });
