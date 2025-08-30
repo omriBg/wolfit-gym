@@ -509,7 +509,7 @@ app.get('/api/future-workouts/:userId', async (req, res) => {
     // שאילתה לקבלת כל האימונים העתידיים
     const workoutsQuery = `
       SELECT 
-        bf.idBookField,
+        bf.idBooking,
         bf.bookingDate,
         bf.startTime,
         f.idField,
@@ -551,7 +551,7 @@ app.get('/api/future-workouts/:userId', async (req, res) => {
       const endTime = `${endHours.toString().padStart(2, '0')}:${endMins.toString().padStart(2, '0')}`;
       
       return {
-        id: row.idbookfield,
+        id: row.idbooking,
         date: row.bookingdate,
         startTime: startTime,
         endTime: endTime,
