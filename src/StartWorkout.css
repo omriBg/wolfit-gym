@@ -99,8 +99,21 @@
   border-bottom: 2px solid rgba(255, 255, 255, 0.2);
 }
 
-.workout-date-title {
-  font-size: 1.8rem;
+.date-title {
+  font-size: 2rem;
+  color: #ffffff;
+  margin-bottom: 30px;
+  padding-bottom: 15px;
+  border-bottom: 3px solid rgba(179, 142, 216, 0.5);
+  text-align: center;
+  background: rgba(179, 142, 216, 0.1);
+  padding: 20px;
+  border-radius: 12px;
+  border: 1px solid rgba(179, 142, 216, 0.3);
+}
+
+.workout-title {
+  font-size: 1.5rem;
   color: #ffffff;
   margin: 0 0 10px 0;
   background: linear-gradient(45deg, #ffffff, #b38ed8);
@@ -118,17 +131,33 @@
   border-radius: 20px;
   border: 1px solid rgba(179, 142, 216, 0.3);
   display: inline-block;
+  margin-bottom: 8px;
+}
+
+.workout-slots-count {
+  font-size: 1rem;
+  color: rgba(255, 255, 255, 0.7);
+  background: rgba(255, 255, 255, 0.1);
+  padding: 4px 12px;
+  border-radius: 15px;
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  display: inline-block;
 }
 
 .workout-schedule {
   margin-bottom: 25px;
 }
 
-.workout-schedule h3 {
+.workout-schedule h3, .workout-schedule h4 {
   font-size: 1.3rem;
   color: #ffffff;
   margin-bottom: 15px;
   text-align: right;
+}
+
+.workout-schedule h4 {
+  font-size: 1.1rem;
+  color: rgba(255, 255, 255, 0.9);
 }
 
 .time-slots {
@@ -267,12 +296,38 @@
   cursor: pointer;
   transition: all 0.3s ease;
   font-weight: bold;
+  min-height: 50px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
 }
 
 .start-workout-btn:hover {
   background: linear-gradient(45deg, #9c7dc4, #8762ab);
   transform: translateY(-2px);
   box-shadow: 0 6px 20px rgba(179, 142, 216, 0.4);
+}
+
+.start-workout-btn.countdown {
+  background: linear-gradient(45deg, #ff6b6b, #ee5a52);
+  animation: pulse 2s infinite;
+}
+
+.start-workout-btn.countdown:hover {
+  background: linear-gradient(45deg, #ee5a52, #d63031);
+}
+
+@keyframes pulse {
+  0% {
+    box-shadow: 0 0 0 0 rgba(255, 107, 107, 0.7);
+  }
+  70% {
+    box-shadow: 0 0 0 10px rgba(255, 107, 107, 0);
+  }
+  100% {
+    box-shadow: 0 0 0 0 rgba(255, 107, 107, 0);
+  }
 }
 
 .loading {

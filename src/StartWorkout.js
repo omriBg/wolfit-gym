@@ -45,7 +45,7 @@ function StartWorkout({ onBackClick, user }) {
             return dateA - dateB;
           });
           
-          // חלוקה לפי תאריך - כל הזמנה היא שיבוץ נפרד
+          // חלוקה לפי תאריך ויצירת אימונים נפרדים
           const workoutsByDate = {};
           sortedWorkouts.forEach(workout => {
             const dateKey = workout.date;
@@ -53,15 +53,26 @@ function StartWorkout({ onBackClick, user }) {
               workoutsByDate[dateKey] = [];
             }
             
-            // כל הזמנה היא שיבוץ נפרד
-            workoutsByDate[dateKey].push(workout);
-          });
-          
-          // מיון השיבוצים בכל תאריך לפי שעה
-          Object.keys(workoutsByDate).forEach(dateKey => {
-            workoutsByDate[dateKey].sort((a, b) => {
-              return a.startTime.localeCompare(b.startTime);
-            });
+            // בדיקה אם זה המשך של אימון קיים או אימון חדש
+            const lastWorkoutGroup = workoutsByDate[dateKey][workoutsByDate[dateKey].length - 1];
+            if (lastWorkoutGroup && lastWorkoutGroup.length > 0) {
+              const lastSlot = lastWorkoutGroup[lastWorkoutGroup.length - 1];
+              const lastEndTime = new Date(dateKey + ' ' + lastSlot.endTime);
+              const currentStartTime = new Date(dateKey + ' ' + workout.startTime);
+              const timeDiff = (currentStartTime - lastEndTime) / (1000 * 60); // הפרש בדקות
+              
+              // אם ההפרש הוא 0 דקות (רציף) או 15 דקות (המשך טבעי), זה אותו אימון
+              if (timeDiff <= 15) {
+                // המשך של האימון הקיים
+                lastWorkoutGroup.push(workout);
+              } else {
+                // אימון חדש - פער של יותר מ-15 דקות
+                workoutsByDate[dateKey].push([workout]);
+              }
+            } else {
+              // אימון ראשון ביום
+              workoutsByDate[dateKey].push([workout]);
+            }
           });
           
           setWorkoutsByField(workoutsByDate);
@@ -89,6 +100,16 @@ function StartWorkout({ onBackClick, user }) {
       document.body.style.overflow = 'unset';
     };
   }, [user?.id]);
+
+  // עדכון הספירה אחורה כל דקה
+  useEffect(() => {
+    const interval = setInterval(() => {
+      // עדכון כפוי של הקומפוננטה כדי לעדכן את הספירה אחורה
+      setWorkouts(prevWorkouts => [...prevWorkouts]);
+    }, 60000); // כל דקה
+
+    return () => clearInterval(interval);
+  }, []);
 
   // פונקציה לעיצוב התאריך
   const formatDate = (dateString) => {
@@ -123,6 +144,63 @@ function StartWorkout({ onBackClick, user }) {
   // פונקציה לעיצוב השעה
   const formatTime = (timeString) => {
     return timeString.substring(0, 5); // HH:MM
+  };
+
+  // פונקציה לחישוב זמן עד האימון
+  const getTimeUntilWorkout = (dateKey) => {
+    const today = new Date();
+    const workoutDate = new Date(dateKey);
+    
+    // איפוס השעות כדי להשוות רק תאריכים
+    today.setHours(0, 0, 0, 0);
+    workoutDate.setHours(0, 0, 0, 0);
+    
+    const diffTime = workoutDate.getTime() - today.getTime();
+    const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+    
+    if (diffDays === 0) {
+      return 'היום';
+    } else if (diffDays === 1) {
+      return 'מחר';
+    } else if (diffDays === 2) {
+      return 'בעוד יומיים';
+    } else {
+      return `בעוד ${diffDays} ימים`;
+    }
+  };
+
+  // פונקציה לספירה אחורה אם זה היום
+  const getCountdownText = (dateKey, workouts) => {
+    const today = new Date();
+    const workoutDate = new Date(dateKey);
+    
+    // איפוס השעות כדי להשוות רק תאריכים
+    today.setHours(0, 0, 0, 0);
+    workoutDate.setHours(0, 0, 0, 0);
+    
+    if (today.getTime() === workoutDate.getTime()) {
+      // זה היום - נחשב ספירה אחורה
+      const firstWorkout = workouts[0];
+      const workoutTime = new Date(dateKey + ' ' + firstWorkout.startTime);
+      const now = new Date();
+      const diffMs = workoutTime.getTime() - now.getTime();
+      
+      if (diffMs <= 0) {
+        return 'האימון התחיל!';
+      }
+      
+      const diffHours = Math.floor(diffMs / (1000 * 60 * 60));
+      const diffMinutes = Math.floor((diffMs % (1000 * 60 * 60)) / (1000 * 60));
+      
+      if (diffHours > 0) {
+        return `האימון מתחיל בעוד ${diffHours} שעות ו-${diffMinutes} דקות`;
+      } else {
+        return `האימון מתחיל בעוד ${diffMinutes} דקות`;
+      }
+    } else {
+      // לא היום - נחזיר כמה ימים נשארו
+      return getTimeUntilWorkout(dateKey);
+    }
   };
 
   const handleStartWorkout = (workoutId) => {
@@ -168,48 +246,57 @@ function StartWorkout({ onBackClick, user }) {
           </div>
         ) : (
           <div className="workouts-list">
-            {Object.entries(workoutsByField).map(([dateKey, dateWorkouts]) => (
-              <div key={dateKey} className="workout-session">
-                <div className="workout-session-header">
-                  <h2 className="workout-date-title">
-                    שיבוץ מגרשים בתאריך {formatDate(dateKey)}
-                  </h2>
-                  <div className="workout-time-range">
-                    {dateWorkouts.length} שיבוצים
-                  </div>
-                  <div className="workout-date-debug" style={{fontSize: '0.8rem', color: 'rgba(255,255,255,0.6)', marginTop: '5px'}}>
-                    תאריך מקורי: {dateKey}
-                  </div>
-                </div>
+            {Object.entries(workoutsByField).map(([dateKey, workoutGroups]) => (
+              <div key={dateKey} className="date-section">
+                <h2 className="date-title">תאריך: {formatDate(dateKey)}</h2>
                 
-                <div className="workout-schedule">
-                  <h3>רשימת השיבוצים:</h3>
-                  <div className="time-slots">
-                    {dateWorkouts.map((slot, index) => {
-                      // בדיקה שהשעות הגיוניות
-                      const startTime = slot.startTime;
-                      const endTime = slot.endTime;
-                      const isValidTime = startTime && endTime && startTime !== endTime;
-                      
-                      return (
-                        <div key={index} className="time-slot">
-                          <span className="time">
-                            {isValidTime ? `${formatTime(startTime)} - ${formatTime(endTime)}` : `${formatTime(startTime)} (15 דקות)`}
-                          </span>
-                          <span className="field">{slot.fieldName}</span>
-                          <span className="sport">{slot.sportType}</span>
+                {workoutGroups.map((workoutGroup, groupIndex) => {
+                  const firstWorkout = workoutGroup[0];
+                  const lastWorkout = workoutGroup[workoutGroup.length - 1];
+                  const totalDuration = workoutGroup.length * 15; // כל שיבוץ הוא 15 דקות
+                  
+                  return (
+                    <div key={groupIndex} className="workout-session">
+                      <div className="workout-session-header">
+                        <h3 className="workout-title">אימון #{groupIndex + 1}</h3>
+                        <div className="workout-time-range">
+                          {formatTime(firstWorkout.startTime)} - {formatTime(lastWorkout.endTime)} ({totalDuration} דקות)
                         </div>
-                      );
-                    })}
-                  </div>
-                </div>
-                
-                <button 
-                  className="start-workout-btn"
-                  onClick={() => handleStartWorkout(dateKey)}
-                >
-                  התחל אימון בתאריך זה
-                </button>
+                        <div className="workout-slots-count">
+                          {workoutGroup.length} שיבוצים
+                        </div>
+                      </div>
+                      
+                      <div className="workout-schedule">
+                        <h4>לוח זמנים:</h4>
+                        <div className="time-slots">
+                          {workoutGroup.map((slot, index) => {
+                            const startTime = slot.startTime;
+                            const endTime = slot.endTime;
+                            const isValidTime = startTime && endTime && startTime !== endTime;
+                            
+                            return (
+                              <div key={index} className="time-slot">
+                                <span className="time">
+                                  {isValidTime ? `${formatTime(startTime)} - ${formatTime(endTime)}` : `${formatTime(startTime)} (15 דקות)`}
+                                </span>
+                                <span className="field">{slot.fieldName}</span>
+                                <span className="sport">{slot.sportType}</span>
+                              </div>
+                            );
+                          })}
+                        </div>
+                      </div>
+                      
+                      <button 
+                        className={`start-workout-btn ${getCountdownText(dateKey, workoutGroup).includes('דקות') ? 'countdown' : ''}`}
+                        onClick={() => handleStartWorkout(`${dateKey}_${groupIndex}`)}
+                      >
+                        {getCountdownText(dateKey, workoutGroup)}
+                      </button>
+                    </div>
+                  );
+                })}
               </div>
             ))}
             
