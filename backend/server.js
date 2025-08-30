@@ -472,6 +472,126 @@ app.post('/api/available-fields-for-workout', async (req, res) => {
     });
   }
 });
+// API לקבלת אימונים עתידיים של משתמש
+app.get('/api/future-workouts/:userId', async (req, res) => {
+  try {
+    const { userId } = req.params;
+    
+    console.log(`🏃 מחפש אימונים עתידיים עבור משתמש ${userId}`);
+    
+    if (!userId) {
+      return res.json({
+        success: false,
+        message: 'מזהה משתמש נדרש'
+      });
+    }
+    
+    // בדיקה שהמשתמש קיים
+    const userCheck = await pool.query(
+      'SELECT idUser FROM "User" WHERE idUser = $1',
+      [userId]
+    );
+    
+    if (userCheck.rows.length === 0) {
+      return res.json({
+        success: false,
+        message: 'משתמש לא נמצא'
+      });
+    }
+    
+    // קבלת התאריך והשעה הנוכחיים
+    const now = new Date();
+    const currentDate = now.toISOString().split('T')[0]; // YYYY-MM-DD
+    const currentTime = now.toTimeString().split(' ')[0]; // HH:MM:SS
+    
+    console.log(`📅 מחפש אימונים מתאריך ${currentDate} שעה ${currentTime}`);
+    
+    // שאילתה לקבלת כל האימונים העתידיים
+    const workoutsQuery = `
+      SELECT 
+        bf.idBookField,
+        bf.bookingDate,
+        bf.startTime,
+        f.idField,
+        f.fieldName,
+        f.sportType,
+        st.sportName
+      FROM BookField bf
+      JOIN Field f ON bf.idField = f.idField
+      JOIN SportTypes st ON f.sportType = st.sportType
+      WHERE bf.idUser = $1 
+        AND (
+          bf.bookingDate > $2 
+          OR (bf.bookingDate = $2 AND bf.startTime > $3)
+        )
+      ORDER BY bf.bookingDate, bf.startTime
+    `;
+    
+    const result = await pool.query(workoutsQuery, [userId, currentDate, currentTime]);
+    
+    console.log(`🔍 נמצאו ${result.rows.length} אימונים עתידיים`);
+    
+    if (result.rows.length === 0) {
+      return res.json({
+        success: true,
+        workouts: [],
+        message: 'אין אימונים עתידיים'
+      });
+    }
+    
+    // עיבוד התוצאות לפורמט נוח
+    const workouts = result.rows.map(row => {
+      // חישוב משך האימון (רבע שעה)
+      const startTime = row.starttime;
+      const [hours, minutes] = startTime.split(':');
+      const startMinutes = parseInt(hours) * 60 + parseInt(minutes);
+      const endMinutes = startMinutes + 15; // רבע שעה
+      const endHours = Math.floor(endMinutes / 60);
+      const endMins = endMinutes % 60;
+      const endTime = `${endHours.toString().padStart(2, '0')}:${endMins.toString().padStart(2, '0')}`;
+      
+      return {
+        id: row.idbookfield,
+        date: row.bookingdate,
+        startTime: startTime,
+        endTime: endTime,
+        duration: 15, // רבע שעה
+        fieldId: row.idfield,
+        fieldName: row.fieldname,
+        sportType: row.sportname,
+        sportTypeId: row.sporttype
+      };
+    });
+    
+    // מיון האימונים לפי מגרש
+    const workoutsByField = {};
+    workouts.forEach(workout => {
+      const key = workout.fieldName;
+      if (!workoutsByField[key]) {
+        workoutsByField[key] = [];
+      }
+      workoutsByField[key].push(workout);
+    });
+    
+    console.log('📊 חלוקת אימונים לפי מגרש:', Object.keys(workoutsByField));
+    
+    res.json({
+      success: true,
+      workouts: workouts,
+      workoutsByField: workoutsByField,
+      totalWorkouts: workouts.length,
+      message: `נמצאו ${workouts.length} אימונים עתידיים`
+    });
+    
+  } catch (err) {
+    console.error('❌ שגיאה בקבלת אימונים עתידיים:', err);
+    res.json({
+      success: false,
+      message: 'שגיאה בשרת',
+      error: err.message
+    });
+  }
+});
 
 app.listen(PORT, () => {
   console.log(`🚀 השרת רץ על http://localhost:${PORT}`);

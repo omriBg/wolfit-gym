@@ -165,76 +165,445 @@
   }
 }
 
-@media (max-width: 768px) {
+/* מסכים קטנים מאוד - 480px ומטה */
+@media (max-width: 480px) {
+  .menu-container {
+    gap: 2rem;
+    padding: 0 20px;
+  }
+  
+  .brand-title {
+    font-size: 1.8rem;
+    letter-spacing: 2px;
+  }
+  
+  .title-line {
+    width: 60px;
+    height: 1.5px;
+  }
+  
+  .menu-button {
+    width: 280px;
+    height: 55px;
+    font-size: 0.9rem;
+    letter-spacing: 0.5px;
+  }
+  
+  .buttons-section {
+    gap: 1.2rem;
+  }
+  
+  .button-wrapper.hovered {
+    transform: translateY(-2px);
+  }
+  
+  .menu-button:hover .button-text {
+    transform: translateX(8px);
+  }
+}
+
+/* מסכים קטנים - 481px עד 768px */
+@media (min-width: 481px) and (max-width: 768px) {
+  .menu-container {
+    gap: 3rem;
+    padding: 0 30px;
+  }
+  
   .brand-title {
     font-size: 2.5rem;
     letter-spacing: 4px;
   }
   
+  .title-line {
+    width: 70px;
+    height: 2px;
+  }
+  
   .menu-button {
-    width: 280px;
+    width: 320px;
     height: 60px;
     font-size: 1rem;
-  }
-  
-  .menu-container {
-    gap: 3rem;
-  }
-}
-
-@media (max-width: 480px) {
-  .brand-title {
-    font-size: 2rem;
-    letter-spacing: 3px;
-  }
-  
-  .menu-button {
-    width: 250px;
-    height: 55px;
-    font-size: 0.9rem;
+    letter-spacing: 1px;
   }
   
   .buttons-section {
-    gap: 1.5rem;
+    gap: 1.8rem;
   }
 }
 
-/* התאמה למסכים גדולים */
-@media (min-width: 1200px) {
-  .brand-title {
-    font-size: 4.5rem;
-    letter-spacing: 8px;
-  }
-  
-  .menu-button {
-    width: 450px;
-    height: 80px;
-    font-size: 1.3rem;
-  }
-  
+/* מסכים בינוניים - 769px עד 1024px */
+@media (min-width: 769px) and (max-width: 1024px) {
   .menu-container {
-    gap: 5rem;
+    gap: 4rem;
+    padding: 0 40px;
   }
   
-  .buttons-section {
-    gap: 2.5rem;
-  }
-}
-
-/* התאמה למסכים בינוניים */
-@media (min-width: 769px) and (max-width: 1199px) {
   .brand-title {
     font-size: 3rem;
     letter-spacing: 5px;
   }
   
-  .menu-button {
-    width: 380px;
-    height: 75px;
-    font-size: 1.2rem;
+  .title-line {
+    width: 90px;
+    height: 2px;
   }
   
+  .menu-button {
+    width: 380px;
+    height: 70px;
+    font-size: 1.15rem;
+    letter-spacing: 1px;
+  }
+  
+  .buttons-section {
+    gap: 2.2rem;
+  }
+}
+
+/* מסכי לפטופ גדולים - 1025px עד 1199px */
+@media (min-width: 1025px) and (max-width: 1199px) {
   .menu-container {
+    gap: 4.5rem;
+    max-width: 800px;
+    margin: 0 auto;
+  }
+  
+  .brand-title {
+    font-size: 3.5rem;
+    letter-spacing: 6px;
+  }
+  
+  .title-line {
+    width: 100px;
+    height: 2px;
+  }
+  
+  .menu-button {
+    width: 420px;
+    height: 75px;
+    font-size: 1.2rem;
+    letter-spacing: 1.2px;
+  }
+  
+  .buttons-section {
+    gap: 2.5rem;
+  }
+  
+  .button-wrapper.hovered {
+    transform: translateY(-4px);
+  }
+}
+
+/* מסכי דסקטופ - 1200px עד 1399px */
+@media (min-width: 1200px) and (max-width: 1399px) {
+  .menu-container {
+    gap: 5.5rem;
+    max-width: 900px;
+    margin: 0 auto;
+    padding: 0 40px;
+  }
+  
+  .brand-title {
+    font-size: 4.5rem;
+    letter-spacing: 8px;
+  }
+  
+  .title-line {
+    width: 120px;
+    height: 3px;
+  }
+  
+  .menu-button {
+    width: 500px;
+    height: 85px;
+    font-size: 1.3rem;
+    letter-spacing: 1.5px;
+    border-width: 2px;
+  }
+  
+  .buttons-section {
+    gap: 3rem;
+  }
+  
+  .button-wrapper.hovered {
+    transform: translateY(-5px);
+  }
+  
+  .menu-button:hover .button-text {
+    transform: translateX(15px);
+  }
+}
+
+/* מסכי דסקטופ גדולים - 1400px עד 1599px */
+@media (min-width: 1400px) and (max-width: 1599px) {
+  .menu-container {
+    gap: 6.5rem;
+    max-width: 1100px;
+    margin: 0 auto;
+    padding: 0 50px;
+  }
+  
+  .brand-title {
+    font-size: 5.5rem;
+    letter-spacing: 10px;
+  }
+  
+  .title-line {
+    width: 140px;
+    height: 3px;
+  }
+  
+  .menu-button {
+    width: 580px;
+    height: 95px;
+    font-size: 1.5rem;
+    letter-spacing: 2px;
+    border-width: 2px;
+  }
+  
+  .buttons-section {
+    gap: 3.5rem;
+  }
+  
+  .button-wrapper.hovered {
+    transform: translateY(-6px);
+  }
+  
+  .menu-button:hover .button-text {
+    transform: translateX(18px);
+  }
+}
+
+/* מסכי 4K ומסכים ענקיים - 1600px ומעלה */
+@media (min-width: 1600px) {
+  .menu-container {
+    gap: 8rem;
+    max-width: 1300px;
+    margin: 0 auto;
+    padding: 0 60px;
+  }
+  
+  .brand-title {
+    font-size: 6.5rem;
+    letter-spacing: 12px;
+  }
+  
+  .title-line {
+    width: 160px;
+    height: 4px;
+  }
+  
+  .menu-button {
+    width: 650px;
+    height: 110px;
+    font-size: 1.7rem;
+    letter-spacing: 2.5px;
+    border-width: 3px;
+  }
+  
+  .buttons-section {
     gap: 4rem;
+  }
+  
+  .button-wrapper.hovered {
+    transform: translateY(-8px);
+  }
+  
+  .menu-button:hover .button-text {
+    transform: translateX(20px);
+  }
+  
+  .button-line {
+    height: 2px;
+  }
+}
+
+/* מסכי 8K וענקיים במיוחד - 2000px ומעלה */
+@media (min-width: 2000px) {
+  .menu-container {
+    gap: 10rem;
+    max-width: 1600px;
+  }
+  
+  .brand-title {
+    font-size: 8rem;
+    letter-spacing: 15px;
+  }
+  
+  .title-line {
+    width: 200px;
+    height: 5px;
+  }
+  
+  .menu-button {
+    width: 750px;
+    height: 130px;
+    font-size: 2rem;
+    letter-spacing: 3px;
+    border-width: 4px;
+  }
+  
+  .buttons-section {
+    gap: 5rem;
+  }
+  
+  .button-wrapper.hovered {
+    transform: translateY(-10px);
+  }
+  
+  .button-line {
+    height: 3px;
+  }
+}
+
+/* הוסף את זה בסוף הקובץ MainMenu.css - תיקון כפור */
+
+/* תיקון כפור לכפתור התחל אימון */
+.main-menu .menu-button.start-workout,
+.main-menu .start-workout,
+.start-workout.menu-button,
+button.start-workout,
+.buttons-section .start-workout,
+.button-wrapper .start-workout {
+  width: 350px !important;
+  height: 70px !important;
+  min-width: 350px !important;
+  max-width: 350px !important;
+  min-height: 70px !important;
+  max-height: 70px !important;
+  font-size: 1.1rem !important;
+  padding: 0 !important;
+  margin: 0 !important;
+  box-sizing: border-box !important;
+  border-radius: 0 !important;
+  background: transparent !important;
+  border: 1px solid rgba(255, 255, 255, 0.2) !important;
+  color: #ffffff !important;
+  font-weight: 400 !important;
+  letter-spacing: 1px !important;
+  position: relative !important;
+  overflow: hidden !important;
+  cursor: pointer !important;
+  transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1) !important;
+  font-family: inherit !important;
+  text-decoration: none !important;
+  outline: none !important;
+}
+
+/* תיקון כפור לאפקטי הובר */
+.main-menu .menu-button.start-workout:hover,
+.main-menu .start-workout:hover,
+.start-workout.menu-button:hover,
+button.start-workout:hover {
+  border-color: rgba(46, 204, 113, 0.5) !important;
+  box-shadow: 0 0 30px rgba(46, 204, 113, 0.1) !important;
+  background: rgba(255, 255, 255, 0.05) !important;
+  width: 350px !important;
+  height: 70px !important;
+}
+
+/* תיקון כפור למובייל */
+@media (max-width: 480px) {
+  .main-menu .menu-button.start-workout,
+  .main-menu .start-workout,
+  .start-workout.menu-button,
+  button.start-workout {
+    width: 280px !important;
+    height: 55px !important;
+    min-width: 280px !important;
+    max-width: 280px !important;
+    min-height: 55px !important;
+    max-height: 55px !important;
+    font-size: 0.9rem !important;
+  }
+}
+
+@media (min-width: 481px) and (max-width: 768px) {
+  .main-menu .menu-button.start-workout,
+  .main-menu .start-workout,
+  .start-workout.menu-button,
+  button.start-workout {
+    width: 320px !important;
+    height: 60px !important;
+    min-width: 320px !important;
+    max-width: 320px !important;
+    min-height: 60px !important;
+    max-height: 60px !important;
+    font-size: 1rem !important;
+  }
+}
+
+@media (min-width: 769px) and (max-width: 1024px) {
+  .main-menu .menu-button.start-workout,
+  .main-menu .start-workout,
+  .start-workout.menu-button,
+  button.start-workout {
+    width: 380px !important;
+    height: 70px !important;
+    min-width: 380px !important;
+    max-width: 380px !important;
+    min-height: 70px !important;
+    max-height: 70px !important;
+    font-size: 1.15rem !important;
+  }
+}
+
+@media (min-width: 1025px) and (max-width: 1199px) {
+  .main-menu .menu-button.start-workout,
+  .main-menu .start-workout,
+  .start-workout.menu-button,
+  button.start-workout {
+    width: 420px !important;
+    height: 75px !important;
+    min-width: 420px !important;
+    max-width: 420px !important;
+    min-height: 75px !important;
+    max-height: 75px !important;
+    font-size: 1.2rem !important;
+  }
+}
+
+@media (min-width: 1200px) and (max-width: 1399px) {
+  .main-menu .menu-button.start-workout,
+  .main-menu .start-workout,
+  .start-workout.menu-button,
+  button.start-workout {
+    width: 500px !important;
+    height: 85px !important;
+    min-width: 500px !important;
+    max-width: 500px !important;
+    min-height: 85px !important;
+    max-height: 85px !important;
+    font-size: 1.3rem !important;
+  }
+}
+
+@media (min-width: 1400px) and (max-width: 1599px) {
+  .main-menu .menu-button.start-workout,
+  .main-menu .start-workout,
+  .start-workout.menu-button,
+  button.start-workout {
+    width: 580px !important;
+    height: 95px !important;
+    min-width: 580px !important;
+    max-width: 580px !important;
+    min-height: 95px !important;
+    max-height: 95px !important;
+    font-size: 1.5rem !important;
+  }
+}
+
+@media (min-width: 1600px) {
+  .main-menu .menu-button.start-workout,
+  .main-menu .start-workout,
+  .start-workout.menu-button,
+  button.start-workout {
+    width: 650px !important;
+    height: 110px !important;
+    min-width: 650px !important;
+    max-width: 650px !important;
+    min-height: 110px !important;
+    max-height: 110px !important;
+    font-size: 1.7rem !important;
   }
 }
