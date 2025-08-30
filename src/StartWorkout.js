@@ -30,8 +30,41 @@ function StartWorkout({ onBackClick, user }) {
         
         if (data.success) {
           console.log('נמצאו אימונים:', data.workouts);
+          console.log('פירוט האימונים:', data.workouts.map(w => ({
+            date: w.date,
+            startTime: w.startTime,
+            endTime: w.endTime,
+            fieldName: w.fieldName
+          })));
           setWorkouts(data.workouts);
-          setWorkoutsByField(data.workoutsByField);
+          
+          // מיון האימונים לפי תאריך ושעה
+          const sortedWorkouts = data.workouts.sort((a, b) => {
+            const dateA = new Date(a.date + ' ' + a.startTime);
+            const dateB = new Date(b.date + ' ' + b.startTime);
+            return dateA - dateB;
+          });
+          
+          // חלוקה לפי תאריך - כל הזמנה היא שיבוץ נפרד
+          const workoutsByDate = {};
+          sortedWorkouts.forEach(workout => {
+            const dateKey = workout.date;
+            if (!workoutsByDate[dateKey]) {
+              workoutsByDate[dateKey] = [];
+            }
+            
+            // כל הזמנה היא שיבוץ נפרד
+            workoutsByDate[dateKey].push(workout);
+          });
+          
+          // מיון השיבוצים בכל תאריך לפי שעה
+          Object.keys(workoutsByDate).forEach(dateKey => {
+            workoutsByDate[dateKey].sort((a, b) => {
+              return a.startTime.localeCompare(b.startTime);
+            });
+          });
+          
+          setWorkoutsByField(workoutsByDate);
         } else {
           console.log('לא נמצאו אימונים או שגיאה:', data.message);
           setError(data.message);
@@ -59,13 +92,32 @@ function StartWorkout({ onBackClick, user }) {
 
   // פונקציה לעיצוב התאריך
   const formatDate = (dateString) => {
-    const date = new Date(dateString);
-    return date.toLocaleDateString('he-IL', {
-      weekday: 'long',
-      year: 'numeric',
-      month: 'long',
-      day: 'numeric'
-    });
+    try {
+      const date = new Date(dateString);
+      if (isNaN(date.getTime())) {
+        // אם התאריך לא תקין, ננסה פורמט אחר
+        const [year, month, day] = dateString.split('-');
+        const newDate = new Date(year, month - 1, day);
+        if (isNaN(newDate.getTime())) {
+          return dateString; // נחזיר את המחרוזת המקורית אם לא הצלחנו
+        }
+        return newDate.toLocaleDateString('he-IL', {
+          weekday: 'long',
+          year: 'numeric',
+          month: 'long',
+          day: 'numeric'
+        });
+      }
+      return date.toLocaleDateString('he-IL', {
+        weekday: 'long',
+        year: 'numeric',
+        month: 'long',
+        day: 'numeric'
+      });
+    } catch (error) {
+      console.error('שגיאה בעיצוב התאריך:', error);
+      return dateString;
+    }
   };
 
   // פונקציה לעיצוב השעה
@@ -116,32 +168,48 @@ function StartWorkout({ onBackClick, user }) {
           </div>
         ) : (
           <div className="workouts-list">
-            {Object.entries(workoutsByField).map(([fieldName, fieldWorkouts]) => (
-              <div key={fieldName} className="court-section">
-                <h2 className="court-title">{fieldName}</h2>
-                <div className="workouts-grid">
-                  {fieldWorkouts.map(workout => (
-                    <div key={workout.id} className="workout-card">
-                      <div className="workout-header">
-                        <h3>{workout.sportType}</h3>
-                        <span className="workout-duration">{workout.duration} דקות</span>
-                      </div>
-                      <div className="workout-details">
-                        <p className="workout-date">{formatDate(workout.date)}</p>
-                        <p className="workout-time">
-                          {formatTime(workout.startTime)} - {formatTime(workout.endTime)}
-                        </p>
-                        <p className="workout-field">מגרש: {workout.fieldName}</p>
-                      </div>
-                      <button 
-                        className="start-workout-btn"
-                        onClick={() => handleStartWorkout(workout.id)}
-                      >
-                        התחל אימון
-                      </button>
-                    </div>
-                  ))}
+            {Object.entries(workoutsByField).map(([dateKey, dateWorkouts]) => (
+              <div key={dateKey} className="workout-session">
+                <div className="workout-session-header">
+                  <h2 className="workout-date-title">
+                    שיבוץ מגרשים בתאריך {formatDate(dateKey)}
+                  </h2>
+                  <div className="workout-time-range">
+                    {dateWorkouts.length} שיבוצים
+                  </div>
+                  <div className="workout-date-debug" style={{fontSize: '0.8rem', color: 'rgba(255,255,255,0.6)', marginTop: '5px'}}>
+                    תאריך מקורי: {dateKey}
+                  </div>
                 </div>
+                
+                <div className="workout-schedule">
+                  <h3>רשימת השיבוצים:</h3>
+                  <div className="time-slots">
+                    {dateWorkouts.map((slot, index) => {
+                      // בדיקה שהשעות הגיוניות
+                      const startTime = slot.startTime;
+                      const endTime = slot.endTime;
+                      const isValidTime = startTime && endTime && startTime !== endTime;
+                      
+                      return (
+                        <div key={index} className="time-slot">
+                          <span className="time">
+                            {isValidTime ? `${formatTime(startTime)} - ${formatTime(endTime)}` : `${formatTime(startTime)} (15 דקות)`}
+                          </span>
+                          <span className="field">{slot.fieldName}</span>
+                          <span className="sport">{slot.sportType}</span>
+                        </div>
+                      );
+                    })}
+                  </div>
+                </div>
+                
+                <button 
+                  className="start-workout-btn"
+                  onClick={() => handleStartWorkout(dateKey)}
+                >
+                  התחל אימון בתאריך זה
+                </button>
               </div>
             ))}
             

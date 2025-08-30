@@ -75,17 +75,94 @@
   margin: 0 auto;
 }
 
-.court-section {
-  margin-bottom: 40px;
+.workout-session {
+  background: rgba(255, 255, 255, 0.1);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  border-radius: 12px;
+  padding: 25px;
+  margin-bottom: 30px;
+  backdrop-filter: blur(10px);
+  transition: all 0.3s ease;
 }
 
-.court-title {
+.workout-session:hover {
+  background: rgba(255, 255, 255, 0.15);
+  border-color: rgba(179, 142, 216, 0.5);
+  transform: translateY(-3px);
+  box-shadow: 0 8px 25px rgba(179, 142, 216, 0.3);
+}
+
+.workout-session-header {
+  text-align: center;
+  margin-bottom: 25px;
+  padding-bottom: 20px;
+  border-bottom: 2px solid rgba(255, 255, 255, 0.2);
+}
+
+.workout-date-title {
   font-size: 1.8rem;
   color: #ffffff;
-  margin-bottom: 20px;
-  padding-bottom: 10px;
-  border-bottom: 2px solid rgba(255, 255, 255, 0.2);
+  margin: 0 0 10px 0;
+  background: linear-gradient(45deg, #ffffff, #b38ed8);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+.workout-time-range {
+  font-size: 1.2rem;
+  color: rgba(179, 142, 216, 0.9);
+  font-weight: bold;
+  background: rgba(179, 142, 216, 0.1);
+  padding: 8px 16px;
+  border-radius: 20px;
+  border: 1px solid rgba(179, 142, 216, 0.3);
+  display: inline-block;
+}
+
+.workout-schedule {
+  margin-bottom: 25px;
+}
+
+.workout-schedule h3 {
+  font-size: 1.3rem;
+  color: #ffffff;
+  margin-bottom: 15px;
   text-align: right;
+}
+
+.time-slots {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.time-slot {
+  display: grid;
+  grid-template-columns: 120px 1fr 120px;
+  gap: 15px;
+  align-items: center;
+  background: rgba(255, 255, 255, 0.05);
+  padding: 12px 15px;
+  border-radius: 8px;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  text-align: right;
+}
+
+.time-slot .time {
+  color: #b38ed8;
+  font-weight: bold;
+  font-size: 0.95rem;
+}
+
+.time-slot .field {
+  color: #ffffff;
+  font-weight: 500;
+}
+
+.time-slot .sport {
+  color: rgba(255, 255, 255, 0.7);
+  font-size: 0.9rem;
 }
 
 .workouts-grid {
@@ -278,8 +355,18 @@
     padding: 15px;
   }
   
-  .court-title {
+  .workout-date-title {
     font-size: 1.5rem;
+  }
+  
+  .time-slot {
+    grid-template-columns: 1fr;
+    gap: 8px;
+    text-align: center;
+  }
+  
+  .time-slot .time {
+    font-size: 1rem;
   }
   
   .workout-header h3 {
@@ -337,7 +424,7 @@
     padding: 25px;
   }
   
-  .court-title {
+  .workout-date-title {
     font-size: 2rem;
   }
 }
