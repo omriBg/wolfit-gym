@@ -1,0 +1,130 @@
+.countdown-timer {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 15px;
+  background: linear-gradient(135deg, rgba(179, 142, 216, 0.1), rgba(156, 125, 196, 0.1));
+  border: 2px solid rgba(179, 142, 216, 0.3);
+  border-radius: 15px;
+  backdrop-filter: blur(10px);
+  transition: all 0.3s ease;
+  min-height: 80px;
+}
+
+.countdown-timer.urgent {
+  background: linear-gradient(135deg, rgba(255, 107, 107, 0.1), rgba(238, 90, 82, 0.1));
+  border-color: rgba(255, 107, 107, 0.5);
+  animation: pulse 2s infinite;
+}
+
+.countdown-text {
+  font-size: 1.1rem;
+  color: rgba(255, 255, 255, 0.9);
+  margin-bottom: 8px;
+  text-align: center;
+  font-weight: 600;
+}
+
+.countdown-timer:not(.urgent) .countdown-text {
+  font-size: 1.3rem;
+  color: #ffffff;
+  margin-bottom: 0;
+}
+
+.countdown-display {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
+  font-family: 'Courier New', monospace;
+  font-weight: bold;
+}
+
+.countdown-number {
+  background: rgba(255, 255, 255, 0.1);
+  color: #ffffff;
+  padding: 8px 12px;
+  border-radius: 8px;
+  font-size: 1.2rem;
+  min-width: 40px;
+  text-align: center;
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  backdrop-filter: blur(5px);
+}
+
+.countdown-separator {
+  color: #b38ed8;
+  font-size: 1.5rem;
+  font-weight: bold;
+  margin: 0 2px;
+}
+
+.countdown-label {
+  color: #ffffff;
+  font-size: 1rem;
+  margin-left: 8px;
+  font-weight: 500;
+}
+
+.countdown-timer.urgent .countdown-number {
+  background: rgba(255, 107, 107, 0.2);
+  border-color: rgba(255, 107, 107, 0.4);
+  color: #ffffff;
+}
+
+.countdown-timer.urgent .countdown-separator {
+  color: #ff6b6b;
+}
+
+@keyframes pulse {
+  0% {
+    box-shadow: 0 0 0 0 rgba(255, 107, 107, 0.7);
+  }
+  70% {
+    box-shadow: 0 0 0 10px rgba(255, 107, 107, 0);
+  }
+  100% {
+    box-shadow: 0 0 0 0 rgba(255, 107, 107, 0);
+  }
+}
+
+/* התאמה למובייל */
+@media (max-width: 768px) {
+  .countdown-timer {
+    padding: 12px;
+    min-height: 70px;
+  }
+  
+  .countdown-text {
+    font-size: 0.8rem;
+  }
+  
+  .countdown-number {
+    padding: 6px 10px;
+    font-size: 1rem;
+    min-width: 35px;
+  }
+  
+  .countdown-separator {
+    font-size: 1.2rem;
+  }
+}
+
+/* התאמה למסכים קטנים */
+@media (max-width: 480px) {
+  .countdown-timer {
+    padding: 10px;
+    min-height: 60px;
+  }
+  
+  .countdown-number {
+    padding: 4px 8px;
+    font-size: 0.9rem;
+    min-width: 30px;
+  }
+  
+  .countdown-separator {
+    font-size: 1rem;
+  }
+}

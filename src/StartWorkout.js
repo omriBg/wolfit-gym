@@ -1,5 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import './StartWorkout.css';
+import './CountdownTimer.css';
+import CountdownTimer from './CountdownTimer';
 
 function StartWorkout({ onBackClick, user }) {
   const [workouts, setWorkouts] = useState([]);
@@ -57,9 +59,13 @@ function StartWorkout({ onBackClick, user }) {
             const lastWorkoutGroup = workoutsByDate[dateKey][workoutsByDate[dateKey].length - 1];
             if (lastWorkoutGroup && lastWorkoutGroup.length > 0) {
               const lastSlot = lastWorkoutGroup[lastWorkoutGroup.length - 1];
-              const lastStartTime = new Date(dateKey + ' ' + lastSlot.startTime);
-              const currentStartTime = new Date(dateKey + ' ' + workout.startTime);
-              const timeDiff = (currentStartTime - lastStartTime) / (1000 * 60); // הפרש בדקות
+              
+              // חישוב הזמן בצורה פשוטה יותר
+              const lastTime = lastSlot.startTime.split(':');
+              const currentTime = workout.startTime.split(':');
+              const lastMinutes = parseInt(lastTime[0]) * 60 + parseInt(lastTime[1]);
+              const currentMinutes = parseInt(currentTime[0]) * 60 + parseInt(currentTime[1]);
+              const timeDiff = currentMinutes - lastMinutes;
               
               console.log(`בדיקת רציפות: ${lastSlot.startTime} -> ${workout.startTime}, הפרש: ${timeDiff} דקות`);
               
@@ -153,58 +159,93 @@ function StartWorkout({ onBackClick, user }) {
 
   // פונקציה לחישוב זמן עד האימון
   const getTimeUntilWorkout = (dateKey) => {
-    const today = new Date();
-    const workoutDate = new Date(dateKey);
-    
-    // איפוס השעות כדי להשוות רק תאריכים
-    today.setHours(0, 0, 0, 0);
-    workoutDate.setHours(0, 0, 0, 0);
-    
-    const diffTime = workoutDate.getTime() - today.getTime();
-    const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
-    
-    if (diffDays === 0) {
-      return 'היום';
-    } else if (diffDays === 1) {
-      return 'מחר';
-    } else if (diffDays === 2) {
-      return 'בעוד יומיים';
-    } else {
-      return `בעוד ${diffDays} ימים`;
+    try {
+      const today = new Date();
+      const workoutDate = new Date(dateKey);
+      
+      // איפוס השעות כדי להשוות רק תאריכים
+      today.setHours(0, 0, 0, 0);
+      workoutDate.setHours(0, 0, 0, 0);
+      
+      const diffTime = workoutDate.getTime() - today.getTime();
+      const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+      
+      if (isNaN(diffDays)) {
+        return 'בקרוב';
+      }
+      
+      if (diffDays === 0) {
+        return 'היום';
+      } else if (diffDays === 1) {
+        return 'מחר';
+      } else if (diffDays === 2) {
+        return 'בעוד יומיים';
+      } else {
+        return `בעוד ${diffDays} ימים`;
+      }
+    } catch (error) {
+      console.error('שגיאה בחישוב זמן עד האימון:', error);
+      return 'בקרוב';
     }
   };
 
   // פונקציה לספירה אחורה אם זה היום
   const getCountdownText = (dateKey, workouts) => {
-    const today = new Date();
-    const workoutDate = new Date(dateKey);
-    
-    // איפוס השעות כדי להשוות רק תאריכים
-    today.setHours(0, 0, 0, 0);
-    workoutDate.setHours(0, 0, 0, 0);
-    
-    if (today.getTime() === workoutDate.getTime()) {
-      // זה היום - נחשב ספירה אחורה
+    try {
+      console.log('חישוב ספירה אחורה עבור:', dateKey, workouts);
+      
+      const today = new Date();
+      const workoutDate = new Date(dateKey);
+      
+      console.log('היום:', today.toISOString().split('T')[0]);
+      console.log('תאריך אימון:', dateKey);
+      
+      // איפוס השעות כדי להשוות רק תאריכים
+      today.setHours(0, 0, 0, 0);
+      workoutDate.setHours(0, 0, 0, 0);
+      
+      console.log('השוואת תאריכים:', today.getTime(), workoutDate.getTime());
+      
+      // תמיד נחשב ספירה אחורה (לא רק אם זה היום)
       const firstWorkout = workouts[0];
-      const workoutTime = new Date(dateKey + ' ' + firstWorkout.startTime);
+      if (!firstWorkout || !firstWorkout.startTime) {
+        return 'האימון התחיל!';
+      }
+      
+      console.log('שעת האימון:', firstWorkout.startTime);
+      
+      // יצירת תאריך מלא עם שעה
+      const [year, month, day] = dateKey.split('-');
+      const [hours, minutes] = firstWorkout.startTime.split(':');
+      const workoutTime = new Date(parseInt(year), parseInt(month) - 1, parseInt(day), parseInt(hours), parseInt(minutes));
       const now = new Date();
+      
+      console.log('זמן אימון:', workoutTime);
+      console.log('עכשיו:', now);
+      
       const diffMs = workoutTime.getTime() - now.getTime();
+      console.log('הפרש במילישניות:', diffMs);
       
       if (diffMs <= 0) {
         return 'האימון התחיל!';
       }
       
-      const diffHours = Math.floor(diffMs / (1000 * 60 * 60));
+      const diffDays = Math.floor(diffMs / (1000 * 60 * 60 * 24));
+      const diffHours = Math.floor((diffMs % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
       const diffMinutes = Math.floor((diffMs % (1000 * 60 * 60)) / (1000 * 60));
       
-      if (diffHours > 0) {
+      console.log('ימים:', diffDays, 'שעות:', diffHours, 'דקות:', diffMinutes);
+      
+      if (diffDays > 0) {
+        return `האימון מתחיל בעוד ${diffDays} ימים`;
+      } else if (diffHours > 0) {
         return `האימון מתחיל בעוד ${diffHours} שעות ו-${diffMinutes} דקות`;
       } else {
         return `האימון מתחיל בעוד ${diffMinutes} דקות`;
       }
-    } else {
-      // לא היום - נחזיר כמה ימים נשארו
-      return getTimeUntilWorkout(dateKey);
+    } catch (error) {
+      console.error('שגיאה בחישוב הספירה אחורה:', error);
+      return 'האימון מתחיל בקרוב';
     }
   };
 
@@ -263,12 +304,8 @@ function StartWorkout({ onBackClick, user }) {
                   return (
                     <div key={groupIndex} className="workout-session">
                       <div className="workout-session-header">
-                        <h3 className="workout-title">אימון #{groupIndex + 1}</h3>
                         <div className="workout-time-range">
                           {formatTime(firstWorkout.startTime)} - {formatTime(lastWorkout.endTime)} ({totalDuration} דקות)
-                        </div>
-                        <div className="workout-slots-count">
-                          {workoutGroup.length} שיבוצים
                         </div>
                       </div>
                       
@@ -293,30 +330,36 @@ function StartWorkout({ onBackClick, user }) {
                         </div>
                       </div>
                       
-                      <button 
-                        className={`start-workout-btn ${getCountdownText(dateKey, workoutGroup).includes('דקות') ? 'countdown' : ''}`}
-                        onClick={() => handleStartWorkout(`${dateKey}_${groupIndex}`)}
-                      >
-                        {getCountdownText(dateKey, workoutGroup)}
-                      </button>
+                      <CountdownTimer 
+                        targetDate={dateKey}
+                        targetTime={firstWorkout.startTime}
+                        onComplete={() => handleStartWorkout(`${dateKey}_${groupIndex}`)}
+                      />
+                      {/* מציג כפתור רק אם זה היום */}
+                      {(() => {
+                        const today = new Date();
+                        const workoutDate = new Date(dateKey);
+                        today.setHours(0, 0, 0, 0);
+                        workoutDate.setHours(0, 0, 0, 0);
+                        const isToday = today.getTime() === workoutDate.getTime();
+                        
+                        return isToday ? (
+                          <button 
+                            className="start-workout-btn"
+                            onClick={() => handleStartWorkout(`${dateKey}_${groupIndex}`)}
+                            style={{ marginTop: '15px' }}
+                          >
+                            התחל אימון
+                          </button>
+                        ) : null;
+                      })()}
                     </div>
                   );
                 })}
               </div>
             ))}
             
-            <div className="workouts-summary" style={{
-              marginTop: '40px',
-              padding: '20px',
-              background: 'rgba(179, 142, 216, 0.1)',
-              borderRadius: '12px',
-              border: '1px solid rgba(179, 142, 216, 0.3)',
-              textAlign: 'center'
-            }}>
-              <p style={{ margin: 0, fontSize: '1.1rem' }}>
-                סה"כ יש לך <strong>{workouts.length} אימונים</strong> מתוכננים
-              </p>
-            </div>
+
           </div>
         )}
       </div>
