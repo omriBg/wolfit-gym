@@ -40,8 +40,18 @@ function StartWorkout({ onBackClick, user }) {
           })));
           setWorkouts(data.workouts);
           
-          // מיון האימונים לפי תאריך ושעה
-          const sortedWorkouts = data.workouts.sort((a, b) => {
+          // סינון אימונים שכבר הסתיימו ומיון לפי תאריך ושעה
+          const now = new Date();
+          const filteredWorkouts = data.workouts.filter(workout => {
+            const [year, month, day] = workout.date.split('-');
+            const [hours, minutes] = workout.endTime.split(':');
+            const workoutEndTime = new Date(parseInt(year), parseInt(month) - 1, parseInt(day), parseInt(hours), parseInt(minutes));
+            return workoutEndTime > now;
+          });
+          
+          console.log(`סוננו ${data.workouts.length - filteredWorkouts.length} אימונים שכבר הסתיימו`);
+          
+          const sortedWorkouts = filteredWorkouts.sort((a, b) => {
             const dateA = new Date(a.date + ' ' + a.startTime);
             const dateB = new Date(b.date + ' ' + b.startTime);
             return dateA - dateB;
@@ -50,6 +60,18 @@ function StartWorkout({ onBackClick, user }) {
           // חלוקה לפי תאריך ויצירת אימונים רציפים
           const workoutsByDate = {};
           sortedWorkouts.forEach(workout => {
+            // בדיקה אם האימון כבר הסתיים
+            const now = new Date();
+            const [year, month, day] = workout.date.split('-');
+            const [hours, minutes] = workout.endTime.split(':');
+            const workoutEndTime = new Date(parseInt(year), parseInt(month) - 1, parseInt(day), parseInt(hours), parseInt(minutes));
+            
+            // אם האימון כבר הסתיים, נדלג עליו
+            if (workoutEndTime <= now) {
+              console.log(`אימון שכבר הסתיים: ${workout.date} ${workout.endTime}`);
+              return;
+            }
+            
             const dateKey = workout.date;
             if (!workoutsByDate[dateKey]) {
               workoutsByDate[dateKey] = [];

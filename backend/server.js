@@ -506,7 +506,7 @@ app.get('/api/future-workouts/:userId', async (req, res) => {
     
     console.log(`📅 מחפש אימונים מתאריך ${currentDate} שעה ${currentTime}`);
     
-    // שאילתה לקבלת כל האימונים העתידיים
+    // שאילתה לקבלת כל האימונים העתידיים (כולל אימונים שהתחילו אבל לא הסתיימו)
     const workoutsQuery = `
       SELECT 
         bf.idfield,
