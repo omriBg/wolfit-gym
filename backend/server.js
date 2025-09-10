@@ -224,6 +224,18 @@ app.post('/api/google-login', async (req, res) => {
         });
       }
       
+      // המרת תאריך לפורמט PostgreSQL (YYYY-MM-DD)
+      let formattedBirthdate = null;
+      if (birthdate) {
+        // אם התאריך בפורמט DD/MM/YYYY, נהפוך אותו ל-YYYY-MM-DD
+        if (birthdate.includes('/')) {
+          const [day, month, year] = birthdate.split('/');
+          formattedBirthdate = `${year}-${month.padStart(2, '0')}-${day.padStart(2, '0')}`;
+        } else {
+          formattedBirthdate = birthdate;
+        }
+      }
+
       // הכנסת משתמש חדש
       const userResult = await pool.query(
         `INSERT INTO "User" 
@@ -238,7 +250,7 @@ app.post('/api/google-login', async (req, res) => {
           'google',
           height || null,
           weight || null,
-          birthdate || null,
+          formattedBirthdate,
           intensityLevel || 'medium'
         ]
       );
