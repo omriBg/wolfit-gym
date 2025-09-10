@@ -169,7 +169,8 @@ app.post('/api/google-login', async (req, res) => {
       }
       
       // בדיקה שהטוקן מיועד לאפליקציה שלנו
-      if (googleData.aud !== process.env.GOOGLE_CLIENT_ID) {
+      const expectedClientId = process.env.GOOGLE_CLIENT_ID || "386514389479-impprp7mgpalddmuflkvev582v8idjug.apps.googleusercontent.com";
+      if (googleData.aud !== expectedClientId) {
         console.warn('⚠️ ניסיון התחברות עם Client ID לא תקין:', googleData.aud);
         throw new Error('טוקן Google לא תקין');
       }
