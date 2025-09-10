@@ -3,6 +3,7 @@ import './App.css';
 import SignUpScreen from './SignUpScreen.js';
 import SignUpPreferences from './SignUpPreferences.js';
 import WelcomeScreen from './WelcomeScreen.js';
+import { GoogleLogin, GoogleOAuthProvider } from '@react-oauth/google';
 import './mobile-fix.css';
 function App() {
   const [isLoggedIn, setIsLoggedIn] = useState(false);
@@ -12,56 +13,49 @@ function App() {
   const [password, setPassword] = useState('');
   const [loginMessage, setLoginMessage] = useState(''); 
   const [loggedInUser, setLoggedInUser] = useState(null);
-  const [isLoading, setIsLoading] = useState(false); 
+  const [isLoading, setIsLoading] = useState(false);
 
-  const handleLogin = async () => {
-    if (!userName.trim() || !password.trim()) {
-      setLoginMessage('אנא מלא את כל השדות');
-      return;
-    }
+  // Google OAuth Client ID
+  const GOOGLE_CLIENT_ID = "386514389479-impprp7mgpalddmuflkvev582v8idjug.apps.googleusercontent.com"; 
 
-    setIsLoading(true); 
-    setLoginMessage('מתחבר לשרת...'); 
-
+  const handleGoogleLogin = async (credentialResponse) => {
+    setIsLoading(true);
+    setLoginMessage('מתחבר עם Google...');
+    
     try {
-      // יצירת AbortController עם timeout של 30 שניות
-      const controller = new AbortController();
-      const timeoutId = setTimeout(() => controller.abort(), 30000);
-
-      const response = await fetch('https://wolfit-gym-backend-ijvq.onrender.com/api/login', {
+      const response = await fetch('https://wolfit-gym-backend-ijvq.onrender.com/api/google-login', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
         },
         body: JSON.stringify({
-          userName: userName.trim(),
-          password: password
-        }),
-        signal: controller.signal
+          credential: credentialResponse.credential
+        })
       });
-
-      clearTimeout(timeoutId);
-
+      
       const result = await response.json();
       
       if (result.success) {
         console.log('התחברות הצליחה:', result.user);
-        setLoggedInUser(result.user); 
+        setLoggedInUser(result.user);
         setIsLoggedIn(true);
-        setLoginMessage(''); 
+        setLoginMessage('');
       } else {
-        setLoginMessage(result.message || 'שגיאה בהתחברות');
+        if (result.isNewUser) {
+          // משתמש חדש - מעבר למסך הרשמה
+          setLoginMessage('משתמש חדש - אנא הירשם תחילה');
+          setTimeout(() => {
+            handleGoToSignUp();
+          }, 2000);
+        } else {
+          setLoginMessage(result.message || 'שגיאה בהתחברות עם Google');
+        }
       }
-      
     } catch (error) {
       console.error('שגיאה בחיבור לשרת:', error);
-      if (error.name === 'AbortError') {
-        setLoginMessage('השרת לא מגיב. נסה שוב (ייתכן שהוא "ישן" וצריך להתעורר)');
-      } else {
-        setLoginMessage('שגיאה בחיבור לשרת. נסה שוב.');
-      }
+      setLoginMessage('שגיאה בחיבור לשרת. נסה שוב.');
     } finally {
-      setIsLoading(false); 
+      setIsLoading(false);
     }
   };
 
@@ -144,26 +138,31 @@ function App() {
 
   // 🔥 מסך ההתחברות החדש עם State
   return (
-    <div className="App">
-      <div className="logo-container">
-        <img src="/logo1.png" alt="WOLFit Logo" className="login-logo" />
-      </div>
-      
-      <div className="login-form">
-        <input 
-          type="text" 
-          placeholder="שם משתמש"  
-          value={userName}
-          onChange={(e) => setUserName(e.target.value)}
-          disabled={isLoading}
-        />
-        <input 
-          type="password" 
-          placeholder="סיסמה"
-          value={password}
-          onChange={(e) => setPassword(e.target.value)}
-          disabled={isLoading}
-        />
+    <GoogleOAuthProvider clientId={GOOGLE_CLIENT_ID}>
+      <div className="App">
+        <div className="logo-container">
+          <img src="/logo1.png" alt="WOLFit Logo" className="login-logo" />
+        </div>
+        
+        <div className="login-form">
+          {/* כפתור Google OAuth */}
+          <div style={{ 
+            display: 'flex', 
+            justifyContent: 'center', 
+            marginBottom: '20px',
+            opacity: isLoading ? 0.6 : 1
+          }}>
+            <GoogleLogin
+              onSuccess={handleGoogleLogin}
+              onError={() => setLoginMessage('שגיאה בהתחברות עם Google')}
+              theme="outline"
+              size="large"
+              text="signin_with"
+              shape="rectangular"
+              logo_alignment="left"
+              disabled={isLoading}
+            />
+          </div>
         
         {/* הודעה למשתמש */}
         {loginMessage && (
@@ -176,30 +175,26 @@ function App() {
           </p>
         )}
         
-        <button 
-          onClick={handleLogin}
-          disabled={isLoading}
-          style={{
-            opacity: isLoading ? 0.6 : 1,
-            cursor: isLoading ? 'not-allowed' : 'pointer',
-            position: 'relative'
-          }}
-        >
-          {isLoading ? (
-            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-              <div style={{
-                width: '16px',
-                height: '16px',
-                border: '2px solid #ffffff',
-                borderTop: '2px solid transparent',
-                borderRadius: '50%',
-                animation: 'spin 1s linear infinite',
-                marginLeft: '8px'
-              }}></div>
-              מתחבר...
-            </div>
-          ) : 'כניסה'}
-        </button>
+        {/* אינדיקטור טעינה */}
+        {isLoading && (
+          <div style={{ 
+            display: 'flex', 
+            alignItems: 'center', 
+            justifyContent: 'center',
+            marginTop: '10px'
+          }}>
+            <div style={{
+              width: '16px',
+              height: '16px',
+              border: '2px solid #b38ed8',
+              borderTop: '2px solid transparent',
+              borderRadius: '50%',
+              animation: 'spin 1s linear infinite',
+              marginLeft: '8px'
+            }}></div>
+            מתחבר עם Google...
+          </div>
+        )}
         
         <p>אין לך חשבון?
           <span 
@@ -216,6 +211,7 @@ function App() {
         </p>
       </div>
     </div>
+    </GoogleOAuthProvider>
   );
 }
 

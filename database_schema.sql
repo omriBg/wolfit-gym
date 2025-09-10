@@ -3,13 +3,16 @@
 -- Create User table
 CREATE TABLE IF NOT EXISTS "User" (
     idUser SERIAL PRIMARY KEY,
-    userName VARCHAR(50) UNIQUE NOT NULL,
-    password VARCHAR(255) NOT NULL,
+    userName VARCHAR(50) UNIQUE,
+    password VARCHAR(255),
     email VARCHAR(100) UNIQUE NOT NULL,
     height INTEGER,
     weight INTEGER,
     birthdate DATE,
-    intensityLevel VARCHAR(20) DEFAULT 'medium'
+    intensityLevel VARCHAR(20) DEFAULT 'medium',
+    googleId VARCHAR(255) UNIQUE,
+    profilePicture VARCHAR(500),
+    authProvider VARCHAR(20) DEFAULT 'local'
 );
 
 -- Create SportTypes table

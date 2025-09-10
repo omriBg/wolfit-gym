@@ -2,6 +2,7 @@
 const express = require('express');
 const cors = require('cors');
 const { Pool } = require('pg');
+const jwt = require('jsonwebtoken');
 require('dotenv').config();
 
 const app = express();
@@ -87,53 +88,86 @@ app.get('/api/user-preferences/:userId', async (req, res) => {
     }
   });
 
-// API לבדיקת התחברות
-app.post('/api/login', async (req, res) => {
-    try {
-      const { userName, password } = req.body;
+// API להתחברות עם Google OAuth
+app.post('/api/google-login', async (req, res) => {
+  try {
+    const { credential } = req.body;
+    
+    if (!credential) {
+      return res.json({
+        success: false,
+        message: 'נתוני Google חסרים'
+      });
+    }
+    
+    // פענוח הנתונים מ-Google
+    const googleData = jwt.decode(credential);
+    
+    if (!googleData) {
+      return res.json({
+        success: false,
+        message: 'נתוני Google לא תקינים'
+      });
+    }
+    
+    console.log('🔍 נתוני Google:', {
+      googleId: googleData.sub,
+      email: googleData.email,
+      name: googleData.name
+    });
+    
+    // בדיקה אם המשתמש קיים
+    const existingUser = await pool.query(
+      'SELECT * FROM "User" WHERE googleId = $1 OR email = $2',
+      [googleData.sub, googleData.email]
+    );
+    
+    if (existingUser.rows.length > 0) {
+      // משתמש קיים - התחברות ישירה
+      const user = existingUser.rows[0];
       
-      // בדיקה שהשדות לא ריקים
-      if (!userName || !password) {
-        return res.json({
-          success: false,
-          message: 'שם משתמש וסיסמה נדרשים'
-        });
+      // עדכון פרטי Google אם חסרים
+      if (!user.googleid) {
+        await pool.query(
+          'UPDATE "User" SET googleId = $1, profilePicture = $2, authProvider = $3 WHERE idUser = $4',
+          [googleData.sub, googleData.picture, 'google', user.iduser]
+        );
       }
-      
-      // חיפוש המשתמש במסד נתונים
-      const userResult = await pool.query(
-        'SELECT idUser, userName, email FROM "User" WHERE userName = $1 AND password = $2',
-        [userName, password]
-      );
-      
-      if (userResult.rows.length === 0) {
-        return res.json({
-          success: false,
-          message: 'שם משתמש או סיסמה שגויים'
-        });
-      }
-      
-      const user = userResult.rows[0];
       
       res.json({
         success: true,
         message: 'התחברות הצליחה!',
         user: {
           id: user.iduser,
-          userName: user.username,
-          email: user.email
+          userName: user.username || googleData.name,
+          email: user.email,
+          profilePicture: user.profilepicture || googleData.picture
         }
       });
-      
-    } catch (err) {
-      console.error('שגיאה בהתחברות:', err);
+    } else {
+      // משתמש חדש - צריך הרשמה
       res.json({
         success: false,
-        message: 'שגיאה בשרת',
-        error: err.message
+        message: 'משתמש לא קיים. אנא הירשם תחילה',
+        isNewUser: true,
+        googleData: {
+          googleId: googleData.sub,
+          name: googleData.name,
+          email: googleData.email,
+          picture: googleData.picture
+        }
       });
     }
-  });
+    
+  } catch (err) {
+    console.error('❌ שגיאה בהתחברות עם Google:', err);
+    res.json({
+      success: false,
+      message: 'שגיאה בשרת',
+      error: err.message
+    });
+  }
+});
 
   // API לבדיקת זמינות שם משתמש
   app.post('/api/check-username', async (req, res) => {
