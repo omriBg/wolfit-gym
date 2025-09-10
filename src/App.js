@@ -14,6 +14,7 @@ function App() {
   const [loginMessage, setLoginMessage] = useState(''); 
   const [loggedInUser, setLoggedInUser] = useState(null);
   const [isLoading, setIsLoading] = useState(false);
+  const [googleUserData, setGoogleUserData] = useState(null);
 
 
   // Google OAuth Client ID
@@ -43,7 +44,8 @@ function App() {
         setLoginMessage('');
       } else {
         if (result.isNewUser) {
-          // משתמש חדש - מעבר למסך הרשמה
+          // משתמש חדש - שמירת נתוני Google ומעבר למסך הרשמה
+          setGoogleUserData(result.googleData);
           setLoginMessage('משתמש חדש - אנא הירשם תחילה');
           setTimeout(() => {
             handleGoToSignUp();
@@ -85,20 +87,28 @@ function App() {
     console.log('נתוני משתמש מלאים:', completeUserData);
     
     try {
+      // הוספת נתוני Google לנתוני ההרשמה
+      const registrationData = {
+        ...completeUserData,
+        googleData: googleUserData
+      };
+      
       const response = await fetch('https://wolfit-gym-backend-ijvq.onrender.com/api/register', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify(completeUserData)
+        body: JSON.stringify(registrationData)
       });
       
       const result = await response.json();
       
       if (result.success) {
-        alert('ההרשמה הושלמה בהצלחה! אתה יכול להתחבר עכשיו');
+        console.log('הרשמה הושלמה בהצלחה:', result);
+        setLoggedInUser(result.user);
+        setIsLoggedIn(true);
         setCurrentScreen('login');
-        setUserBasicData(null);
+        setGoogleUserData(null); // ניקוי נתוני Google
       } else {
         alert('שגיאה בהרשמה: ' + result.message);
       }
