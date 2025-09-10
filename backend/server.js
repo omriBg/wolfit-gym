@@ -126,14 +126,6 @@ app.post('/api/google-login', async (req, res) => {
       // משתמש קיים - התחברות ישירה
       const user = existingUser.rows[0];
       
-      // עדכון פרטי Google אם חסרים
-      if (!user.googleid) {
-        await pool.query(
-          'UPDATE "User" SET googleId = $1, profilePicture = $2, authProvider = $3 WHERE idUser = $4',
-          [googleData.sub, googleData.picture, 'google', user.iduser]
-        );
-      }
-      
       res.json({
         success: true,
         message: 'התחברות הצליחה!',
@@ -206,49 +198,49 @@ app.post('/api/google-login', async (req, res) => {
     }
   });
   
-  // API להרשמת משתמש חדש
+  // API להרשמת משתמש חדש מ-Google OAuth
   app.post('/api/register', async (req, res) => {
     try {
-      const { userName, password, email, height, weight, birthdate, intensityLevel, selectedSports } = req.body;
+      const { googleData, height, weight, birthdate, intensityLevel, selectedSports } = req.body;
       
-      // בדיקה שכל השדות החובה קיימים
-      if (!userName || !password || !email) {
+      // בדיקה שנתוני Google קיימים
+      if (!googleData || !googleData.googleId || !googleData.email) {
         return res.json({
           success: false,
-          message: 'שם משתמש, סיסמה ואימייל נדרשים'
+          message: 'נתוני Google חסרים'
         });
       }
       
-      // בדיקה אם שם המשתמש כבר קיים
+      // בדיקה אם המשתמש כבר קיים
       const existingUser = await pool.query(
-        'SELECT idUser FROM "User" WHERE userName = $1',
-        [userName]
+        'SELECT idUser FROM "User" WHERE googleId = $1 OR email = $2',
+        [googleData.googleId, googleData.email]
       );
       
       if (existingUser.rows.length > 0) {
         return res.json({
           success: false,
-          message: 'שם המשתמש כבר קיים במערכת'
-        });
-      }
-      
-      // בדיקה אם האימייל כבר קיים
-      const existingEmail = await pool.query(
-        'SELECT idUser FROM "User" WHERE email = $1',
-        [email]
-      );
-      
-      if (existingEmail.rows.length > 0) {
-        return res.json({
-          success: false,
-          message: 'האימייל כבר קיים במערכת'
+          message: 'המשתמש כבר קיים במערכת'
         });
       }
       
       // הכנסת משתמש חדש
       const userResult = await pool.query(
-        'INSERT INTO "User" (userName, password, email, height, weight, birthdate, intensityLevel) VALUES ($1, $2, $3, $4, $5, $6, $7) RETURNING idUser',
-        [userName, password, email, height, weight, birthdate, intensityLevel]
+        `INSERT INTO "User" 
+         (googleId, email, userName, profilePicture, authProvider, height, weight, birthdate, intensityLevel) 
+         VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9) 
+         RETURNING idUser`,
+        [
+          googleData.googleId,
+          googleData.email,
+          googleData.name,
+          googleData.picture,
+          'google',
+          height || null,
+          weight || null,
+          birthdate || null,
+          intensityLevel || 'medium'
+        ]
       );
       
       const userId = userResult.rows[0].iduser;
@@ -266,7 +258,12 @@ app.post('/api/google-login', async (req, res) => {
       res.json({
         success: true,
         message: 'המשתמש נרשם בהצלחה!',
-        userId: userId
+        user: {
+          id: userId,
+          userName: googleData.name,
+          email: googleData.email,
+          profilePicture: googleData.picture
+        }
       });
       
     } catch (err) {
@@ -278,44 +275,6 @@ app.post('/api/google-login', async (req, res) => {
       });
     }
   });
-app.put('/api/save-user-preferences/:userId', async (req, res) => {
-  try {
-    const { userId } = req.params;
-    const { intensityLevel, selectedSports } = req.body;
-    
-    await pool.query(
-      'UPDATE "User" SET intensityLevel = $1 WHERE idUser = $2',
-      [intensityLevel, userId]
-    );
-    
-    await pool.query(
-      'DELETE FROM UserPreferences WHERE idUser = $1',
-      [userId]
-    );
-    
-    if (selectedSports && selectedSports.length > 0) {
-      for (let i = 0; i < selectedSports.length; i++) {
-        await pool.query(
-          'INSERT INTO UserPreferences (idUser, sportType, preferenceRank) VALUES ($1, $2, $3)',
-          [userId, selectedSports[i], i + 1]
-        );
-      }
-    }
-    
-    res.json({
-      success: true,
-      message: 'העדפות נשמרו בהצלחה!'
-    });
-    
-  } catch (err) {
-    console.error('שגיאה בשמירת העדפות:', err);
-    res.json({
-      success: false,
-      message: 'שגיאה בשמירת העדפות',
-      error: err.message
-    });
-  }
-});
 
 // API לשמירת אימון במסד הנתונים
 app.post('/api/book-fields', async (req, res) => {
