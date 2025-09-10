@@ -3,65 +3,14 @@ const express = require('express');
 const cors = require('cors');
 const { Pool } = require('pg');
 const jwt = require('jsonwebtoken');
-const bcrypt = require('bcrypt');
 require('dotenv').config();
 
 const app = express();
 const PORT = process.env.PORT || 3001;
 
 // Middleware
-app.use(cors({
-  origin: process.env.NODE_ENV === 'production' 
-    ? ['https://wolfit-gym-frontend.onrender.com', 'https://wolfit-gym.onrender.com']
-    : ['http://localhost:3000', 'http://localhost:3001'],
-  credentials: true
-}));
-app.use(express.json({ limit: '10mb' }));
-
-// Rate limiting middleware (בסיסי)
-const rateLimitMap = new Map();
-const RATE_LIMIT_WINDOW = 15 * 60 * 1000; // 15 דקות
-const RATE_LIMIT_MAX_REQUESTS = 100; // מקסימום בקשות לחלון זמן
-
-const rateLimitMiddleware = (req, res, next) => {
-  const clientIP = req.ip || req.connection.remoteAddress;
-  const now = Date.now();
-  
-  if (!rateLimitMap.has(clientIP)) {
-    rateLimitMap.set(clientIP, { count: 1, resetTime: now + RATE_LIMIT_WINDOW });
-    return next();
-  }
-  
-  const clientData = rateLimitMap.get(clientIP);
-  
-  if (now > clientData.resetTime) {
-    // חלון זמן חדש
-    rateLimitMap.set(clientIP, { count: 1, resetTime: now + RATE_LIMIT_WINDOW });
-    return next();
-  }
-  
-  if (clientData.count >= RATE_LIMIT_MAX_REQUESTS) {
-    return res.status(429).json({
-      success: false,
-      message: 'יותר מדי בקשות. נסה שוב מאוחר יותר'
-    });
-  }
-  
-  clientData.count++;
-  next();
-};
-
-// החלת rate limiting על כל הבקשות
-app.use(rateLimitMiddleware);
-
-// Security headers middleware
-app.use((req, res, next) => {
-  res.setHeader('X-Content-Type-Options', 'nosniff');
-  res.setHeader('X-Frame-Options', 'DENY');
-  res.setHeader('X-XSS-Protection', '1; mode=block');
-  res.setHeader('Referrer-Policy', 'strict-origin-when-cross-origin');
-  next();
-});
+app.use(cors());
+app.use(express.json());
 
 // חיבור למסד נתונים
 const pool = new Pool({
@@ -151,43 +100,20 @@ app.post('/api/google-login', async (req, res) => {
       });
     }
     
-    // אימות מאובטח של הנתונים מ-Google
-    let googleData;
-    try {
-      // בדיקה שהטוקן תקין (ללא אימות חתימה - זה נעשה בצד הלקוח)
-      googleData = jwt.decode(credential);
-      
-      if (!googleData || !googleData.sub || !googleData.email) {
-        throw new Error('נתוני Google לא תקינים');
-      }
-      
-      // בדיקה שהטוקן לא פג תוקף
-      const now = Math.floor(Date.now() / 1000);
-      if (googleData.exp && googleData.exp < now) {
-        throw new Error('טוקן Google פג תוקף');
-      }
-      
-      // בדיקה שהטוקן מיועד לאפליקציה שלנו
-      const expectedClientId = process.env.GOOGLE_CLIENT_ID || "386514389479-impprp7mgpalddmuflkvev582v8idjug.apps.googleusercontent.com";
-      if (googleData.aud !== expectedClientId) {
-        console.warn('⚠️ ניסיון התחברות עם Client ID לא תקין:', googleData.aud);
-        throw new Error('טוקן Google לא תקין');
-      }
-      
-    } catch (jwtError) {
-      console.error('❌ שגיאה באימות Google token:', jwtError.message);
+    // פענוח הנתונים מ-Google
+    const googleData = jwt.decode(credential);
+    
+    if (!googleData) {
       return res.json({
         success: false,
-        message: 'נתוני Google לא תקינים או פגי תוקף'
+        message: 'נתוני Google לא תקינים'
       });
     }
     
-    // לוג מאובטח - לא נשמור נתונים רגישים
-    console.log('🔍 התחברות Google:', {
+    console.log('🔍 נתוני Google:', {
       googleId: googleData.sub,
-      email: googleData.email ? googleData.email.replace(/(.{2}).*(@.*)/, '$1***$2') : 'N/A',
-      name: googleData.name ? googleData.name.substring(0, 2) + '***' : 'N/A',
-      timestamp: new Date().toISOString()
+      email: googleData.email,
+      name: googleData.name
     });
     
     // בדיקה אם המשתמש קיים
@@ -230,172 +156,6 @@ app.post('/api/google-login', async (req, res) => {
     res.json({
       success: false,
       message: 'שגיאה בשרת',
-      error: err.message
-    });
-  }
-});
-
-// API להרשמת משתמש חדש (כולל Google OAuth)
-app.post('/api/register', async (req, res) => {
-  try {
-    const { 
-      userName, 
-      email, 
-      password, 
-      height, 
-      weight, 
-      birthdate, 
-      intensityLevel, 
-      selectedSports,
-      googleData 
-    } = req.body;
-    
-    // לוג מאובטח - לא נשמור נתונים רגישים
-    console.log('📝 בקשה להרשמה:', { 
-      userName: userName ? userName.substring(0, 2) + '***' : 'N/A',
-      email: email ? email.replace(/(.{2}).*(@.*)/, '$1***$2') : 'N/A',
-      hasPassword: !!password,
-      hasGoogleData: !!googleData,
-      selectedSports: selectedSports?.length || 0,
-      timestamp: new Date().toISOString()
-    });
-    
-    // בדיקות בסיסיות
-    if (!email) {
-      return res.json({
-        success: false,
-        message: 'כתובת אימייל נדרשת'
-      });
-    }
-    
-    // אם זה משתמש Google, נבדוק שיש נתוני Google
-    if (googleData) {
-      if (!googleData.googleId || !googleData.email) {
-        return res.json({
-          success: false,
-          message: 'נתוני Google חסרים'
-        });
-      }
-      
-      // וידוא שהאימייל תואם
-      if (googleData.email !== email) {
-        return res.json({
-          success: false,
-          message: 'כתובת האימייל לא תואמת לנתוני Google'
-        });
-      }
-    } else {
-      // משתמש רגיל - נדרש סיסמה ושם משתמש
-      if (!password || !userName) {
-        return res.json({
-          success: false,
-          message: 'שם משתמש וסיסמה נדרשים'
-        });
-      }
-    }
-    
-    // בדיקה שהאימייל לא קיים כבר
-    const existingEmail = await pool.query(
-      'SELECT idUser FROM "User" WHERE email = $1',
-      [email]
-    );
-    
-    if (existingEmail.rows.length > 0) {
-      return res.json({
-        success: false,
-        message: 'כתובת אימייל זו כבר רשומה במערכת'
-      });
-    }
-    
-    // בדיקה שהשם משתמש לא קיים (אם סופק)
-    if (userName) {
-      const existingUserName = await pool.query(
-        'SELECT idUser FROM "User" WHERE userName = $1',
-        [userName]
-      );
-      
-      if (existingUserName.rows.length > 0) {
-        return res.json({
-          success: false,
-          message: 'שם משתמש זה כבר תפוס'
-        });
-      }
-    }
-    
-    // הצפנת סיסמה אם קיימת
-    let hashedPassword = null;
-    if (password) {
-      const saltRounds = 12;
-      hashedPassword = await bcrypt.hash(password, saltRounds);
-    }
-    
-    // יצירת המשתמש
-    const insertQuery = `
-      INSERT INTO "User" (
-        userName, 
-        password, 
-        email, 
-        height, 
-        weight, 
-        birthdate, 
-        intensityLevel,
-        googleId,
-        profilePicture,
-        authProvider
-      ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10)
-      RETURNING idUser, userName, email, profilePicture
-    `;
-    
-    const userValues = [
-      userName || null,
-      hashedPassword,
-      email,
-      height || null,
-      weight || null,
-      birthdate || null,
-      intensityLevel || 'medium',
-      googleData?.googleId || null,
-      googleData?.picture || null,
-      googleData ? 'google' : 'local'
-    ];
-    
-    const userResult = await pool.query(insertQuery, userValues);
-    const newUser = userResult.rows[0];
-    
-    console.log('✅ נוצר משתמש חדש:', {
-      id: newUser.iduser,
-      email: newUser.email,
-      authProvider: googleData ? 'google' : 'local'
-    });
-    
-    // הוספת העדפות ספורט אם סופקו
-    if (selectedSports && selectedSports.length > 0) {
-      for (let i = 0; i < selectedSports.length; i++) {
-        const sportType = selectedSports[i];
-        await pool.query(
-          'INSERT INTO UserPreferences (idUser, sportType, preferenceRank) VALUES ($1, $2, $3)',
-          [newUser.iduser, sportType, i + 1]
-        );
-      }
-      console.log(`✅ נוספו ${selectedSports.length} העדפות ספורט`);
-    }
-    
-    res.json({
-      success: true,
-      message: 'ההרשמה הושלמה בהצלחה!',
-      user: {
-        id: newUser.iduser,
-        userName: newUser.username || googleData?.name,
-        email: newUser.email,
-        profilePicture: newUser.profilepicture || googleData?.picture
-      }
-    });
-    
-  } catch (err) {
-    console.error('❌ שגיאה בהרשמה:', err);
-    res.json({
-      success: false,
-      message: 'שגיאה בהרשמה',
       error: err.message
     });
   }
@@ -747,7 +507,6 @@ app.get('/api/future-workouts/:userId', async (req, res) => {
     });
   }
 });
-
 
 app.listen(PORT, () => {
   console.log(`🚀 השרת רץ על http://localhost:${PORT}`);
