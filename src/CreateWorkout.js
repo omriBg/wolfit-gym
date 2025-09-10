@@ -866,8 +866,13 @@ function CreateWorkout({ user, selectedDate, startTime, endTime, onBackClick }) 
   };
 
   const generateWorkout = async () => {
-    if (timeSlots.length === 0 || Object.keys(fieldsByTime).length === 0) {
+    if (timeSlots.length === 0) {
       setError('לא נטענו נתונים. אנא רענן את הדף.');
+      return;
+    }
+    
+    if (!user || !user.id) {
+      setError('משתמש לא מחובר');
       return;
     }
     
@@ -875,18 +880,40 @@ function CreateWorkout({ user, selectedDate, startTime, endTime, onBackClick }) 
     setError('');
     
     try {
-      console.log('🚀 מתחיל ליצור תוכנית אימון אופטימלית מלאה...');
+      console.log('🚀 מתחיל ליצור תוכנית אימון אופטימלית בשרת...');
       
-      // סימולציה של זמן עיבוד (כדי שהמשתמש יראה שמשהו קורה)
-      await new Promise(resolve => setTimeout(resolve, 1500));
+      // שליחה לשרת ליצירת אימון אופטימלי
+      const response = await fetch('https://wolfit-gym-backend-ijvq.onrender.com/api/create-optimal-workout', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          date: selectedDate,
+          timeSlots: timeSlots,
+          userId: user.id
+        })
+      });
       
-      const optimalWorkout = generateOptimalWorkout();
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
       
-      if (optimalWorkout && optimalWorkout.successfulSlots > 0) {
-        setWorkoutPlan(optimalWorkout);
-        console.log('✅ תוכנית אימון אופטימלית נוצרה בהצלחה');
+      const data = await response.json();
+      
+      if (data.success) {
+        console.log('✅ תוכנית אימון אופטימלית נוצרה ונשמרה בהצלחה בשרת');
+        setWorkoutPlan(data.workout);
+        setSaveSuccess(true);
+        
+        // מעבר אוטומטי למסך הראשי אחרי 3 שניות
+        setTimeout(() => {
+          if (onBackClick) {
+            onBackClick();
+          }
+        }, 3000);
       } else {
-        setError('לא הצליח ליצור תוכנית אימון מתאימה. נסה שעות או תאריך אחרים.');
+        setError(data.message || 'לא הצליח ליצור תוכנית אימון מתאימה');
       }
       
     } catch (error) {
@@ -897,78 +924,13 @@ function CreateWorkout({ user, selectedDate, startTime, endTime, onBackClick }) 
     }
   };
 
+  // הפונקציה הזו כבר לא נדרשת - השמירה קורית בשרת
   const saveWorkoutToDatabase = async () => {
-    if (!workoutPlan || !user || !user.id) {
-      setError('אין תוכנית אימון או משתמש לא מוגדר');
-      return;
-    }
-
-    setIsSaving(true);
-    setError('');
-    setSaveSuccess(false);
-
-    try {
-      // הכנת רשימת הזמנות למגרשים
-      const bookings = workoutPlan.slots
-        .filter(slot => slot.field !== null)
-        .map(slot => ({
-          idField: slot.field.id,
-          bookingDate: selectedDate,
-          startTime: slot.time,
-          idUser: user.id
-        }));
-
-      if (bookings.length === 0) {
-        setError('אין מגרשים לשמירה');
-        setIsSaving(false);
-        return;
-      }
-
-      const requestBody = {
-        bookings: bookings,
-        userId: user.id,
-        date: selectedDate
-      };
-
-      console.log('💾 שומר אימון:', requestBody);
-
-      const response = await fetch('https://wolfit-gym-backend-ijvq.onrender.com/api/book-fields', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify(requestBody)
-      });
-
-      if (!response.ok) {
-        throw new Error(`HTTP error! status: ${response.status}`);
-      }
-
-      const data = await response.json();
-
-      if (data.success) {
-        setSaveSuccess(true);
-        console.log('✅ אימון נשמר בהצלחה');
-        
-        setTimeout(() => {
-          if (onBackClick) {
-            onBackClick();
-          }
-        }, 2000);
-      } else {
-        setError(`שגיאה בשמירת האימון: ${data.message}`);
-      }
-
-    } catch (error) {
-      console.error('❌ שגיאה בשמירת האימון:', error);
-      setError(`שגיאה בשמירת האימון: ${error.message}`);
-    } finally {
-      setIsSaving(false);
-    }
+    console.log('ℹ️ השמירה כבר קורית בשרת - אין צורך בפונקציה זו');
   };
 
   const canCreateWorkout = () => {
-    return !loading && timeSlots.length > 0 && Object.keys(fieldsByTime).length > 0;
+    return !loading && timeSlots.length > 0;
   };
 
   if (loading) {
@@ -985,7 +947,7 @@ function CreateWorkout({ user, selectedDate, startTime, endTime, onBackClick }) 
             borderRadius: '8px',
             border: '1px solid rgba(81, 207, 102, 0.3)'
           }}>
-            המערכת טוענה את העדפותיך, בודקת זמינות מגרשים ומכינה אלגוריתם אופטימלי...
+            המערכת טוענה את העדפותיך ומכינה את הנתונים ליצירת אימון אופטימלי...
           </div>
         </div>
       </div>
@@ -1078,13 +1040,13 @@ function CreateWorkout({ user, selectedDate, startTime, endTime, onBackClick }) 
               transition: 'all 0.3s ease'
             }}
           >
-            {isGenerating ? '🔄 יוצר אימון אופטימלי...' : '🎯 צור תוכנית אימון אופטימלית'}
+            {isGenerating ? '🔄 יוצר אימון אופטימלי בשרת...' : '🎯 צור תוכנית אימון אופטימלית'}
           </button>
         </div>
 
         {workoutPlan && (
           <div className="workout-result" style={{ marginTop: '30px' }}>
-            <h2>🏆 התוכנית האופטימלית שלך</h2>
+            <h2>🏆 התוכנית האופטימלית שלך (נוצרה בשרת)</h2>
             
                          <div className="optimization-info" style={{
                background: 'linear-gradient(135deg, #8b5cf6 0%, #7c3aed 100%)',
@@ -1094,10 +1056,10 @@ function CreateWorkout({ user, selectedDate, startTime, endTime, onBackClick }) 
                margin: '20px 0',
                textAlign: 'center'
              }}>
-              <h3 style={{ margin: '0 0 15px 0' }}>📊 סטטיסטיקות אופטימליות</h3>
+              <h3 style={{ margin: '0 0 15px 0' }}>📊 סטטיסטיקות אופטימליות (אלגוריתם הונגרי בשרת)</h3>
               <div style={{ display: 'flex', justifyContent: 'space-around', flexWrap: 'wrap', gap: '20px' }}>
                 <div>
-                  <div style={{ fontSize: '24px', fontWeight: 'bold' }}>{workoutPlan.successfulSlots}/{workoutPlan.totalSlots}</div>
+                  <div style={{ fontSize: '24px', fontWeight: 'bold' }}>{workoutPlan.successfulSlots}/{timeSlots.length}</div>
                   <div style={{ fontSize: '14px', opacity: 0.9 }}>רבעי שעה מוצלחים</div>
                 </div>
                 <div>
@@ -1106,7 +1068,7 @@ function CreateWorkout({ user, selectedDate, startTime, endTime, onBackClick }) 
                 </div>
                 <div>
                   <div style={{ fontSize: '24px', fontWeight: 'bold' }}>✅</div>
-                  <div style={{ fontSize: '14px', opacity: 0.9 }}>{workoutPlan.algorithm}</div>
+                  <div style={{ fontSize: '14px', opacity: 0.9 }}>אלגוריתם הונגרי בשרת</div>
                 </div>
               </div>
             </div>

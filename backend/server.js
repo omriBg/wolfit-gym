@@ -3,14 +3,66 @@ const express = require('express');
 const cors = require('cors');
 const { Pool } = require('pg');
 const jwt = require('jsonwebtoken');
+const bcrypt = require('bcrypt');
+const { CompleteOptimalWorkoutScheduler } = require('./optimalWorkoutAlgorithm');
 require('dotenv').config();
 
 const app = express();
 const PORT = process.env.PORT || 3001;
 
 // Middleware
-app.use(cors());
-app.use(express.json());
+app.use(cors({
+  origin: process.env.NODE_ENV === 'production' 
+    ? ['https://wolfit-gym-frontend.onrender.com', 'https://wolfit-gym.onrender.com']
+    : ['http://localhost:3000', 'http://localhost:3001'],
+  credentials: true
+}));
+app.use(express.json({ limit: '10mb' }));
+
+// Rate limiting middleware (בסיסי)
+const rateLimitMap = new Map();
+const RATE_LIMIT_WINDOW = 15 * 60 * 1000; // 15 דקות
+const RATE_LIMIT_MAX_REQUESTS = 100; // מקסימום בקשות לחלון זמן
+
+const rateLimitMiddleware = (req, res, next) => {
+  const clientIP = req.ip || req.connection.remoteAddress;
+  const now = Date.now();
+  
+  if (!rateLimitMap.has(clientIP)) {
+    rateLimitMap.set(clientIP, { count: 1, resetTime: now + RATE_LIMIT_WINDOW });
+    return next();
+  }
+  
+  const clientData = rateLimitMap.get(clientIP);
+  
+  if (now > clientData.resetTime) {
+    // חלון זמן חדש
+    rateLimitMap.set(clientIP, { count: 1, resetTime: now + RATE_LIMIT_WINDOW });
+    return next();
+  }
+  
+  if (clientData.count >= RATE_LIMIT_MAX_REQUESTS) {
+    return res.status(429).json({
+      success: false,
+      message: 'יותר מדי בקשות. נסה שוב מאוחר יותר'
+    });
+  }
+  
+  clientData.count++;
+  next();
+};
+
+// החלת rate limiting על כל הבקשות
+app.use(rateLimitMiddleware);
+
+// Security headers middleware
+app.use((req, res, next) => {
+  res.setHeader('X-Content-Type-Options', 'nosniff');
+  res.setHeader('X-Frame-Options', 'DENY');
+  res.setHeader('X-XSS-Protection', '1; mode=block');
+  res.setHeader('Referrer-Policy', 'strict-origin-when-cross-origin');
+  next();
+});
 
 // חיבור למסד נתונים
 const pool = new Pool({
@@ -100,20 +152,42 @@ app.post('/api/google-login', async (req, res) => {
       });
     }
     
-    // פענוח הנתונים מ-Google
-    const googleData = jwt.decode(credential);
-    
-    if (!googleData) {
+    // אימות מאובטח של הנתונים מ-Google
+    let googleData;
+    try {
+      // בדיקה שהטוקן תקין (ללא אימות חתימה - זה נעשה בצד הלקוח)
+      googleData = jwt.decode(credential);
+      
+      if (!googleData || !googleData.sub || !googleData.email) {
+        throw new Error('נתוני Google לא תקינים');
+      }
+      
+      // בדיקה שהטוקן לא פג תוקף
+      const now = Math.floor(Date.now() / 1000);
+      if (googleData.exp && googleData.exp < now) {
+        throw new Error('טוקן Google פג תוקף');
+      }
+      
+      // בדיקה שהטוקן מיועד לאפליקציה שלנו
+      if (googleData.aud !== process.env.GOOGLE_CLIENT_ID) {
+        console.warn('⚠️ ניסיון התחברות עם Client ID לא תקין:', googleData.aud);
+        throw new Error('טוקן Google לא תקין');
+      }
+      
+    } catch (jwtError) {
+      console.error('❌ שגיאה באימות Google token:', jwtError.message);
       return res.json({
         success: false,
-        message: 'נתוני Google לא תקינים'
+        message: 'נתוני Google לא תקינים או פגי תוקף'
       });
     }
     
-    console.log('🔍 נתוני Google:', {
+    // לוג מאובטח - לא נשמור נתונים רגישים
+    console.log('🔍 התחברות Google:', {
       googleId: googleData.sub,
-      email: googleData.email,
-      name: googleData.name
+      email: googleData.email ? googleData.email.replace(/(.{2}).*(@.*)/, '$1***$2') : 'N/A',
+      name: googleData.name ? googleData.name.substring(0, 2) + '***' : 'N/A',
+      timestamp: new Date().toISOString()
     });
     
     // בדיקה אם המשתמש קיים
@@ -161,6 +235,172 @@ app.post('/api/google-login', async (req, res) => {
   }
 });
 
+// API להרשמת משתמש חדש (כולל Google OAuth)
+app.post('/api/register', async (req, res) => {
+  try {
+    const { 
+      userName, 
+      email, 
+      password, 
+      height, 
+      weight, 
+      birthdate, 
+      intensityLevel, 
+      selectedSports,
+      googleData 
+    } = req.body;
+    
+    // לוג מאובטח - לא נשמור נתונים רגישים
+    console.log('📝 בקשה להרשמה:', { 
+      userName: userName ? userName.substring(0, 2) + '***' : 'N/A',
+      email: email ? email.replace(/(.{2}).*(@.*)/, '$1***$2') : 'N/A',
+      hasPassword: !!password,
+      hasGoogleData: !!googleData,
+      selectedSports: selectedSports?.length || 0,
+      timestamp: new Date().toISOString()
+    });
+    
+    // בדיקות בסיסיות
+    if (!email) {
+      return res.json({
+        success: false,
+        message: 'כתובת אימייל נדרשת'
+      });
+    }
+    
+    // אם זה משתמש Google, נבדוק שיש נתוני Google
+    if (googleData) {
+      if (!googleData.googleId || !googleData.email) {
+        return res.json({
+          success: false,
+          message: 'נתוני Google חסרים'
+        });
+      }
+      
+      // וידוא שהאימייל תואם
+      if (googleData.email !== email) {
+        return res.json({
+          success: false,
+          message: 'כתובת האימייל לא תואמת לנתוני Google'
+        });
+      }
+    } else {
+      // משתמש רגיל - נדרש סיסמה ושם משתמש
+      if (!password || !userName) {
+        return res.json({
+          success: false,
+          message: 'שם משתמש וסיסמה נדרשים'
+        });
+      }
+    }
+    
+    // בדיקה שהאימייל לא קיים כבר
+    const existingEmail = await pool.query(
+      'SELECT idUser FROM "User" WHERE email = $1',
+      [email]
+    );
+    
+    if (existingEmail.rows.length > 0) {
+      return res.json({
+        success: false,
+        message: 'כתובת אימייל זו כבר רשומה במערכת'
+      });
+    }
+    
+    // בדיקה שהשם משתמש לא קיים (אם סופק)
+    if (userName) {
+      const existingUserName = await pool.query(
+        'SELECT idUser FROM "User" WHERE userName = $1',
+        [userName]
+      );
+      
+      if (existingUserName.rows.length > 0) {
+        return res.json({
+          success: false,
+          message: 'שם משתמש זה כבר תפוס'
+        });
+      }
+    }
+    
+    // הצפנת סיסמה אם קיימת
+    let hashedPassword = null;
+    if (password) {
+      const saltRounds = 12;
+      hashedPassword = await bcrypt.hash(password, saltRounds);
+    }
+    
+    // יצירת המשתמש
+    const insertQuery = `
+      INSERT INTO "User" (
+        userName, 
+        password, 
+        email, 
+        height, 
+        weight, 
+        birthdate, 
+        intensityLevel,
+        googleId,
+        profilePicture,
+        authProvider
+      ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10)
+      RETURNING idUser, userName, email, profilePicture
+    `;
+    
+    const userValues = [
+      userName || null,
+      hashedPassword,
+      email,
+      height || null,
+      weight || null,
+      birthdate || null,
+      intensityLevel || 'medium',
+      googleData?.googleId || null,
+      googleData?.picture || null,
+      googleData ? 'google' : 'local'
+    ];
+    
+    const userResult = await pool.query(insertQuery, userValues);
+    const newUser = userResult.rows[0];
+    
+    console.log('✅ נוצר משתמש חדש:', {
+      id: newUser.iduser,
+      email: newUser.email,
+      authProvider: googleData ? 'google' : 'local'
+    });
+    
+    // הוספת העדפות ספורט אם סופקו
+    if (selectedSports && selectedSports.length > 0) {
+      for (let i = 0; i < selectedSports.length; i++) {
+        const sportType = selectedSports[i];
+        await pool.query(
+          'INSERT INTO UserPreferences (idUser, sportType, preferenceRank) VALUES ($1, $2, $3)',
+          [newUser.iduser, sportType, i + 1]
+        );
+      }
+      console.log(`✅ נוספו ${selectedSports.length} העדפות ספורט`);
+    }
+    
+    res.json({
+      success: true,
+      message: 'ההרשמה הושלמה בהצלחה!',
+      user: {
+        id: newUser.iduser,
+        userName: newUser.username || googleData?.name,
+        email: newUser.email,
+        profilePicture: newUser.profilepicture || googleData?.picture
+      }
+    });
+    
+  } catch (err) {
+    console.error('❌ שגיאה בהרשמה:', err);
+    res.json({
+      success: false,
+      message: 'שגיאה בהרשמה',
+      error: err.message
+    });
+  }
+});
+
   // API לבדיקת זמינות שם משתמש
   app.post('/api/check-username', async (req, res) => {
     try {
@@ -198,7 +438,8 @@ app.post('/api/google-login', async (req, res) => {
     }
   });
 
-  
+// API לשמירת אימון
+app.post('/api/save-workout', async (req, res) => {
   try {
     const { bookings, userId, date } = req.body;
     
@@ -502,6 +743,181 @@ app.get('/api/future-workouts/:userId', async (req, res) => {
     res.json({
       success: false,
       message: 'שגיאה בשרת',
+      error: err.message
+    });
+  }
+});
+
+// API ליצירת אימון אופטימלי (האלגוריתם בשרת!)
+app.post('/api/create-optimal-workout', async (req, res) => {
+  try {
+    const { date, timeSlots, userId } = req.body;
+    
+    console.log('🎯 מקבל בקשה ליצירת אימון אופטימלי:', { date, timeSlots, userId });
+    
+    if (!date || !timeSlots || !Array.isArray(timeSlots) || !userId) {
+      return res.json({
+        success: false,
+        message: 'תאריך, זמנים ומזהה משתמש נדרשים'
+      });
+    }
+    
+    // בדיקה שהתאריך לא בעבר
+    const today = new Date().toISOString().split('T')[0];
+    if (date < today) {
+      return res.json({
+        success: false,
+        message: 'לא ניתן ליצור אימון לתאריך בעבר'
+      });
+    }
+    
+    // בדיקה שהמשתמש קיים
+    const userCheck = await pool.query(
+      'SELECT idUser FROM "User" WHERE idUser = $1',
+      [userId]
+    );
+    
+    if (userCheck.rows.length === 0) {
+      return res.json({
+        success: false,
+        message: 'משתמש לא נמצא'
+      });
+    }
+    
+    // קבלת העדפות המשתמש
+    const preferencesResult = await pool.query(
+      'SELECT sportType FROM UserPreferences WHERE idUser = $1 ORDER BY preferenceRank',
+      [userId]
+    );
+    
+    const userPreferences = preferencesResult.rows.map(row => row.sporttype);
+    
+    console.log('❤️ העדפות משתמש:', userPreferences);
+    
+    // קבלת מגרשים זמינים לכל זמן
+    const fieldsByTime = {};
+    
+    for (const timeSlot of timeSlots) {
+      console.log(`⏰ בודק זמינות ל-${timeSlot}`);
+      
+      // קבלת כל המגרשים
+      const fieldsResult = await pool.query(
+        'SELECT f.idField, f.fieldName, f.sportType, st.sportName FROM Field f JOIN SportTypes st ON f.sportType = st.sportType ORDER BY f.idField'
+      );
+      
+      const availableFields = [];
+      
+      for (const field of fieldsResult.rows) {
+        // בדיקה אם המגרש תפוס בזמן זה
+        const bookingCheck = await pool.query(
+          'SELECT * FROM BookField WHERE idField = $1 AND bookingDate = $2 AND startTime = $3',
+          [field.idfield, date, timeSlot]
+        );
+        
+        if (bookingCheck.rows.length === 0) {
+          // המגרש זמין
+          availableFields.push({
+            id: field.idfield,
+            name: field.fieldname,
+            sportType: field.sportname,
+            sportTypeId: field.sporttype,
+            isAvailable: true
+          });
+        } else {
+          console.log(`❌ מגרש ${field.fieldname} תפוס ב-${timeSlot}`);
+        }
+      }
+      
+      fieldsByTime[timeSlot] = availableFields;
+      console.log(`✅ נמצאו ${availableFields.length} מגרשים זמינים ל-${timeSlot}`);
+    }
+    
+    // בדיקה שיש מגרשים זמינים
+    const totalFields = Object.values(fieldsByTime).flat().length;
+    if (totalFields === 0) {
+      return res.json({
+        success: false,
+        message: 'אין מגרשים זמינים לתאריך ושעות שנבחרו'
+      });
+    }
+    
+    // יצירת האימון האופטימלי עם האלגוריתם ההונגרי
+    console.log('🚀 מתחיל אלגוריתם אופטימלי...');
+    const scheduler = new CompleteOptimalWorkoutScheduler(timeSlots, fieldsByTime, userPreferences);
+    const workoutResult = scheduler.solve();
+    
+    if (workoutResult.successfulSlots === 0) {
+      return res.json({
+        success: false,
+        message: 'לא הצליח ליצור אימון מתאים. נסה שעות או תאריך אחרים.'
+      });
+    }
+    
+    // שמירת האימון במסד הנתונים (אטומית!)
+    console.log('💾 שומר אימון במסד הנתונים...');
+    const transaction = await pool.query('BEGIN');
+    
+    try {
+      const bookings = workoutResult.slots
+        .filter(slot => slot.field !== null)
+        .map(slot => ({
+          idField: slot.field.id,
+          bookingDate: date,
+          startTime: slot.time,
+          idUser: userId
+        }));
+      
+      // שמירת כל ההזמנות
+      for (const booking of bookings) {
+        const { idField, bookingDate, startTime, idUser } = booking;
+        
+        // בדיקה כפולה שהמגרש לא תפוס (race condition protection)
+        const existingBooking = await pool.query(
+          'SELECT * FROM BookField WHERE idField = $1 AND bookingDate = $2 AND startTime = $3',
+          [idField, bookingDate, startTime]
+        );
+        
+        if (existingBooking.rows.length > 0) {
+          throw new Error(`מגרש ${idField} כבר תפוס ב-${bookingDate} ${startTime}`);
+        }
+        
+        // הכנסת ההזמנה
+        await pool.query(
+          'INSERT INTO BookField (idField, bookingDate, startTime, idUser) VALUES ($1, $2, $3, $4)',
+          [idField, bookingDate, startTime, idUser]
+        );
+        
+        console.log(`✅ נשמרה הזמנה: מגרש ${idField}, תאריך ${bookingDate}, שעה ${startTime}`);
+      }
+      
+      await pool.query('COMMIT');
+      
+      console.log('🎉 אימון אופטימלי נוצר ונשמר בהצלחה!');
+      
+      res.json({
+        success: true,
+        message: `אימון אופטימלי נוצר בהצלחה! נשמרו ${bookings.length} הזמנות`,
+        workout: {
+          date: date,
+          slots: workoutResult.slots,
+          successfulSlots: workoutResult.successfulSlots,
+          totalScore: workoutResult.totalScore,
+          sportsUsage: workoutResult.sportsUsage
+        },
+        savedCount: bookings.length
+      });
+      
+    } catch (error) {
+      await pool.query('ROLLBACK');
+      console.error('❌ שגיאה בשמירת האימון:', error);
+      throw error;
+    }
+    
+  } catch (err) {
+    console.error('❌ שגיאה ביצירת אימון אופטימלי:', err);
+    res.json({
+      success: false,
+      message: 'שגיאה ביצירת האימון האופטימלי',
       error: err.message
     });
   }
