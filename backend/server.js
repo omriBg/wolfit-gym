@@ -3,6 +3,7 @@ const express = require('express');
 const cors = require('cors');
 const { Pool } = require('pg');
 const jwt = require('jsonwebtoken');
+const { OptimalHungarianAlgorithm, CompleteOptimalWorkoutScheduler, SPORT_MAPPING } = require('./optimalWorkoutAlgorithm');
 require('dotenv').config();
 
 const app = express();
@@ -503,6 +504,120 @@ app.get('/api/future-workouts/:userId', async (req, res) => {
     res.json({
       success: false,
       message: 'שגיאה בשרת',
+      error: err.message
+    });
+  }
+});
+
+// API ליצירת תוכנית אימון אופטימלית
+app.post('/api/generate-optimal-workout', async (req, res) => {
+  try {
+    const { userId, date, timeSlots, userPreferences } = req.body;
+    
+    console.log('🎯 מקבל בקשה ליצירת אימון אופטימלי:', { userId, date, timeSlots: timeSlots?.length, userPreferences });
+    
+    if (!userId || !date || !timeSlots || !Array.isArray(timeSlots)) {
+      return res.json({
+        success: false,
+        message: 'נתונים חסרים: userId, date, timeSlots נדרשים'
+      });
+    }
+    
+    // בדיקה שהתאריך לא בעבר
+    const today = new Date().toISOString().split('T')[0];
+    if (date < today) {
+      return res.json({
+        success: false,
+        message: 'לא ניתן ליצור אימון לתאריך בעבר'
+      });
+    }
+    
+    // בדיקה שהמשתמש קיים
+    const userCheck = await pool.query(
+      'SELECT idUser FROM "User" WHERE idUser = $1',
+      [userId]
+    );
+    
+    if (userCheck.rows.length === 0) {
+      return res.json({
+        success: false,
+        message: 'משתמש לא נמצא'
+      });
+    }
+    
+    // קבלת מגרשים זמינים (שימוש בקוד הקיים)
+    const fieldsByTime = {};
+    
+    for (const timeSlot of timeSlots) {
+      console.log(`⏰ בודק זמינות ל-${timeSlot}`);
+      
+      const fieldsResult = await pool.query(
+        'SELECT f.idField, f.fieldName, f.sportType, st.sportName FROM Field f JOIN SportTypes st ON f.sportType = st.sportType ORDER BY f.idField'
+      );
+      
+      const availableFields = [];
+      
+      for (const field of fieldsResult.rows) {
+        const bookingCheck = await pool.query(
+          'SELECT * FROM BookField WHERE idField = $1 AND bookingDate = $2 AND startTime = $3',
+          [field.idfield, date, timeSlot]
+        );
+        
+        if (bookingCheck.rows.length === 0) {
+          availableFields.push({
+            id: field.idfield,
+            name: field.fieldname,
+            sportType: field.sportname,
+            sportTypeId: field.sporttype,
+            isAvailable: true
+          });
+        }
+      }
+      
+      fieldsByTime[timeSlot] = availableFields;
+    }
+    
+    // בדיקה שיש מגרשים זמינים
+    const totalFields = Object.values(fieldsByTime).flat().length;
+    if (totalFields === 0) {
+      return res.json({
+        success: false,
+        message: 'אין מגרשים זמינים לתאריך ושעות שנבחרו'
+      });
+    }
+    
+    console.log('🏟️ מגרשים זמינים נטענו:', Object.keys(fieldsByTime).map(time => 
+      `${time}: ${fieldsByTime[time].length} מגרשים`
+    ));
+    
+    // יצירת תוכנית אימון אופטימלית
+    console.log('🚀 מתחיל אלגוריתם הונגרי אופטימלי...');
+    
+    const scheduler = new CompleteOptimalWorkoutScheduler(
+      timeSlots, 
+      fieldsByTime, 
+      userPreferences || []
+    );
+    
+    const workoutPlan = scheduler.solve();
+    
+    console.log('✅ תוכנית אימון אופטימלית נוצרה:', {
+      successfulSlots: workoutPlan.successfulSlots,
+      totalSlots: workoutPlan.totalSlots,
+      totalScore: workoutPlan.totalScore
+    });
+    
+    res.json({
+      success: true,
+      workoutPlan: workoutPlan,
+      message: `נוצרה תוכנית אימון אופטימלית עם ${workoutPlan.successfulSlots}/${workoutPlan.totalSlots} זמנים מוצלחים`
+    });
+    
+  } catch (err) {
+    console.error('❌ שגיאה ביצירת אימון אופטימלי:', err);
+    res.json({
+      success: false,
+      message: 'שגיאה ביצירת האימון האופטימלי',
       error: err.message
     });
   }
