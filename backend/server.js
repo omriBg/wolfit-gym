@@ -89,6 +89,75 @@ app.get('/api/user-preferences/:userId', async (req, res) => {
     }
   });
 
+// API לשמירת העדפות משתמש
+app.put('/api/save-user-preferences/:userId', async (req, res) => {
+  try {
+    const { userId } = req.params;
+    const { intensityLevel, selectedSports } = req.body;
+    
+    console.log('💾 מקבל בקשה לשמירת העדפות:', { userId, intensityLevel, selectedSports });
+    
+    if (!userId) {
+      return res.json({
+        success: false,
+        message: 'מזהה משתמש נדרש'
+      });
+    }
+    
+    // בדיקה שהמשתמש קיים
+    const userCheck = await pool.query(
+      'SELECT idUser FROM "User" WHERE idUser = $1',
+      [userId]
+    );
+    
+    if (userCheck.rows.length === 0) {
+      return res.json({
+        success: false,
+        message: 'משתמש לא נמצא'
+      });
+    }
+    
+    // עדכון רמת עוצמה
+    if (intensityLevel !== undefined) {
+      await pool.query(
+        'UPDATE "User" SET intensityLevel = $1 WHERE idUser = $2',
+        [intensityLevel, userId]
+      );
+    }
+    
+    // מחיקת העדפות קיימות
+    await pool.query(
+      'DELETE FROM UserPreferences WHERE idUser = $1',
+      [userId]
+    );
+    
+    // הוספת העדפות חדשות
+    if (selectedSports && Array.isArray(selectedSports)) {
+      for (let i = 0; i < selectedSports.length; i++) {
+        await pool.query(
+          'INSERT INTO UserPreferences (idUser, sportType, preferenceRank) VALUES ($1, $2, $3)',
+          [userId, selectedSports[i], i + 1]
+        );
+      }
+    }
+    
+    console.log('✅ העדפות נשמרו בהצלחה');
+    
+    res.json({
+      success: true,
+      message: 'העדפות נשמרו בהצלחה'
+    });
+    
+  } catch (err) {
+    console.error('❌ שגיאה בשמירת העדפות:', err);
+    res.json({
+      success: false,
+      message: 'שגיאה בשמירת העדפות',
+      error: err.message
+    });
+  }
+});
+
 // API להתחברות עם Google OAuth
 app.post('/api/google-login', async (req, res) => {
   try {
@@ -263,7 +332,7 @@ app.post('/api/save-workout', async (req, res) => {
       
       // בדיקה שהמגרש קיים
       const fieldCheck = await pool.query(
-        'SELECT idField FROM Field WHERE idField = $1',
+        'SELECT idfield FROM Field WHERE idfield = $1',
         [idField]
       );
       
@@ -274,7 +343,7 @@ app.post('/api/save-workout', async (req, res) => {
       
       // בדיקה שהמגרש לא תפוס כבר
       const existingBooking = await pool.query(
-        'SELECT * FROM BookField WHERE idField = $1 AND bookingDate = $2 AND startTime = $3',
+        'SELECT * FROM BookField WHERE idfield = $1 AND bookingdate = $2 AND starttime = $3',
         [idField, bookingDate, startTime]
       );
       
@@ -285,7 +354,7 @@ app.post('/api/save-workout', async (req, res) => {
       
       // הכנסת ההזמנה
       await pool.query(
-        'INSERT INTO BookField (idField, bookingDate, startTime, idUser) VALUES ($1, $2, $3, $4)',
+        'INSERT INTO BookField (idfield, bookingdate, starttime, iduser) VALUES ($1, $2, $3, $4)',
         [idField, bookingDate, startTime, idUser]
       );
       
@@ -339,7 +408,7 @@ app.post('/api/available-fields-for-workout', async (req, res) => {
       
       // קבלת כל המגרשים
       const fieldsResult = await pool.query(
-        'SELECT f.idField, f.fieldName, f.sportType, st.sportName FROM Field f JOIN SportTypes st ON f.sportType = st.sportType ORDER BY f.idField'
+        'SELECT f.idfield, f.fieldname, f.sporttype, st.sportname FROM Field f JOIN SportTypes st ON f.sporttype = st.sporttype ORDER BY f.idfield'
       );
       
       const availableFields = [];
@@ -347,7 +416,7 @@ app.post('/api/available-fields-for-workout', async (req, res) => {
       for (const field of fieldsResult.rows) {
         // בדיקה אם המגרש תפוס בזמן זה
         const bookingCheck = await pool.query(
-          'SELECT * FROM BookField WHERE idField = $1 AND bookingDate = $2 AND startTime = $3',
+          'SELECT * FROM BookField WHERE idfield = $1 AND bookingdate = $2 AND starttime = $3',
           [field.idfield, date, timeSlot]
         );
         
@@ -552,14 +621,14 @@ app.post('/api/generate-optimal-workout', async (req, res) => {
       console.log(`⏰ בודק זמינות ל-${timeSlot}`);
       
       const fieldsResult = await pool.query(
-        'SELECT f.idField, f.fieldName, f.sportType, st.sportName FROM Field f JOIN SportTypes st ON f.sportType = st.sportType ORDER BY f.idField'
+        'SELECT f.idfield, f.fieldname, f.sporttype, st.sportname FROM Field f JOIN SportTypes st ON f.sporttype = st.sporttype ORDER BY f.idfield'
       );
       
       const availableFields = [];
       
       for (const field of fieldsResult.rows) {
         const bookingCheck = await pool.query(
-          'SELECT * FROM BookField WHERE idField = $1 AND bookingDate = $2 AND startTime = $3',
+          'SELECT * FROM BookField WHERE idfield = $1 AND bookingdate = $2 AND starttime = $3',
           [field.idfield, date, timeSlot]
         );
         
