@@ -365,65 +365,110 @@ class CompleteOptimalWorkoutScheduler {
     const priorityPenalty = (priority - 1) * 2000;
     score -= priorityPenalty;
     
-    // עונש על שימוש יתר בספורט
-    const usagePenalty = currentUsage * 100;
-    score -= usagePenalty;
+    // עונש על שימוש חוזר (רק אם זה לא עדיפות ראשונה)
+    if (priority > 1) {
+      const usagePenalty = currentUsage * currentUsage * 100;
+      score -= usagePenalty;
+    }
     
-    // בונוס על זמינות מגרשים
-    const fieldCount = availableFields.filter(field => field.sportTypeId === sportId).length;
-    score += fieldCount * 50;
+    // בונוס לאיכות המגרש
+    const bestField = availableFields
+      .filter(field => field.sportTypeId === sportId)
+      .sort((a, b) => (b.name || '').length - (a.name || '').length)[0];
+    
+    if (bestField && bestField.name && bestField.name.length > 10) {
+      score += 50; // מגרש איכותי
+    }
+    
+    // עונש קל על זמנים מאוחרים (העדפה לזמנים מוקדמים)
+    const timeIndex = this.timeSlots.indexOf(timeSlot);
+    score -= timeIndex * 2;
     
     return Math.max(0, score);
   }
 
-  // יצירת מטריצת עלות אופטימלית
+  // יצירת מטריצת עלויות מושלמת לאלגוריתם ההונגרי
   createOptimalCostMatrix() {
-    console.log('📊 יוצר מטריצת עלות אופטימלית...');
+    console.log('🏗️ יוצר מטריצת עלויות אופטימלית...');
     
-    const n = this.timeSlots.length;
-    const costMatrix = [];
+    const numTimeSlots = this.timeSlots.length;
     
-    for (let i = 0; i < n; i++) {
-      const row = [];
-      for (let j = 0; j < n; j++) {
-        row.push(Infinity);
-      }
-      costMatrix.push(row);
-    }
-    
-    // יצירת אפשרויות ספורט לכל זמן
+    // יוצר "אפשרויות ספורט" - עם עדיפות לגיוון
     const sportOptions = [];
-    for (let i = 0; i < n; i++) {
-      const timeSlot = this.timeSlots[i];
-      const options = [];
-      
-      for (const sportId of this.availableSports) {
-        const score = this.calculatePreciseScore(timeSlot, sportId);
-        if (score > 0) {
-          options.push({ sportId, score, timeSlot });
-        }
-      }
-      
-      // מיון לפי ניקוד (גבוה יותר = טוב יותר)
-      options.sort((a, b) => b.score - a.score);
-      sportOptions.push(options);
+    
+    // קודם כל - כל ספורט פעם ראשונה (גיוון מקסימלי)
+    for (const sportId of this.availableSports) {
+      sportOptions.push({
+        sportId,
+        usage: 0,
+        id: `${sportId}_1`,
+        name: `${SPORT_MAPPING[sportId]} (ראשון)`,
+        priority: 1 // עדיפות גבוהה
+      });
     }
     
-    // מילוי מטריצת העלות
-    for (let i = 0; i < n; i++) {
-      for (let j = 0; j < n; j++) {
-        if (j < sportOptions[i].length) {
-          const option = sportOptions[i][j];
-          // המרת ניקוד לעלות (נמוך יותר = טוב יותר)
-          costMatrix[i][j] = 10000 - option.score;
-        }
+    // אחר כך - ספורטים לא אהובים (אם אין ברירה)
+    for (const sportId of this.availableSports) {
+      if (!this.userPreferences.includes(sportId)) {
+        sportOptions.push({
+          sportId,
+          usage: 1,
+          id: `${sportId}_2`,
+          name: `${SPORT_MAPPING[sportId]} (לא אהוב)`,
+          priority: 2 // עדיפות נמוכה
+        });
       }
     }
     
-    console.log('📊 מטריצת עלות נוצרה:', costMatrix.map(row => 
-      row.map(val => val === Infinity ? '∞' : val)
-    ));
+    // לבסוף - חזרה על ספורטים אהובים (רק אם אין ברירה)
+    for (const sportId of this.userPreferences) {
+      sportOptions.push({
+        sportId,
+        usage: 1,
+        id: `${sportId}_3`,
+        name: `${SPORT_MAPPING[sportId]} (חוזר)`,
+        priority: 3 // עדיפות נמוכה ביותר
+      });
+    }
     
+    const matrixSize = Math.max(numTimeSlots, sportOptions.length);
+    console.log(`📐 גודל מטריצה: ${matrixSize}x${matrixSize}`);
+    console.log(`🏃 אפשרויות ספורט: ${sportOptions.length}`);
+    
+    const costMatrix = Array(matrixSize).fill().map(() => Array(matrixSize).fill(0));
+    
+    // מילוי המטריצה
+    for (let i = 0; i < matrixSize; i++) {
+      for (let j = 0; j < matrixSize; j++) {
+        if (i < numTimeSlots && j < sportOptions.length) {
+          // זמן אמיתי ← אפשרות ספורט אמיתית
+          const timeSlot = this.timeSlots[i];
+          const sportOption = sportOptions[j];
+          const score = this.calculatePreciseScore(timeSlot, sportOption.sportId, sportOption.usage, sportOption.priority);
+          
+          // המרה לעלות: ניקוד גבוה = עלות נמוכה
+          costMatrix[i][j] = score === -1 ? 999999 : (10000 - score);
+          
+        } else if (i < numTimeSlots) {
+          // זמן אמיתי ← ספורט דמה (עלות גבוהה מאוד)
+          costMatrix[i][j] = 999999;
+          
+        } else if (j < sportOptions.length) {
+          // זמן דמה ← ספורט אמיתי (עלות נמוכה)
+          costMatrix[i][j] = 1;
+          
+        } else {
+          // זמן דמה ← ספורט דמה (עלות 0)
+          costMatrix[i][j] = 0;
+        }
+      }
+    }
+    
+    // שמירת מידע על האפשרויות למטרות דיבוג
+    this.sportOptions = sportOptions;
+    this.matrixSize = matrixSize;
+    
+    console.log('✅ מטריצת עלויות נוצרה בהצלחה');
     return costMatrix;
   }
 
@@ -444,56 +489,53 @@ class CompleteOptimalWorkoutScheduler {
   parseOptimalAssignment(assignment) {
     console.log('🔍 מנתח תוצאת השמה אופטימלית...');
     
-    const result = {
-      slots: [],
-      successfulSlots: 0,
-      totalScore: 0,
-      sportsUsage: {}
-    };
+    const result = [];
+    const sportsUsageCount = {};
+    const usedSportOptions = new Set(); // מניעת כפילות
+    let totalScore = 0;
     
     for (let i = 0; i < this.timeSlots.length; i++) {
       const timeSlot = this.timeSlots[i];
       const assignedOptionIndex = assignment[i];
       
-      if (assignedOptionIndex >= 0 && assignedOptionIndex < this.availableSports.length) {
-        const sportId = this.availableSports[assignedOptionIndex];
-        const currentUsage = result.sportsUsage[sportId] || 0;
+      if (assignedOptionIndex !== -1 && 
+          assignedOptionIndex < this.sportOptions.length) {
         
-        if (!result.sportsUsage[sportId]) {
-          result.sportsUsage[sportId] = 0;
-        }
+        const sportOption = this.sportOptions[assignedOptionIndex];
+        const currentUsage = sportsUsageCount[sportOption.sportId] || 0;
         
-        if (currentUsage < this.maxUsagePerSport) {
-          const selectedField = this.findOptimalField(timeSlot, sportId);
-          const score = this.calculatePreciseScore(timeSlot, sportId, currentUsage);
+        // בדיקה אם השמה תקינה (לא כפילות באותה אופציה)
+        if (!usedSportOptions.has(assignedOptionIndex)) {
+          const selectedField = this.findOptimalField(timeSlot, sportOption.sportId);
+          const score = this.calculatePreciseScore(timeSlot, sportOption.sportId, currentUsage);
           
           if (selectedField && score > 0) {
-            result.sportsUsage[sportId] = currentUsage + 1;
-            result.totalScore += score;
-            result.successfulSlots++;
+            sportsUsageCount[sportOption.sportId] = currentUsage + 1;
+            usedSportOptions.add(assignedOptionIndex); // סימון כשימוש
+            totalScore += score;
             
-            result.slots.push({
+            result.push({
               time: timeSlot,
               field: selectedField,
-              sportType: SPORT_MAPPING[sportId],
-              sportId: sportId,
+              sportType: SPORT_MAPPING[sportOption.sportId],
+              sportId: sportOption.sportId,
               usage: currentUsage + 1,
               score: score,
               isOptimal: true
             });
             
-            console.log(`✅ ${timeSlot}: ${SPORT_MAPPING[sportId]} (${score} נק') במגרש ${selectedField.name}`);
+            console.log(`✅ ${timeSlot}: ${SPORT_MAPPING[sportOption.sportId]} (${score} נק') במגרש ${selectedField.name}`);
           } else {
-            result.slots.push({
+            result.push({
               time: timeSlot,
               field: null,
               reason: 'לא נמצא מגרש מתאים',
               isOptimal: false
             });
-            console.log(`❌ ${timeSlot}: לא נמצא מגרש ל-${SPORT_MAPPING[sportId]}`);
+            console.log(`❌ ${timeSlot}: לא נמצא מגרש ל-${SPORT_MAPPING[sportOption.sportId]}`);
           }
         } else {
-          result.slots.push({
+          result.push({
             time: timeSlot,
             field: null,
             reason: 'ספורט זה כבר שומש',
@@ -502,7 +544,7 @@ class CompleteOptimalWorkoutScheduler {
           console.log(`⚠️ ${timeSlot}: ספורט כבר שומש`);
         }
       } else {
-        result.slots.push({
+        result.push({
           time: timeSlot,
           field: null,
           reason: 'לא נמצא שיבוץ אופטימלי',
@@ -512,28 +554,97 @@ class CompleteOptimalWorkoutScheduler {
       }
     }
     
-    console.log(`🏆 פתרון אופטימלי: ${result.successfulSlots}/${this.timeSlots.length} זמנים`);
-    console.log(`📊 ניקוד כולל: ${result.totalScore}`);
+    const successfulSlots = result.filter(slot => slot.field !== null).length;
     
-    return result;
+    console.log(`🏆 פתרון אופטימלי: ${successfulSlots}/${this.timeSlots.length} זמנים`);
+    console.log(`🎯 ניקוד כולל: ${totalScore}`);
+    console.log(`📊 שימוש בספורטים:`, sportsUsageCount);
+    
+    return {
+      slots: result,
+      totalSlots: this.timeSlots.length,
+      successfulSlots: successfulSlots,
+      totalScore: totalScore,
+      sportsUsage: sportsUsageCount,
+      isOptimal: true,
+      algorithm: 'Hungarian Algorithm (Optimal)'
+    };
   }
 
+  // מציאת המגרש האופטימלי לספורט בזמן נתון
   findOptimalField(timeSlot, sportId) {
     const availableFields = this.fieldsByTime[timeSlot] || [];
-    const matchingFields = availableFields.filter(field => 
+    const suitableFields = availableFields.filter(field => 
       field.sportTypeId === sportId && field.isAvailable !== false
     );
     
-    if (matchingFields.length === 0) {
+    if (suitableFields.length === 0) {
       return null;
     }
     
-    // החזרת המגרש הראשון (אפשר לשפר עם לוגיקה נוספת)
-    return matchingFields[0];
+    // מיון לפי איכות המגרש
+    return suitableFields.sort((a, b) => {
+      // העדף מגרשים עם שמות מפורטים יותר
+      const scoreA = (a.name || '').length + (a.description || '').length;
+      const scoreB = (b.name || '').length + (b.description || '').length;
+      return scoreB - scoreA;
+    })[0];
   }
 
+  // בדיקת תקינות הנתונים לפני הפתרון
+  validateInputData() {
+    console.log('🔍 בודק תקינות נתונים...');
+    
+    const issues = [];
+    
+    if (!this.timeSlots || this.timeSlots.length === 0) {
+      issues.push('אין זמנים מוגדרים');
+    }
+    
+    if (!this.fieldsByTime || Object.keys(this.fieldsByTime).length === 0) {
+      issues.push('אין מגרשים זמינים');
+    }
+    
+    if (this.availableSports.length === 0) {
+      issues.push('אין ספורטים זמינים');
+    }
+    
+    // בדיקה שיש לפחות מגרש אחד זמין
+    const totalFields = Object.values(this.fieldsByTime).flat().length;
+    if (totalFields === 0) {
+      issues.push('אין מגרשים זמינים בכלל');
+    }
+    
+    if (issues.length > 0) {
+      console.log('❌ בעיות בנתונים:', issues);
+      return { valid: false, issues };
+    }
+    
+    console.log('✅ נתונים תקינים');
+    return { valid: true, issues: [] };
+  }
+
+  // פונקציה ראשית לפתרון
   solve() {
-    return this.solveOptimal();
+    console.log('🚀 מתחיל פתרון בעיית שיבוץ אופטימלי מלא...');
+    
+    // בדיקת תקינות
+    const validation = this.validateInputData();
+    if (!validation.valid) {
+      throw new Error(`נתונים לא תקינים: ${validation.issues.join(', ')}`);
+    }
+    
+    try {
+      // פתרון אופטימלי
+      const result = this.solveOptimal();
+      
+      console.log('🏆 פתרון אופטימלי הושלם בהצלחה!');
+      return result;
+      
+    } catch (error) {
+      console.error('❌ שגיאה בפתרון אופטימלי:', error);
+      throw new Error(`שגיאה בפתרון אופטימלי: ${error.message}`);
+    }
   }
 }
 
