@@ -49,7 +49,7 @@ function App() {
           setLoginMessage('משתמש חדש - אנא הירשם תחילה');
           setTimeout(() => {
             handleGoToSignUp();
-          }, 2000);
+          }, 1000);
         } else {
           setLoginMessage(result.message || 'שגיאה בהתחברות עם Google');
         }
