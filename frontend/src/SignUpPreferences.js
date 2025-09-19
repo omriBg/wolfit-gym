@@ -1,4 +1,6 @@
 import React, { useState, useEffect } from 'react';
+import { useNavigate, useLocation } from 'react-router-dom';
+import { useAuth } from './contexts/AuthContext';
 import './SignUpPreferences.css';
 import { API_BASE_URL } from './config';
 
@@ -36,7 +38,11 @@ async function sendRegistrationToServer(userData) {
     { id: 9, name: 'אופניים', icon: '🚴' }       // Cycling
   ];
 
-function SignUpPreferences({ onBackClick, onCompleteSignUp, userBasicData }) {
+function SignUpPreferences() {
+  const navigate = useNavigate();
+  const location = useLocation();
+  const { login } = useAuth();
+  const { userData, googleData } = location.state || {};
   const [selectedSports, setSelectedSports] = useState([]);
   const [preferenceMode, setPreferenceMode] = useState('simple');
   const [intensityLevel, setIntensityLevel] = useState(2);
@@ -176,7 +182,7 @@ function SignUpPreferences({ onBackClick, onCompleteSignUp, userBasicData }) {
     return [...selectedSportsData, ...unselectedSports];
   }
 
-  function handleCompleteSignUp() {
+  async function handleCompleteSignUp() {
     if (selectedSports.length === 0) {
       alert('אנא בחר לפחות ספורט אחד');
       return;
@@ -188,19 +194,31 @@ function SignUpPreferences({ onBackClick, onCompleteSignUp, userBasicData }) {
       selectedSports: selectedSports,
       sportsRanked: getSportsForAlgorithm() // המערך הממוין לאלגוריתם
     };
-    const completeUserData = {
-        ...userBasicData,  
-        ...preferences     
+      const completeUserData = {
+        ...userData,
+        ...preferences,
+        googleId: googleData?.googleId
       };
-    console.log('נתונים בסיסיים:', userBasicData);
+    console.log('נתונים בסיסיים:', userData);
+    console.log('נתוני Google:', googleData);
     console.log('העדפות ספורט:', preferences);
+    console.log('נתונים מלאים שנשלחים:', completeUserData);
 
-    onCompleteSignUp(completeUserData);
+    // שליחה לשרת
+    const result = await sendRegistrationToServer(completeUserData);
+    
+    if (result.success) {
+      console.log('הרשמה הושלמה בהצלחה:', result);
+      login(result.token, result.user);
+      navigate('/dashboard');
+    } else {
+      alert('שגיאה בהרשמה: ' + result.message);
+    }
   }
 
   return (
     <div className="edit-user-container">
-      <button className="back-button" onClick={onBackClick}>
+      <button className="back-button" onClick={() => navigate('/signup')}>
         חזרה
       </button>
       

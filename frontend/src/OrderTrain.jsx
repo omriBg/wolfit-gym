@@ -1,4 +1,6 @@
 import React, { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
+import { useAuth } from './contexts/AuthContext';
 import './OrderTrain.css';
 import './EditUser.css';
 import DatePicker from "react-datepicker";
@@ -6,7 +8,9 @@ import "react-datepicker/dist/react-datepicker.css";
 import CreateWorkout from './CreateWorkout';
 import { API_BASE_URL } from './config';
 
-function OrderTrain({ onBackClick, user }){
+function OrderTrain(){
+  const { user } = useAuth();
+  const navigate = useNavigate();
   const [selectDate, setSelectDate] = useState(null);
   const [startTime, setStartTime] = useState(null);
   const [endTime, setEndTime] = useState(null);
@@ -142,26 +146,22 @@ function OrderTrain({ onBackClick, user }){
   const handleBackFromCreateWorkout = () => {
     setShowCreateWorkout(false);
     // חזרה לתפריט הראשי לאחר יצירת אימון
-    if (onBackClick) {
-      onBackClick();
-    }
+    navigate('/main-menu');
   };
 
   if (showCreateWorkout) {
     return (
       <CreateWorkout 
-        user={user}
         selectedDate={selectDate.toLocaleDateString('en-CA')}
         startTime={startTime}
         endTime={endTime}
-        onBackClick={handleBackFromCreateWorkout}
       />
     );
   }
 
   return(
     <div className="order-train-container">
-      <button className="back-button" onClick={onBackClick}>חזרה</button>
+      <button className="back-button" onClick={() => navigate('/main-menu')}>חזרה</button>
       <div className="order-content">
         <h1>הזמנת אימון</h1>
         <div style={{marginTop: '50px'}}>

@@ -15,6 +15,33 @@ const PORT = process.env.PORT || 3001;
 app.use(cors());
 app.use(express.json());
 
+// JWT Secret (בסביבת ייצור צריך להיות ב-.env)
+const JWT_SECRET = process.env.JWT_SECRET || 'your-super-secret-jwt-key-change-in-production';
+
+// Middleware לאימות JWT
+const authenticateToken = (req, res, next) => {
+  const authHeader = req.headers['authorization'];
+  const token = authHeader && authHeader.split(' ')[1]; // Bearer TOKEN
+
+  if (!token) {
+    return res.status(401).json({
+      success: false,
+      message: 'לא מחובר - טוקן חסר'
+    });
+  }
+
+  jwt.verify(token, JWT_SECRET, (err, user) => {
+    if (err) {
+      return res.status(403).json({
+        success: false,
+        message: 'טוקן לא תקין או פג תוקף'
+      });
+    }
+    req.user = user;
+    next();
+  });
+};
+
 // חיבור למסד נתונים
 const pool = new Pool({
   host: process.env.DB_HOST || 'localhost',
@@ -49,7 +76,7 @@ app.get('/test', async (req, res) => {
   }
 });
 // API לטעינת העדפות משתמש
-app.get('/api/user-preferences/:userId', async (req, res) => {
+app.get('/api/user-preferences/:userId', authenticateToken, async (req, res) => {
     try {
       const { userId } = req.params;
       
@@ -92,7 +119,7 @@ app.get('/api/user-preferences/:userId', async (req, res) => {
   });
 
 // API לשמירת העדפות משתמש
-app.put('/api/save-user-preferences/:userId', async (req, res) => {
+app.put('/api/save-user-preferences/:userId', authenticateToken, async (req, res) => {
   try {
     const { userId } = req.params;
     const { intensityLevel, selectedSports } = req.body;
@@ -198,14 +225,25 @@ app.post('/api/google-login', async (req, res) => {
       // משתמש קיים - התחברות ישירה
       const user = existingUser.rows[0];
       
+      // יצירת JWT token
+      const token = jwt.sign(
+        { 
+          userId: user.iduser,
+          email: user.email,
+          userName: user.username || googleData.name
+        },
+        JWT_SECRET,
+        { expiresIn: '24h' }
+      );
+      
       res.json({
         success: true,
         message: 'התחברות הצליחה!',
+        token: token,
         user: {
           id: user.iduser,
           userName: user.username || googleData.name,
-          email: user.email,
-          profilePicture: user.profilepicture || googleData.picture
+          email: user.email
         }
       });
     } else {
@@ -228,6 +266,148 @@ app.post('/api/google-login', async (req, res) => {
     res.json({
       success: false,
       message: 'שגיאה בשרת',
+      error: err.message
+    });
+  }
+});
+
+// API לבדיקת טוקן ואימות משתמש
+app.get('/api/verify-token', authenticateToken, async (req, res) => {
+  try {
+    const { userId } = req.user;
+    
+    // קבלת פרטי המשתמש מהמסד נתונים
+    const userResult = await pool.query(
+      'SELECT iduser, username, email FROM "User" WHERE iduser = $1',
+      [userId]
+    );
+    
+    if (userResult.rows.length === 0) {
+      return res.status(404).json({
+        success: false,
+        message: 'משתמש לא נמצא'
+      });
+    }
+    
+    const user = userResult.rows[0];
+    
+    res.json({
+      success: true,
+      message: 'טוקן תקין',
+      user: {
+        id: user.iduser,
+        userName: user.username,
+        email: user.email
+      }
+    });
+    
+  } catch (err) {
+    console.error('❌ שגיאה בבדיקת טוקן:', err);
+    res.status(500).json({
+      success: false,
+      message: 'שגיאה בשרת',
+      error: err.message
+    });
+  }
+});
+
+// API לרישום משתמש חדש
+app.post('/api/register', async (req, res) => {
+  try {
+    const { 
+      userName, 
+      email, 
+      password, 
+      height, 
+      weight, 
+      birthdate, 
+      intensityLevel, 
+      googleId, 
+      sportPreferences 
+    } = req.body;
+    
+    console.log('📝 מקבל בקשה לרישום:', { userName, email, googleId });
+    console.log('📝 כל הנתונים:', req.body);
+    
+    if (!userName || !email) {
+      return res.json({
+        success: false,
+        message: 'שם משתמש ואימייל נדרשים'
+      });
+    }
+    
+    // בדיקה אם המשתמש כבר קיים
+    const existingUser = await pool.query(
+      'SELECT idUser FROM "User" WHERE email = $1 OR userName = $2',
+      [email, userName]
+    );
+    
+    if (existingUser.rows.length > 0) {
+      return res.json({
+        success: false,
+        message: 'משתמש עם אימייל או שם משתמש זה כבר קיים'
+      });
+    }
+    
+    // הכנסת המשתמש למסד הנתונים
+    console.log('💾 שומר משתמש במסד נתונים:', {
+      userName, email, height, weight, birthdate, intensityLevel, googleId
+    });
+    
+    const result = await pool.query(
+      `INSERT INTO "User" (username, email, password, height, weight, birthdate, intensitylevel, "googleId") 
+       VALUES ($1, $2, $3, $4, $5, $6, $7, $8) 
+       RETURNING iduser, username, email`,
+      [userName, email, password || '', 
+       height && height !== '' ? parseInt(height) : null, 
+       weight && weight !== '' ? parseInt(weight) : null, 
+       birthdate && birthdate !== '' ? birthdate : null, 
+       intensityLevel, googleId]
+    );
+    
+    const newUser = result.rows[0];
+    
+    // יצירת JWT token
+    const token = jwt.sign(
+      { 
+        userId: newUser.iduser,
+        email: newUser.email,
+        userName: newUser.username
+      },
+      JWT_SECRET,
+      { expiresIn: '24h' }
+    );
+    
+    // שמירת העדפות ספורט אם קיימות
+    if (sportPreferences && Array.isArray(sportPreferences)) {
+      console.log('🏃 שומר העדפות ספורט:', sportPreferences);
+      for (let i = 0; i < sportPreferences.length; i++) {
+        await pool.query(
+          'INSERT INTO UserPreferences (idUser, sportType, preferenceRank) VALUES ($1, $2, $3)',
+          [newUser.iduser, sportPreferences[i], i + 1]
+        );
+        console.log(`✅ נשמרה העדפה: ${sportPreferences[i]} במקום ${i + 1}`);
+      }
+    }
+    
+    console.log('✅ משתמש נרשם בהצלחה:', newUser.username);
+    
+    res.json({
+      success: true,
+      message: 'הרשמה הושלמה בהצלחה!',
+      token: token,
+      user: {
+        id: newUser.iduser,
+        userName: newUser.username,
+        email: newUser.email
+      }
+    });
+    
+  } catch (err) {
+    console.error('❌ שגיאה ברישום:', err);
+    res.json({
+      success: false,
+      message: 'שגיאה ברישום',
       error: err.message
     });
   }
@@ -271,7 +451,7 @@ app.post('/api/google-login', async (req, res) => {
   });
 
 // API לשמירת אימון
-app.post('/api/save-workout', async (req, res) => {
+app.post('/api/save-workout', authenticateToken, async (req, res) => {
   try {
     const { bookings, userId, date } = req.body;
     
@@ -486,7 +666,7 @@ app.post('/api/save-workout', async (req, res) => {
 });
 
 // API לקבלת מגרשים זמינים ליצירת אימון
-app.post('/api/available-fields-for-workout', async (req, res) => {
+app.post('/api/available-fields-for-workout', authenticateToken, async (req, res) => {
   try {
     const { date, timeSlots, userId } = req.body;
     
@@ -627,7 +807,7 @@ app.post('/api/available-fields-for-workout', async (req, res) => {
   }
 });
 // API לקבלת שעות תפוסות של משתמש לתאריך מסוים
-app.get('/api/user-booked-times/:userId/:date', async (req, res) => {
+app.get('/api/user-booked-times/:userId/:date', authenticateToken, async (req, res) => {
   try {
     const { userId, date } = req.params;
     
@@ -707,7 +887,7 @@ app.get('/api/user-booked-times/:userId/:date', async (req, res) => {
 });
 
 // API לקבלת אימונים עתידיים של משתמש
-app.get('/api/future-workouts/:userId', async (req, res) => {
+app.get('/api/future-workouts/:userId', authenticateToken, async (req, res) => {
   try {
     const { userId } = req.params;
     
@@ -839,7 +1019,7 @@ app.get('/api/future-workouts/:userId', async (req, res) => {
 });
 
 // API ליצירת תוכנית אימון אופטימלית
-app.post('/api/generate-optimal-workout', async (req, res) => {
+app.post('/api/generate-optimal-workout', authenticateToken, async (req, res) => {
   try {
     const { userId, date, timeSlots, userPreferences } = req.body;
     

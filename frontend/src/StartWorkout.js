@@ -1,10 +1,14 @@
 import React, { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
+import { useAuth } from './contexts/AuthContext';
 import './StartWorkout.css';
 import './CountdownTimer.css';
 import CountdownTimer from './CountdownTimer';
 import { API_BASE_URL } from './config';
 
-function StartWorkout({ onBackClick, user }) {
+function StartWorkout() {
+  const { user } = useAuth();
+  const navigate = useNavigate();
   const [workouts, setWorkouts] = useState([]);
   const [workoutsByField, setWorkoutsByField] = useState({});
   const [loading, setLoading] = useState(true);
@@ -28,7 +32,13 @@ function StartWorkout({ onBackClick, user }) {
         
         console.log('טוען אימונים עבור משתמש:', user.id);
         
-        const response = await fetch(`${API_BASE_URL}/api/future-workouts/${user.id}`);
+        const token = localStorage.getItem('authToken');
+        const response = await fetch(`${API_BASE_URL}/api/future-workouts/${user.id}`, {
+          headers: {
+            'Authorization': `Bearer ${token}`,
+            'Content-Type': 'application/json',
+          },
+        });
         const data = await response.json();
         
         if (data.success) {
@@ -316,16 +326,13 @@ function StartWorkout({ onBackClick, user }) {
 
   const handleBookNewWorkout = () => {
     console.log('מעבר להזמנת אימון חדש');
-    // כאן תוסיף את הלוגיקה למעבר למסך הזמנת אימון
-    if (onBackClick) {
-      // חזרה למסך הראשי ומשם יוכלו ללחוץ על הזמנת אימון
-      onBackClick();
-    }
+    // מעבר למסך הזמנת אימון
+    navigate('/workout-booking');
   };
 
   return (
     <div className="start-workout-container">
-      <button className="back-button" onClick={onBackClick}>
+      <button className="back-button" onClick={() => navigate('/main-menu')}>
         חזרה
       </button>
       

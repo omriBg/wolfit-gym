@@ -1,0 +1,162 @@
+.login-page {
+  text-align: center;
+  background-color: #000000;
+  color: white;
+  overflow-y: auto;
+  
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  min-height: 100vh;
+}
+
+.logo-container {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  width: 100%;
+}
+
+.login-logo {
+  width: 600px;
+  margin-bottom: 30px;
+  animation: fade-in-slow 4s ease-out;
+  max-width: 90vw;
+  height: auto;
+}
+
+@keyframes fade-in-slow {
+  from { 
+    opacity: 0; 
+    transform: translateY(20px) scale(0.2); 
+  }
+  to { 
+    opacity: 1; 
+    transform: translateY(0) scale(1); 
+  }
+}
+
+.login-form {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 20px;
+  max-width: 400px;
+  margin: 0 auto;
+  padding: 0 20px;
+  width: 100%;
+}
+
+input {
+  width: 100%;
+  max-width: 300px;
+  height: 40px;
+  padding: 15px;
+  font-size: 16px;
+  border: none;
+  border-radius: 8px;
+  background-color: #333;
+  color: white;
+  text-align: right;
+}
+
+input::placeholder {
+  color: #edeaea;
+}
+
+button {
+  width: 100%;
+  max-width: 330px;
+  height: 50px;
+  font-size: 18px;
+  background-color: #e6ecf1;
+  color: rgb(7, 5, 5);
+  border: none;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: all 0.3s ease;
+}
+
+button:hover:not(:disabled) {
+  background-color: #d1d8dd;
+  transform: translateY(-2px);
+}
+
+button:disabled {
+  background-color: #cccccc;
+  cursor: not-allowed;
+  transform: none;
+}
+
+@keyframes spin {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}
+
+/* התאמה למובייל */
+@media (max-width: 768px) {
+  .login-logo {
+    width: 80vw;
+    margin-bottom: 20px;
+  }
+  
+  .login-form {
+    gap: 15px;
+    padding: 0 15px;
+  }
+  
+  input {
+    height: 45px;
+    font-size: 16px;
+  }
+  
+  button {
+    height: 50px;
+    font-size: 18px;
+  }
+}
+
+/* התאמה למסכים קטנים מאוד */
+@media (max-width: 480px) {
+  .login-logo {
+    width: 85vw;
+    margin-bottom: 15px;
+  }
+  
+  .login-form {
+    gap: 12px;
+    padding: 0 10px;
+  }
+  
+  input {
+    height: 45px;
+    font-size: 16px;
+  }
+  
+  button {
+    height: 50px;
+    font-size: 18px;
+  }
+}
+
+/* התאמה למסכים גדולים */
+@media (min-width: 1200px) {
+  .login-logo {
+    width: 500px;
+  }
+  
+  .login-form {
+    gap: 25px;
+  }
+  
+  input {
+    height: 45px;
+    font-size: 18px;
+  }
+  
+  button {
+    height: 55px;
+    font-size: 20px;
+  }
+}

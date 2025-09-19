@@ -1,7 +1,13 @@
 import React, { useState, useEffect } from 'react';
+import { useNavigate, useLocation } from 'react-router-dom';
 import './SignUpScreen.css';
 
-function SignUpScreen({ onBackToLogin, onSignUpComplete }) {
+function SignUpScreen() {
+  const navigate = useNavigate();
+  const location = useLocation();
+  const googleData = location.state?.googleData;
+    const [userName, setUserName] = useState(googleData?.name || '');
+    const [email, setEmail] = useState(googleData?.email || '');
     const [height, setHeight] = useState('');
     const [weight, setWeight] = useState('');
     const [birthdate, setBirthdate] = useState('');
@@ -15,10 +21,29 @@ function SignUpScreen({ onBackToLogin, onSignUpComplete }) {
         };
     }, []);
 
+    // לוגים לבדיקה
+    useEffect(() => {
+        console.log('🔍 SignUpScreen - נתוני Google:', googleData);
+        console.log('🔍 SignUpScreen - שם משתמש:', userName);
+        console.log('🔍 SignUpScreen - אימייל:', email);
+    }, [googleData, userName, email]);
+
     const validateField = (fieldName, value) => {
         let error = '';
         
         switch (fieldName) {
+            case 'userName':
+                if (value && value.trim().length < 3) {
+                    error = 'שם משתמש חייב להכיל לפחות 3 תווים';
+                }
+                break;
+                
+            case 'email':
+                if (value && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value)) {
+                    error = 'אימייל לא תקין';
+                }
+                break;
+                
             case 'height':
                 if (value && (isNaN(value) || value < 100 || value > 250)) {
                     error = 'גובה חייב להיות בין 100 ל-250 ס"מ';
@@ -64,33 +89,78 @@ function SignUpScreen({ onBackToLogin, onSignUpComplete }) {
 
 
     const handleContinue = () => {
+        // בדיקת שדות חובה
+        if (!userName.trim()) {
+            setErrors({ userName: 'שם משתמש נדרש' });
+            return;
+        }
+        if (!email.trim()) {
+            setErrors({ email: 'אימייל נדרש' });
+            return;
+        }
+        
         console.log('נתונים:', {
+            userName,
+            email,
             height,
             weight,
             birthdate
         });
         
-        if (onSignUpComplete) {
-          const userData = {
-            height,
-            weight,
-            birthdate
-            };
-            onSignUpComplete(userData);
-        }
+        const userData = {
+          userName,
+          email,
+          height,
+          weight,
+          birthdate
+        };
+        navigate('/signup-preferences', { state: { userData, googleData } });
     };
 
     return (
         <div className="signup-container">
-          <button className="back-button" onClick={onBackToLogin}>
+          <button className="back-button" onClick={() => navigate('/login')}>
             חזרה
           </button>
           
           <div className="content">
             <h1>השלמת הרשמה</h1>
-            <p>כמעט סיימנו! רק כמה פרטים נוספים (אופציונליים)</p>
+            {googleData ? (
+              <div>
+                <p style={{ color: '#8b5cf6', fontWeight: 'bold', marginBottom: '10px' }}>
+                  🎉 ברוך הבא! התחברת עם Google
+                </p>
+                <p>נתוני Google שלך נטענו אוטומטית. אנא השלם את הפרטים הבאים:</p>
+              </div>
+            ) : (
+              <p>כמעט סיימנו! רק כמה פרטים נוספים (אופציונליים)</p>
+            )}
             
             <div className="signup-form">
+              <div className="form-group">
+                <input 
+                  type="text" 
+                  placeholder="שם משתמש"
+                  value={userName}
+                  onChange={(e) => updateField('userName', e.target.value, setUserName)}
+                  className={errors.userName ? 'error' : ''}
+                  required
+                />
+                {errors.userName && <span className="error-message">{errors.userName}</span>}
+              </div>
+              
+              <div className="form-group">
+                <input 
+                  type="email" 
+                  placeholder="אימייל"
+                  value={email}
+                  onChange={(e) => updateField('email', e.target.value, setEmail)}
+                  className={errors.email ? 'error' : ''}
+                  required
+                />
+                {errors.email && <span className="error-message">{errors.email}</span>}
+              </div>
+              
               <div className="form-group">
                 <input 
                   type="number" 

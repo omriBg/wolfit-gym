@@ -1,7 +1,8 @@
 
 import React, { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
+import { useAuth } from './contexts/AuthContext';
 import { API_BASE_URL } from './config';
-
 import './CreateWorkout.css';
 
 // מיפוי ספורטים (תואם לשרת שלך)
@@ -19,7 +20,9 @@ const SPORT_MAPPING = {
 
 
 // הרכיב הראשי עם השלמות מלאות
-function CreateWorkout({ user, selectedDate, startTime, endTime, onBackClick }) {
+function CreateWorkout({ selectedDate, startTime, endTime }) {
+  const { user } = useAuth();
+  const navigate = useNavigate();
   const [isGenerating, setIsGenerating] = useState(false);
   const [workoutPlan, setWorkoutPlan] = useState(null);
   const [userPreferences, setUserPreferences] = useState([]);
@@ -140,9 +143,11 @@ function CreateWorkout({ user, selectedDate, startTime, endTime, onBackClick }) 
       
       console.log('📋 נתוני בקשה:', requestBody);
       
+      const token = localStorage.getItem('authToken');
       const response = await fetch(`${API_BASE_URL}/api/generate-optimal-workout`, {
         method: 'POST',
         headers: {
+          'Authorization': `Bearer ${token}`,
           'Content-Type': 'application/json',
         },
         body: JSON.stringify(requestBody)
@@ -231,9 +236,11 @@ function CreateWorkout({ user, selectedDate, startTime, endTime, onBackClick }) 
 
       console.log('💾 שומר אימון:', requestBody);
 
+      const token = localStorage.getItem('authToken');
       const response = await fetch(`${API_BASE_URL}/api/save-workout`, {
         method: 'POST',
         headers: {
+          'Authorization': `Bearer ${token}`,
           'Content-Type': 'application/json',
         },
         body: JSON.stringify(requestBody)
@@ -251,9 +258,7 @@ function CreateWorkout({ user, selectedDate, startTime, endTime, onBackClick }) 
         
         // הודעה של הצלחה ואז חזרה לתפריט הראשי
         setTimeout(() => {
-          if (onBackClick) {
-            onBackClick();
-          }
+          navigate('/main-menu');
         }, 3000); // 3 שניות כדי שהמשתמש יראה את הודעת ההצלחה
       } else {
         setError(`שגיאה בשמירת האימון: ${data.message}`);
@@ -274,7 +279,7 @@ function CreateWorkout({ user, selectedDate, startTime, endTime, onBackClick }) 
   if (loading) {
     return (
       <div className="create-workout-container">
-        <button className="back-button" onClick={onBackClick}>חזרה</button>
+        <button className="back-button" onClick={() => navigate('/main-menu')}>חזרה</button>
         <div className="content">
           <h1>🔄 טוען נתונים...</h1>
           <p>אנא המתן בזמן שאנו טוענים את המידע הדרוש ליצירת האימון</p>
@@ -285,7 +290,7 @@ function CreateWorkout({ user, selectedDate, startTime, endTime, onBackClick }) 
 
   return (
     <div className="create-workout-container">
-      <button className="back-button" onClick={onBackClick}>
+      <button className="back-button" onClick={() => navigate('/main-menu')}>
         חזרה
       </button>
       

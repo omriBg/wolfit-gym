@@ -1,13 +1,13 @@
 import React, { useState, useEffect } from 'react';
-import EditUser from './EditUser';
-import OrderTrain from './OrderTrain';
-import StartWorkout from './StartWorkout';
+import { useNavigate } from 'react-router-dom';
+import { useAuth } from './contexts/AuthContext';
 import './MainMenu.css';
 
-function MainMenu({ user }) {
+function MainMenu() {
+  const { user, logout } = useAuth();
   const [isLoaded, setIsLoaded] = useState(false);
   const [hoveredButton, setHoveredButton] = useState(null);
-  const [currentView, setCurrentView] = useState('menu');
+  const navigate = useNavigate();
 
   useEffect(() => {
     const timer = setTimeout(() => setIsLoaded(true), 100);
@@ -19,41 +19,38 @@ function MainMenu({ user }) {
     
     switch(action) {
       case 'user-edit':
-        setCurrentView('editUser');
+        navigate('/edit-user');
         break;
       case 'workout-booking':
-        setCurrentView('workoutBooking');
+        navigate('/workout-booking');
         break;
       case 'start-workout':
-        setCurrentView('startWorkout');
+        navigate('/start-workout');
         break;
       default:
-        setCurrentView('menu');
+        break;
     }
   };
 
-  const handleBackToMenu = () => {
-    setCurrentView('menu');
-  };
-
-  if (currentView === 'editUser') {
-    return <EditUser onBackClick={handleBackToMenu} currentUser={user} />; 
-  }
-
-  if (currentView === 'workoutBooking') {
-    return <OrderTrain onBackClick={handleBackToMenu} user={user} />;
-  }
-
-  if (currentView === 'startWorkout') {
-    return <StartWorkout onBackClick={handleBackToMenu} user={user} />;
-  }
-
   return (
     <div className={`main-menu ${isLoaded ? 'loaded' : ''}`}>
+      {/* כפתור התנתקות בצד ימין למעלה */}
+      <button 
+        className="logout-button"
+        onClick={() => logout()}
+      >
+        התנתק
+      </button>
+      
       <div className="menu-container">
         <div className="header-section">
           <h1 className="brand-title">WOLFit</h1>
           <div className="title-line"></div>
+          {user && (
+            <p className="welcome-message">
+              ברוך הבא, {user.userName || user.email}!
+            </p>
+          )}
         </div>
         
         <div className="buttons-section">

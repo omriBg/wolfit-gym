@@ -1,8 +1,12 @@
 import React, { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
+import { useAuth } from './contexts/AuthContext';
 import './EditUser.css';
 import { API_BASE_URL } from './config';
 
-function EditUser({ onBackClick, currentUser }) {
+function EditUser() {
+  const { user: currentUser } = useAuth();
+  const navigate = useNavigate();
   const [selectedSports, setSelectedSports] = useState([]);
   const [preferenceMode, setPreferenceMode] = useState('simple');
   const [intensityLevel, setIntensityLevel] = useState(2);
@@ -32,7 +36,13 @@ function EditUser({ onBackClick, currentUser }) {
     setIsLoading(true);
     
     try {
-      const response = await fetch(`${API_BASE_URL}/api/user-preferences/${currentUser.id}`);
+      const token = localStorage.getItem('authToken');
+      const response = await fetch(`${API_BASE_URL}/api/user-preferences/${currentUser.id}`, {
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json',
+        },
+      });
       console.log('תגובה מהשרת:', response.status);
       
       if (response.ok) {
@@ -106,9 +116,11 @@ function EditUser({ onBackClick, currentUser }) {
       const url = `${API_BASE_URL}/api/save-user-preferences/${currentUser.id}`; 
       console.log('🌐 URL:', url);
 
+      const token = localStorage.getItem('authToken');
       const response = await fetch(url, {
         method: 'PUT',
         headers: {
+          'Authorization': `Bearer ${token}`,
           'Content-Type': 'application/json',
         },
         body: JSON.stringify(requestData)
@@ -123,9 +135,7 @@ function EditUser({ onBackClick, currentUser }) {
         setTimeout(() => {
           setSaveMessage('');
           // חזרה לתפריט הראשי לאחר שמירת ההעדפות
-          if (onBackClick) {
-            onBackClick();
-          }
+          navigate('/main-menu');
         }, 1000);
       } else {
         const errorText = await response.text();
@@ -274,7 +284,7 @@ function EditUser({ onBackClick, currentUser }) {
 
   return (
     <div className="edit-user-container">
-      <button className="back-button" onClick={onBackClick}>חזרה</button>
+      <button className="back-button" onClick={() => navigate('/main-menu')}>חזרה</button>
       
       <div className="content">
         <h1>עריכת משתמש</h1>
