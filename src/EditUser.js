@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import './EditUser.css';
+import { API_BASE_URL } from './config';
 
 function EditUser({ onBackClick, currentUser }) {
   const [selectedSports, setSelectedSports] = useState([]);
@@ -31,7 +32,7 @@ function EditUser({ onBackClick, currentUser }) {
     setIsLoading(true);
     
     try {
-      const response = await fetch(`https://wolfit-gym-backend-ijvq.onrender.com/api/user-preferences/${currentUser.id}`);
+      const response = await fetch(`${API_BASE_URL}/api/user-preferences/${currentUser.id}`);
       console.log('תגובה מהשרת:', response.status);
       
       if (response.ok) {
@@ -102,7 +103,7 @@ function EditUser({ onBackClick, currentUser }) {
 
       console.log('📤 נתונים לשליחה:', JSON.stringify(requestData, null, 2));
 
-      const url = `https://wolfit-gym-backend-ijvq.onrender.com/api/save-user-preferences/${currentUser.id}`;
+      const url = `${API_BASE_URL}/api/save-user-preferences/${currentUser.id}`; 
       console.log('🌐 URL:', url);
 
       const response = await fetch(url, {
@@ -118,8 +119,14 @@ function EditUser({ onBackClick, currentUser }) {
       if (response.ok) {
         const result = await response.json();
         console.log('✅ תוצאת שמירה:', result);
-        setSaveMessage('העדפות נשמרו בהצלחה!');
-        setTimeout(() => setSaveMessage(''), 3000);
+        setSaveMessage('✅ השינויים נשמרו בהצלחה!');
+        setTimeout(() => {
+          setSaveMessage('');
+          // חזרה לתפריט הראשי לאחר שמירת ההעדפות
+          if (onBackClick) {
+            onBackClick();
+          }
+        }, 1000);
       } else {
         const errorText = await response.text();
         console.log('❌ שגיאה בשמירה:', errorText);
@@ -400,14 +407,39 @@ function EditUser({ onBackClick, currentUser }) {
             )}
 
             {saveMessage && (
-              <div className="save-message" style={{
-                color: saveMessage.includes('בהצלחה') ? '#4CAF50' : '#F44336',
-                textAlign: 'center',
-                marginTop: '20px',
-                fontSize: '16px'
-              }}>
-                {saveMessage}
-              </div>
+              <>
+                {/* רקע שחור לגמרי */}
+                <div style={{
+                  position: 'fixed',
+                  top: 0,
+                  left: 0,
+                  width: '100%',
+                  height: '100%',
+                  backgroundColor: 'rgba(0, 0, 0, 0.9)',
+                  zIndex: 999
+                }}></div>
+                
+                {/* תיבת ההודעה */}
+                <div className="save-message" style={{
+                  position: 'fixed',
+                  top: '50%',
+                  left: '50%',
+                  transform: 'translate(-50%, -50%)',
+                  backgroundColor: '#fff',
+                  color: '#000',
+                  padding: '20px 30px',
+                  borderRadius: '12px',
+                  border: '2px solid #8b5cf6',
+                  boxShadow: '0 4px 20px rgba(0, 0, 0, 0.5)',
+                  fontSize: '18px',
+                  fontWeight: 'bold',
+                  zIndex: 1000,
+                  textAlign: 'center',
+                  animation: 'popup 0.3s ease-out'
+                }}>
+                  {saveMessage}
+                </div>
+              </>
             )}
 
             <div style={{ textAlign: 'center', marginTop: '30px' }}>

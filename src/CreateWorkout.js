@@ -1,5 +1,6 @@
 
 import React, { useState, useEffect } from 'react';
+import { API_BASE_URL } from './config';
 
 import './CreateWorkout.css';
 
@@ -16,7 +17,6 @@ const SPORT_MAPPING = {
   9: 'אופניים'
 };
 
-// האלגוריתם ההונגרי הועבר לשרת - הקוד בצד הלקוח רק שולח בקשות
 
 // הרכיב הראשי עם השלמות מלאות
 function CreateWorkout({ user, selectedDate, startTime, endTime, onBackClick }) {
@@ -31,7 +31,7 @@ function CreateWorkout({ user, selectedDate, startTime, endTime, onBackClick }) 
   const [saveSuccess, setSaveSuccess] = useState(false);
 
   useEffect(() => {
-    console.log('🎬 CreateWorkout נטען עם פרמטרים:', {
+    console.log(' CreateWorkout נטען עם פרמטרים:', {
       user: user?.userName,
       selectedDate,
       startTime,
@@ -40,6 +40,14 @@ function CreateWorkout({ user, selectedDate, startTime, endTime, onBackClick }) 
     
     initializeWorkoutData();
   }, []);
+
+  // יצירת אימון אוטומטית אחרי שהנתונים נטענו
+  useEffect(() => {
+    if (!loading && timeSlots.length > 0 && !workoutPlan && !isGenerating) {
+      console.log('🚀 יוצר אימון אוטומטית...');
+      generateWorkout();
+    }
+  }, [loading, timeSlots.length, workoutPlan, isGenerating]);
 
   const initializeWorkoutData = async () => {
     try {
@@ -69,7 +77,7 @@ function CreateWorkout({ user, selectedDate, startTime, endTime, onBackClick }) 
         throw new Error('משתמש לא מוגדר');
       }
       
-      const url = `https://wolfit-gym-backend-ijvq.onrender.com/api/user-preferences/${user.id}`;
+      const url = `${API_BASE_URL}/api/user-preferences/${user.id}`;
       console.log('📡 קורא העדפות מ:', url);
       
       const response = await fetch(url);
@@ -132,7 +140,7 @@ function CreateWorkout({ user, selectedDate, startTime, endTime, onBackClick }) 
       
       console.log('📋 נתוני בקשה:', requestBody);
       
-      const response = await fetch('https://wolfit-gym-backend-ijvq.onrender.com/api/generate-optimal-workout', {
+      const response = await fetch(`${API_BASE_URL}/api/generate-optimal-workout`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -223,7 +231,7 @@ function CreateWorkout({ user, selectedDate, startTime, endTime, onBackClick }) 
 
       console.log('💾 שומר אימון:', requestBody);
 
-      const response = await fetch('https://wolfit-gym-backend-ijvq.onrender.com/api/save-workout', {
+      const response = await fetch(`${API_BASE_URL}/api/save-workout`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -241,11 +249,12 @@ function CreateWorkout({ user, selectedDate, startTime, endTime, onBackClick }) 
         setSaveSuccess(true);
         console.log('✅ אימון נשמר בהצלחה');
         
+        // הודעה של הצלחה ואז חזרה לתפריט הראשי
         setTimeout(() => {
           if (onBackClick) {
             onBackClick();
           }
-        }, 2000);
+        }, 3000); // 3 שניות כדי שהמשתמש יראה את הודעת ההצלחה
       } else {
         setError(`שגיאה בשמירת האימון: ${data.message}`);
       }
@@ -268,16 +277,7 @@ function CreateWorkout({ user, selectedDate, startTime, endTime, onBackClick }) 
         <button className="back-button" onClick={onBackClick}>חזרה</button>
         <div className="content">
           <h1>🔄 טוען נתונים...</h1>
-          <p>אנא המתן בזמן שאנו טוענים את המידע הדרוש ליצירת האימון האופטימלי</p>
-          <div style={{ 
-            margin: '20px 0', 
-            padding: '15px', 
-            background: 'rgba(81, 207, 102, 0.1)',
-            borderRadius: '8px',
-            border: '1px solid rgba(81, 207, 102, 0.3)'
-          }}>
-            המערכת טוענה את העדפותיך, בודקת זמינות מגרשים ומכינה אלגוריתם אופטימלי...
-          </div>
+          <p>אנא המתן בזמן שאנו טוענים את המידע הדרוש ליצירת האימון</p>
         </div>
       </div>
     );
@@ -290,142 +290,39 @@ function CreateWorkout({ user, selectedDate, startTime, endTime, onBackClick }) 
       </button>
       
       <div className="content">
-        <h1>🎯 יוצר אימון אופטימלי מלא (Hungarian Algorithm)</h1>
+        <h1>🎯 יוצר אימון</h1>
         
-        <div className="workout-info">
-          <div className="info-card">
-            <h3>🗓️ פרטי האימון</h3>
-            <p><strong>תאריך:</strong> {selectedDate}</p>
-            <p><strong>שעה:</strong> {startTime} - {endTime}</p>
-            <p><strong>משתמש:</strong> {user.userName}</p>
-            <p><strong>רבעי שעה:</strong> {timeSlots.length}</p>
-          </div>
-          
-          <div className="info-card">
-            <h3>❤️ העדפות המשתמש</h3>
-            {userPreferences.length > 0 ? (
-              <div>
-                <p><strong>ספורטים מועדפים (לפי סדר):</strong></p>
-                <ol style={{ margin: '10px 0', paddingRight: '20px' }}>
-                  {userPreferences.map((sportId) => (
-                    <li key={sportId} style={{ margin: '5px 0' }}>
-                      {SPORT_MAPPING[sportId] || `ספורט ${sportId}`}
-                    </li>
-                  ))}
-                </ol>
-              </div>
-            ) : (
-              <p style={{ color: '#ff6b6b' }}>⚠️ אין העדפות שמורות - האלגוריתם ישתמש בהעדפות ברירת מחדל</p>
-            )}
-          </div>
-          
-          <div className="info-card">
-            <h3>🏟️ זמינות מגרשים</h3>
-            <p><strong>רבעי שעה:</strong> {timeSlots.length}</p>
-            <p><strong>סטטוס:</strong> השרת יבדוק זמינות בזמן אמת</p>
-            <div style={{ 
-              marginTop: '10px', 
-              padding: '10px', 
-              background: 'rgba(81, 207, 102, 0.1)',
-              borderRadius: '6px',
-              fontSize: '0.9rem'
-            }}>
-              ✅ האלגוריתם ההונגרי רץ בשרת - ביצועים מהירים יותר!
-            </div>
-          </div>
-        </div>
-
         {error && (
           <div style={{ 
-            color: '#ff6b6b', 
+            color: '#000', 
             textAlign: 'center', 
             margin: '20px 0',
             padding: '15px',
-            background: 'rgba(255, 107, 107, 0.1)',
+            background: '#f5f5f5',
             borderRadius: '8px',
-            border: '1px solid rgba(255, 107, 107, 0.3)'
+            border: '1px solid #ccc'
           }}>
             ❌ {error}
           </div>
         )}
 
-        <div className="action-buttons">
-          <button
-            className="generate-button"
-            onClick={generateWorkout}
-            disabled={isGenerating || !canCreateWorkout()}
-            style={{
-              background: isGenerating ? '#ccc' : 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
-              color: 'white',
-              border: 'none',
-              padding: '15px 30px',
-              borderRadius: '8px',
-              fontSize: '16px',
-              fontWeight: 'bold',
-              cursor: isGenerating ? 'not-allowed' : 'pointer',
-              transition: 'all 0.3s ease'
-            }}
-          >
-            {isGenerating ? '🔄 יוצר אימון אופטימלי...' : '🎯 צור תוכנית אימון אופטימלית'}
-          </button>
-        </div>
+        {isGenerating && (
+          <div style={{ 
+            textAlign: 'center', 
+            margin: '40px 0',
+            padding: '20px',
+            fontSize: '18px'
+          }}>
+            🔄 יוצר אימון...
+          </div>
+        )}
 
         {workoutPlan && (
           <div className="workout-result" style={{ marginTop: '30px' }}>
-            <h2>🏆 התוכנית האופטימלית שלך</h2>
-            
-                         <div className="optimization-info" style={{
-               background: 'linear-gradient(135deg, #8b5cf6 0%, #7c3aed 100%)',
-               color: 'white',
-               padding: '20px',
-               borderRadius: '12px',
-               margin: '20px 0',
-               textAlign: 'center'
-             }}>
-              <h3 style={{ margin: '0 0 15px 0' }}>📊 סטטיסטיקות אופטימליות</h3>
-              <div style={{ display: 'flex', justifyContent: 'space-around', flexWrap: 'wrap', gap: '20px' }}>
-                <div>
-                  <div style={{ fontSize: '24px', fontWeight: 'bold' }}>{workoutPlan.successfulSlots}/{timeSlots.length}</div>
-                  <div style={{ fontSize: '14px', opacity: 0.9 }}>רבעי שעה מוצלחים</div>
-                </div>
-                <div>
-                  <div style={{ fontSize: '24px', fontWeight: 'bold' }}>{workoutPlan.totalScore}</div>
-                  <div style={{ fontSize: '14px', opacity: 0.9 }}>ניקוד כולל</div>
-                </div>
-                <div>
-                  <div style={{ fontSize: '24px', fontWeight: 'bold' }}>✅</div>
-                  <div style={{ fontSize: '14px', opacity: 0.9 }}>אלגוריתם הונגרי</div>
-                </div>
-              </div>
-            </div>
-
-            {workoutPlan.sportsUsage && Object.keys(workoutPlan.sportsUsage).length > 0 && (
-                             <div className="sports-summary" style={{
-                 background: 'rgba(139, 92, 246, 0.1)',
-                 padding: '15px',
-                 borderRadius: '8px',
-                 border: '1px solid rgba(139, 92, 246, 0.3)',
-                 margin: '20px 0'
-               }}>
-                <h3 style={{ margin: '0 0 15px 0' }}>📈 פילוג ספורטים אופטימלי:</h3>
-                <div style={{ display: 'flex', flexWrap: 'wrap', gap: '15px' }}>
-                  {Object.entries(workoutPlan.sportsUsage).map(([sportId, count]) => (
-                                         <div key={sportId} style={{
-                       background: 'white',
-                       padding: '10px 15px',
-                       borderRadius: '20px',
-                       border: '1px solid rgba(139, 92, 246, 0.5)',
-                       fontSize: '14px'
-                     }}>
-                      <strong>{SPORT_MAPPING[sportId] || `ספורט ${sportId}`}:</strong> {count} פעמים
-                    </div>
-                  ))}
-                </div>
-              </div>
-            )}
+            <h2>🏆 האימון שלך</h2>
             
             <div className="workout-timeline">
-              <h3>⏰ לוח זמנים מפורט:</h3>
+              <h3>⏰ לוח זמנים:</h3>
               {workoutPlan.slots.map((slot, index) => (
                                  <div key={index} className="time-slot" style={{
                    display: 'flex',
@@ -450,21 +347,16 @@ function CreateWorkout({ user, selectedDate, startTime, endTime, onBackClick }) 
                            ✅ {slot.field.name}
                          </div>
                          <div style={{ fontSize: '14px', color: '#666', marginTop: '5px' }}>
-                           🏃 ספורט: {slot.sportType} | 
-                           🔄 שימוש: {slot.usage}/2 | 
-                           {slot.score && (
-                             <span> 🎯 ניקוד: {slot.score}</span>
-                           )}
-                           {slot.isOptimal && <span style={{ color: '#8b5cf6' }}> | ⭐ אופטימלי</span>}
+                           🏃 ספורט: {slot.sportType}
                          </div>
                       </>
                     ) : (
                       <>
-                        <div style={{ fontWeight: 'bold', fontSize: '16px', color: '#ff6b6b' }}>
+                        <div style={{ fontWeight: 'bold', fontSize: '16px', color: '#000' }}>
                           ❌ לא זמין
                         </div>
-                        <div style={{ fontSize: '14px', color: '#999', marginTop: '5px' }}>
-                          {slot.reason || 'לא נמצא מגרש מתאים'}
+                        <div style={{ fontSize: '14px', color: '#666', marginTop: '5px' }}>
+                          לא נמצא מגרש מתאים
                         </div>
                       </>
                     )}
@@ -474,18 +366,42 @@ function CreateWorkout({ user, selectedDate, startTime, endTime, onBackClick }) 
             </div>
 
             {saveSuccess ? (
-                               <div style={{ 
-                   color: '#8b5cf6', 
-                   textAlign: 'center', 
-                   margin: '30px 0',
-                   padding: '20px',
-                   background: 'rgba(139, 92, 246, 0.1)',
-                   borderRadius: '12px',
-                   border: '2px solid rgba(139, 92, 246, 0.3)'
-                 }}>
-                <h3>🎉 האימון האופטימלי נשמר בהצלחה!</h3>
-                <p>מעביר אותך לתפריט הראשי בעוד רגעים...</p>
-              </div>
+              <>
+                {/* רקע שחור לגמרי */}
+                <div style={{
+                  position: 'fixed',
+                  top: 0,
+                  left: 0,
+                  width: '100%',
+                  height: '100%',
+                  backgroundColor: 'rgba(0, 0, 0, 0.9)',
+                  zIndex: 999
+                }}></div>
+                
+                {/* תיבת ההודעה */}
+                <div style={{ 
+                  position: 'fixed',
+                  top: '50%',
+                  left: '50%',
+                  transform: 'translate(-50%, -50%)',
+                  backgroundColor: '#fff',
+                  color: '#000',
+                  padding: '30px 40px',
+                  borderRadius: '12px',
+                  border: '2px solid #8b5cf6',
+                  boxShadow: '0 4px 20px rgba(0, 0, 0, 0.5)',
+                  zIndex: 1000,
+                  textAlign: 'center',
+                  animation: 'popup 0.3s ease-out',
+                  maxWidth: '400px'
+                }}>
+                  <h3 style={{ margin: '0 0 15px 0', fontSize: '20px' }}>🎉 האימון נשמר בהצלחה!</h3>
+                  <p style={{ margin: '8px 0', fontSize: '16px' }}>✅ האימון שלך הוזמן בהצלחה</p>
+                  <p style={{ margin: '8px 0', fontSize: '16px' }}>📅 תאריך: {selectedDate}</p>
+                  <p style={{ margin: '8px 0', fontSize: '16px' }}>⏰ זמן: {startTime} - {endTime}</p>
+                  <p style={{ margin: '15px 0 0 0', fontSize: '14px', color: '#666' }}>🔄 מעביר אותך לתפריט הראשי בעוד רגעים...</p>
+                </div>
+              </>
             ) : (
               <div className="action-buttons" style={{ marginTop: '30px', textAlign: 'center' }}>
                 <button
@@ -504,7 +420,7 @@ function CreateWorkout({ user, selectedDate, startTime, endTime, onBackClick }) 
                      transition: 'all 0.3s ease'
                    }}
                 >
-                  {isSaving ? '💾 שומר אימון...' : '✅ אישור ושמירת האימון האופטימלי'}
+                  {isSaving ? '💾 שומר אימון...' : '✅ אישור ושמירת האימון'}
                 </button>
               </div>
             )}

@@ -4,6 +4,8 @@ const cors = require('cors');
 const { Pool } = require('pg');
 const jwt = require('jsonwebtoken');
 const { OptimalHungarianAlgorithm, CompleteOptimalWorkoutScheduler, SPORT_MAPPING } = require('./optimalWorkoutAlgorithm');
+const { sendWorkoutBookingEmail } = require('./emailService');
+const { startReminderService } = require('./reminderService');
 require('dotenv').config();
 
 const app = express();
@@ -188,7 +190,7 @@ app.post('/api/google-login', async (req, res) => {
     
     // בדיקה אם המשתמש קיים
     const existingUser = await pool.query(
-      'SELECT * FROM "User" WHERE googleId = $1 OR email = $2',
+      'SELECT * FROM "User" WHERE "googleId" = $1 OR email = $2',
       [googleData.sub, googleData.email]
     );
     
@@ -326,6 +328,53 @@ app.post('/api/save-workout', async (req, res) => {
       });
     }
     
+    // בדיקה שהמשתמש לא הזמין כבר אימון באותו תאריך ושעות
+    console.log('🔍 בודק התנגשויות עם הזמנות קיימות...');
+    
+    for (const booking of bookings) {
+      const { startTime } = booking;
+      
+      // חישוב רבע שעה לפני ואחרי
+      const [hours, minutes] = startTime.split(':');
+      const startMinutes = parseInt(hours) * 60 + parseInt(minutes);
+      const beforeMinutes = startMinutes - 15; // רבע שעה לפני
+      const afterMinutes = startMinutes + 15;  // רבע שעה אחרי
+      
+      // המרה חזרה לפורמט זמן
+      const beforeHours = Math.floor(beforeMinutes / 60);
+      const beforeMins = beforeMinutes % 60;
+      const beforeTime = `${beforeHours.toString().padStart(2, '0')}:${beforeMins.toString().padStart(2, '0')}`;
+      
+      const afterHours = Math.floor(afterMinutes / 60);
+      const afterMins = afterMinutes % 60;
+      const afterTime = `${afterHours.toString().padStart(2, '0')}:${afterMins.toString().padStart(2, '0')}`;
+      
+      console.log(`⏰ בודק התנגשות עבור ${startTime} (טווח: ${beforeTime} - ${afterTime})`);
+      
+      // בדיקה אם יש הזמנה קיימת של אותו משתמש באותו תאריך בטווח הזמן
+      const conflictCheck = await pool.query(
+        `SELECT * FROM BookField 
+         WHERE iduser = $1 
+         AND bookingdate = $2 
+         AND (
+           starttime = $3 OR 
+           starttime = $4 OR 
+           starttime = $5
+         )`,
+        [userId, date, beforeTime, startTime, afterTime]
+      );
+      
+      if (conflictCheck.rows.length > 0) {
+        const conflict = conflictCheck.rows[0];
+        return res.json({
+          success: false,
+          message: `יש לך כבר אימון מוזמן ב-${date} בשעה ${conflict.starttime}. לא ניתן להזמין אימון בטווח של רבע שעה לפני ואחרי (${beforeTime} - ${afterTime})`
+        });
+      }
+    }
+    
+    console.log('✅ לא נמצאו התנגשויות עם הזמנות קיימות');
+    
     // שמירת כל ההזמנות
     for (const booking of bookings) {
       const { idField, bookingDate, startTime, idUser } = booking;
@@ -361,6 +410,65 @@ app.post('/api/save-workout', async (req, res) => {
       console.log(`✅ נשמרה הזמנה: מגרש ${idField}, תאריך ${bookingDate}, שעה ${startTime}`);
     }
     
+    // שליחת אימייל הזמנת אימון
+    try {
+      console.log('📧 שולח אימייל הזמנת אימון...');
+      
+      // קבלת פרטי המשתמש
+      const userResult = await pool.query(
+        'SELECT username, email FROM "User" WHERE idUser = $1',
+        [userId]
+      );
+      
+      if (userResult.rows.length > 0) {
+        const user = userResult.rows[0];
+        
+        // קבלת פרטי האימון המלאים
+        const workoutSlots = [];
+        for (const booking of bookings) {
+          const fieldResult = await pool.query(
+            'SELECT f.fieldname, f.sporttype, st.sportname FROM Field f JOIN SportTypes st ON f.sporttype = st.sporttype WHERE f.idfield = $1',
+            [booking.idField]
+          );
+          
+          if (fieldResult.rows.length > 0) {
+            const field = fieldResult.rows[0];
+            workoutSlots.push({
+              time: booking.startTime,
+              field: {
+                name: field.fieldname,
+                sportType: field.sportname
+              }
+            });
+          }
+        }
+        
+        // מיון לפי זמן
+        workoutSlots.sort((a, b) => a.time.localeCompare(b.time));
+        
+        const startTime = workoutSlots[0]?.time || bookings[0]?.startTime;
+        const endTime = workoutSlots[workoutSlots.length - 1]?.time || bookings[bookings.length - 1]?.startTime;
+        
+        const workoutDetails = {
+          date: date,
+          startTime: startTime,
+          endTime: endTime,
+          slots: workoutSlots
+        };
+        
+        const emailResult = await sendWorkoutBookingEmail(user.email, user.username, workoutDetails);
+        
+        if (emailResult.success) {
+          console.log('✅ אימייל הזמנת אימון נשלח בהצלחה');
+        } else {
+          console.log('⚠️ שגיאה בשליחת אימייל:', emailResult.error);
+        }
+      }
+    } catch (emailError) {
+      console.error('❌ שגיאה בשליחת אימייל הזמנת אימון:', emailError);
+      // לא נעצור את התהליך בגלל שגיאת אימייל
+    }
+    
     res.json({
       success: true,
       message: `האימון נשמר בהצלחה! נשמרו ${bookings.length} הזמנות`,
@@ -380,14 +488,21 @@ app.post('/api/save-workout', async (req, res) => {
 // API לקבלת מגרשים זמינים ליצירת אימון
 app.post('/api/available-fields-for-workout', async (req, res) => {
   try {
-    const { date, timeSlots } = req.body;
+    const { date, timeSlots, userId } = req.body;
     
-    console.log('🏟️ מקבל בקשה למגרשים זמינים:', { date, timeSlots });
+    console.log('🏟️ מקבל בקשה למגרשים זמינים:', { date, timeSlots, userId });
     
     if (!date || !timeSlots || !Array.isArray(timeSlots)) {
       return res.json({
         success: false,
         message: 'תאריך ורשימת זמנים נדרשים'
+      });
+    }
+    
+    if (!userId) {
+      return res.json({
+        success: false,
+        message: 'מזהה משתמש נדרש'
       });
     }
     
@@ -400,11 +515,65 @@ app.post('/api/available-fields-for-workout', async (req, res) => {
       });
     }
     
+    // בדיקה שהמשתמש קיים
+    const userCheck = await pool.query(
+      'SELECT idUser FROM "User" WHERE idUser = $1',
+      [userId]
+    );
+    
+    if (userCheck.rows.length === 0) {
+      return res.json({
+        success: false,
+        message: 'משתמש לא נמצא'
+      });
+    }
+    
+    // קבלת הזמנות קיימות של המשתמש לתאריך זה
+    console.log('🔍 בודק הזמנות קיימות של המשתמש...');
+    const existingBookings = await pool.query(
+      'SELECT starttime FROM BookField WHERE iduser = $1 AND bookingdate = $2',
+      [userId, date]
+    );
+    
+    const userBookedTimes = existingBookings.rows.map(row => row.starttime);
+    console.log(`📅 משתמש הזמין כבר ב-${date}:`, userBookedTimes);
+    
     const fieldsByTime = {};
     
     // עבור כל זמן, נבדוק אילו מגרשים זמינים
     for (const timeSlot of timeSlots) {
       console.log(`⏰ בודק זמינות ל-${timeSlot}`);
+      
+      // בדיקה אם המשתמש כבר הזמין אימון בזמן זה או בטווח של רבע שעה לפני ואחרי
+      let isUserBooked = false;
+      for (const bookedTime of userBookedTimes) {
+        // חישוב רבע שעה לפני ואחרי הזמן הקיים
+        const [hours, minutes] = bookedTime.split(':');
+        const bookedMinutes = parseInt(hours) * 60 + parseInt(minutes);
+        const beforeMinutes = bookedMinutes - 15;
+        const afterMinutes = bookedMinutes + 15;
+        
+        // המרה חזרה לפורמט זמן
+        const beforeHours = Math.floor(beforeMinutes / 60);
+        const beforeMins = beforeMinutes % 60;
+        const beforeTime = `${beforeHours.toString().padStart(2, '0')}:${beforeMins.toString().padStart(2, '0')}`;
+        
+        const afterHours = Math.floor(afterMinutes / 60);
+        const afterMins = afterMinutes % 60;
+        const afterTime = `${afterHours.toString().padStart(2, '0')}:${afterMins.toString().padStart(2, '0')}`;
+        
+        // בדיקה אם הזמן הנוכחי נמצא בטווח
+        if (timeSlot === bookedTime || timeSlot === beforeTime || timeSlot === afterTime) {
+          isUserBooked = true;
+          console.log(`❌ משתמש כבר הזמין אימון ב-${bookedTime}, לא ניתן להזמין ב-${timeSlot}`);
+          break;
+        }
+      }
+      
+      if (isUserBooked) {
+        fieldsByTime[timeSlot] = [];
+        continue;
+      }
       
       // קבלת כל המגרשים
       const fieldsResult = await pool.query(
@@ -457,6 +626,86 @@ app.post('/api/available-fields-for-workout', async (req, res) => {
     });
   }
 });
+// API לקבלת שעות תפוסות של משתמש לתאריך מסוים
+app.get('/api/user-booked-times/:userId/:date', async (req, res) => {
+  try {
+    const { userId, date } = req.params;
+    
+    console.log(`🔍 מחפש שעות תפוסות עבור משתמש ${userId} בתאריך ${date}`);
+    
+    if (!userId || !date) {
+      return res.json({
+        success: false,
+        message: 'מזהה משתמש ותאריך נדרשים'
+      });
+    }
+    
+    // בדיקה שהמשתמש קיים
+    const userCheck = await pool.query(
+      'SELECT idUser FROM "User" WHERE idUser = $1',
+      [userId]
+    );
+    
+    if (userCheck.rows.length === 0) {
+      return res.json({
+        success: false,
+        message: 'משתמש לא נמצא'
+      });
+    }
+    
+    // קבלת הזמנות קיימות של המשתמש לתאריך זה
+    const existingBookings = await pool.query(
+      'SELECT starttime FROM BookField WHERE iduser = $1 AND bookingdate = $2',
+      [userId, date]
+    );
+    
+    const bookedTimes = existingBookings.rows.map(row => row.starttime);
+    console.log(`📅 משתמש הזמין ב-${date}:`, bookedTimes);
+    
+    // יצירת רשימת שעות תפוסות כולל רבע שעה לפני ואחרי
+    const blockedTimes = new Set();
+    
+    for (const bookedTime of bookedTimes) {
+      // חישוב רבע שעה לפני ואחרי הזמן הקיים
+      const [hours, minutes] = bookedTime.split(':');
+      const bookedMinutes = parseInt(hours) * 60 + parseInt(minutes);
+      const beforeMinutes = bookedMinutes - 15;
+      const afterMinutes = bookedMinutes + 15;
+      
+      // המרה חזרה לפורמט זמן
+      const beforeHours = Math.floor(beforeMinutes / 60);
+      const beforeMins = beforeMinutes % 60;
+      const beforeTime = `${beforeHours.toString().padStart(2, '0')}:${beforeMins.toString().padStart(2, '0')}`;
+      
+      const afterHours = Math.floor(afterMinutes / 60);
+      const afterMins = afterMinutes % 60;
+      const afterTime = `${afterHours.toString().padStart(2, '0')}:${afterMins.toString().padStart(2, '0')}`;
+      
+      // הוספה לרשימת השעות התפוסות
+      blockedTimes.add(beforeTime);
+      blockedTimes.add(bookedTime);
+      blockedTimes.add(afterTime);
+    }
+    
+    const blockedTimesArray = Array.from(blockedTimes).sort();
+    console.log(`🚫 שעות תפוסות כולל רבע שעה לפני ואחרי:`, blockedTimesArray);
+    
+    res.json({
+      success: true,
+      blockedTimes: blockedTimesArray,
+      message: `נמצאו ${blockedTimesArray.length} שעות תפוסות`
+    });
+    
+  } catch (err) {
+    console.error('❌ שגיאה בקבלת שעות תפוסות:', err);
+    res.json({
+      success: false,
+      message: 'שגיאה בשרת',
+      error: err.message
+    });
+  }
+});
+
 // API לקבלת אימונים עתידיים של משתמש
 app.get('/api/future-workouts/:userId', async (req, res) => {
   try {
@@ -484,9 +733,9 @@ app.get('/api/future-workouts/:userId', async (req, res) => {
       });
     }
     
-    // קבלת התאריך והשעה הנוכחיים
+    // קבלת התאריך והשעה הנוכחיים בזמן מקומי
     const now = new Date();
-    const currentDate = now.toISOString().split('T')[0]; // YYYY-MM-DD
+    const currentDate = `${now.getFullYear()}-${(now.getMonth() + 1).toString().padStart(2, '0')}-${now.getDate().toString().padStart(2, '0')}`; // YYYY-MM-DD
     const currentTime = now.toTimeString().split(' ')[0]; // HH:MM:SS
     
     console.log(`📅 מחפש אימונים מתאריך ${currentDate} שעה ${currentTime}`);
@@ -535,9 +784,20 @@ app.get('/api/future-workouts/:userId', async (req, res) => {
       const endMins = endMinutes % 60;
       const endTime = `${endHours.toString().padStart(2, '0')}:${endMins.toString().padStart(2, '0')}`;
       
+      // המרת התאריך לפורמט מקומי
+      let localDate;
+      if (row.bookingdate instanceof Date) {
+        // אם זה אובייקט Date, נמיר אותו לפורמט מקומי
+        localDate = `${row.bookingdate.getFullYear()}-${(row.bookingdate.getMonth() + 1).toString().padStart(2, '0')}-${row.bookingdate.getDate().toString().padStart(2, '0')}`;
+      } else {
+        // אם זה מחרוזת, ננסה לפרסר אותה
+        const date = new Date(row.bookingdate);
+        localDate = `${date.getFullYear()}-${(date.getMonth() + 1).toString().padStart(2, '0')}-${date.getDate().toString().padStart(2, '0')}`;
+      }
+      
       return {
         id: row.idfield + '_' + row.bookingdate + '_' + row.starttime, // יצירת מזהה ייחודי
-        date: row.bookingdate,
+        date: localDate,
         startTime: startTime,
         endTime: endTime,
         duration: 15, // רבע שעה
@@ -614,11 +874,52 @@ app.post('/api/generate-optimal-workout', async (req, res) => {
       });
     }
     
+    // קבלת הזמנות קיימות של המשתמש לתאריך זה
+    console.log('🔍 בודק הזמנות קיימות של המשתמש...');
+    const existingBookings = await pool.query(
+      'SELECT starttime FROM BookField WHERE iduser = $1 AND bookingdate = $2',
+      [userId, date]
+    );
+    
+    const userBookedTimes = existingBookings.rows.map(row => row.starttime);
+    console.log(`📅 משתמש הזמין כבר ב-${date}:`, userBookedTimes);
+    
     // קבלת מגרשים זמינים (שימוש בקוד הקיים)
     const fieldsByTime = {};
     
     for (const timeSlot of timeSlots) {
       console.log(`⏰ בודק זמינות ל-${timeSlot}`);
+      
+      // בדיקה אם המשתמש כבר הזמין אימון בזמן זה או בטווח של רבע שעה לפני ואחרי
+      let isUserBooked = false;
+      for (const bookedTime of userBookedTimes) {
+        // חישוב רבע שעה לפני ואחרי הזמן הקיים
+        const [hours, minutes] = bookedTime.split(':');
+        const bookedMinutes = parseInt(hours) * 60 + parseInt(minutes);
+        const beforeMinutes = bookedMinutes - 15;
+        const afterMinutes = bookedMinutes + 15;
+        
+        // המרה חזרה לפורמט זמן
+        const beforeHours = Math.floor(beforeMinutes / 60);
+        const beforeMins = beforeMinutes % 60;
+        const beforeTime = `${beforeHours.toString().padStart(2, '0')}:${beforeMins.toString().padStart(2, '0')}`;
+        
+        const afterHours = Math.floor(afterMinutes / 60);
+        const afterMins = afterMinutes % 60;
+        const afterTime = `${afterHours.toString().padStart(2, '0')}:${afterMins.toString().padStart(2, '0')}`;
+        
+        // בדיקה אם הזמן הנוכחי נמצא בטווח
+        if (timeSlot === bookedTime || timeSlot === beforeTime || timeSlot === afterTime) {
+          isUserBooked = true;
+          console.log(`❌ משתמש כבר הזמין אימון ב-${bookedTime}, לא ניתן להזמין ב-${timeSlot}`);
+          break;
+        }
+      }
+      
+      if (isUserBooked) {
+        fieldsByTime[timeSlot] = [];
+        continue;
+      }
       
       const fieldsResult = await pool.query(
         'SELECT f.idfield, f.fieldname, f.sporttype, st.sportname FROM Field f JOIN SportTypes st ON f.sporttype = st.sporttype ORDER BY f.idfield'
@@ -684,14 +985,20 @@ app.post('/api/generate-optimal-workout', async (req, res) => {
     
   } catch (err) {
     console.error('❌ שגיאה ביצירת אימון אופטימלי:', err);
+    console.error('❌ Stack trace:', err.stack);
+    console.error('❌ נתוני הבקשה:', { userId, date, timeSlots: timeSlots?.length, userPreferences });
     res.json({
       success: false,
       message: 'שגיאה ביצירת האימון האופטימלי',
-      error: err.message
+      error: err.message,
+      details: err.stack
     });
   }
 });
 
 app.listen(PORT, () => {
   console.log(`🚀 השרת רץ על http://localhost:${PORT}`);
+  
+  // הפעלת שירות תזכורות
+  startReminderService();
 });

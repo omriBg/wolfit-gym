@@ -5,6 +5,7 @@ import SignUpPreferences from './SignUpPreferences.js';
 import WelcomeScreen from './WelcomeScreen.js';
 import { GoogleLogin, GoogleOAuthProvider } from '@react-oauth/google';
 import './mobile-fix.css';
+import { API_BASE_URL } from './config';
 function App() {
   const [isLoggedIn, setIsLoggedIn] = useState(false);
   const [currentScreen, setCurrentScreen] = useState('login');
@@ -25,7 +26,7 @@ function App() {
     setLoginMessage('מתחבר עם Google...');
     
     try {
-      const response = await fetch('https://wolfit-gym-backend-ijvq.onrender.com/api/google-login', {
+      const response = await fetch(`${API_BASE_URL}/api/google-login`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -89,11 +90,22 @@ function App() {
     try {
       // הוספת נתוני Google לנתוני ההרשמה
       const registrationData = {
-        ...completeUserData,
-        googleData: googleUserData
+        userName: googleUserData?.name || completeUserData.userName,
+        email: googleUserData?.email || completeUserData.email,
+        password: completeUserData.password || '',
+        height: completeUserData.height,
+        weight: completeUserData.weight,
+        birthdate: completeUserData.birthdate,
+        intensityLevel: completeUserData.intensityLevel,
+        googleId: googleUserData?.googleId,
+        profilePicture: googleUserData?.picture,
+        authProvider: 'google',
+        sportPreferences: completeUserData.selectedSports || []
       };
       
-      const response = await fetch('https://wolfit-gym-backend-ijvq.onrender.com/api/register', {
+      console.log('נתוני הרשמה:', registrationData);
+      
+      const response = await fetch(`${API_BASE_URL}/api/register`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -178,7 +190,7 @@ function App() {
         {/* הודעה למשתמש */}
         {loginMessage && (
           <p style={{ 
-            color: loginMessage.includes('שגיאה') ? '#ff6b6b' : '#b38ed8',
+            color: loginMessage.includes('שגיאה') ? '#000' : '#8b5cf6',
             textAlign: 'center',
             margin: '10px 0'
           }}>
@@ -207,19 +219,7 @@ function App() {
           </div>
         )}
         
-        <p>אין לך חשבון?
-          <span 
-            onClick={handleGoToSignUp}
-            style={{
-              color: '#b38ed8',
-              cursor: 'pointer',
-              marginRight: '5px',
-              textDecoration: 'underline'
-            }}
-          >
-            הירשם כאן
-          </span>
-        </p>
+        
       </div>
     </div>
     </GoogleOAuthProvider>

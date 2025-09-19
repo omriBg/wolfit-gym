@@ -83,9 +83,9 @@
   
   .info-card h3 {
     margin: 0 0 15px 0;
-    color: #b38ed8;
+    color: #8b5cf6;
     font-size: 1.2rem;
-    border-bottom: 1px solid rgba(179, 142, 216, 0.3);
+    border-bottom: 1px solid rgba(139, 92, 246, 0.3);
     padding-bottom: 8px;
   }
   
@@ -207,7 +207,7 @@
   
   .workout-result h2 {
     margin: 0 0 20px 0;
-    color: #4CAF50;
+    color: #8b5cf6;
     text-align: center;
     font-size: 1.8rem;
   }
@@ -224,7 +224,7 @@
   
   .warning {
     text-align: center;
-    color: #FF9800;
+    color: #000;
     font-weight: 600;
     margin: 15px 0;
     padding: 10px;
@@ -260,7 +260,7 @@
   .time {
     font-size: 1.2rem;
     font-weight: bold;
-    color: #b38ed8;
+    color: #8b5cf6;
     min-width: 80px;
     font-family: 'Courier New', monospace;
   }

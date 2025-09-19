@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import './StartWorkout.css';
 import './CountdownTimer.css';
 import CountdownTimer from './CountdownTimer';
+import { API_BASE_URL } from './config';
 
 function StartWorkout({ onBackClick, user }) {
   const [workouts, setWorkouts] = useState([]);
@@ -27,7 +28,7 @@ function StartWorkout({ onBackClick, user }) {
         
         console.log('טוען אימונים עבור משתמש:', user.id);
         
-        const response = await fetch(`https://wolfit-gym-backend-ijvq.onrender.com/api/future-workouts/${user.id}`);
+        const response = await fetch(`${API_BASE_URL}/api/future-workouts/${user.id}`);
         const data = await response.json();
         
         if (data.success) {
@@ -40,45 +41,72 @@ function StartWorkout({ onBackClick, user }) {
           })));
           setWorkouts(data.workouts);
           
-          // סינון אימונים שכבר הסתיימו ומיון לפי תאריך ושעה
+          // מציאת זמן הסיום האחרון לכל תאריך
+          const workoutsByDate = {};
+          data.workouts.forEach(workout => {
+            if (!workoutsByDate[workout.date]) {
+              workoutsByDate[workout.date] = [];
+            }
+            workoutsByDate[workout.date].push(workout);
+          });
+
+          const lastEndTimeByDate = {};
+          Object.keys(workoutsByDate).forEach(date => {
+            const dayWorkouts = workoutsByDate[date].sort((a, b) => a.endTime.localeCompare(b.endTime));
+            lastEndTimeByDate[date] = dayWorkouts[dayWorkouts.length - 1].endTime;
+          });
+
+          // סינון אימונים רק לפי זמן הסיום של האימון האחרון ביום
           const now = new Date();
+          console.log('זמן נוכחי:', now.toISOString());
+          console.log('כל האימונים מהשרת:', data.workouts.length);
+          console.log('פירוט כל האימונים:', data.workouts.map(w => ({ date: w.date, startTime: w.startTime, endTime: w.endTime })));
+          
           const filteredWorkouts = data.workouts.filter(workout => {
-            const [year, month, day] = workout.date.split('-');
-            const [hours, minutes] = workout.endTime.split(':');
-            const workoutEndTime = new Date(parseInt(year), parseInt(month) - 1, parseInt(day), parseInt(hours), parseInt(minutes));
-            return workoutEndTime > now;
+            // חילוץ תאריך מהמחרוזת UTC
+            let dateString;
+            if (workout.date.includes('T')) {
+              // אם זה פורמט UTC, נחלץ רק את החלק של התאריך
+              dateString = workout.date.split('T')[0];
+            } else {
+              // אם זה כבר פורמט YYYY-MM-DD
+              dateString = workout.date;
+            }
+            
+            // יצירת תאריך מקומי מהמחרוזת YYYY-MM-DD
+            const [year, month, day] = dateString.split('-');
+            const workoutDate = new Date(parseInt(year), parseInt(month) - 1, parseInt(day));
+            
+            const lastEndTime = lastEndTimeByDate[workout.date];
+            const [hours, minutes] = lastEndTime.split(':');
+            
+            // יצירת תאריך עם זמן סיום בזמן מקומי
+            const dayEndTime = new Date(workoutDate);
+            dayEndTime.setHours(parseInt(hours), parseInt(minutes), 0, 0);
+            
+            const isAfterNow = dayEndTime > now;
+            console.log(`בדיקת תאריך: ${workout.date} -> ${dateString} ${lastEndTime} -> ${dayEndTime.toISOString()}, אחרי עכשיו: ${isAfterNow}`);
+            return isAfterNow;
           });
           
-          console.log(`סוננו ${data.workouts.length - filteredWorkouts.length} אימונים שכבר הסתיימו`);
+          console.log(`סוננו ${data.workouts.length - filteredWorkouts.length} אימונים שהיום שלהם כבר הסתיים`);
           
           const sortedWorkouts = filteredWorkouts.sort((a, b) => {
             const dateA = new Date(a.date + ' ' + a.startTime);
             const dateB = new Date(b.date + ' ' + b.startTime);
             return dateA - dateB;
           });
-          
+
           // חלוקה לפי תאריך ויצירת אימונים רציפים
-          const workoutsByDate = {};
+          const workoutsByDateDisplay = {};
           sortedWorkouts.forEach(workout => {
-            // בדיקה אם האימון כבר הסתיים
-            const now = new Date();
-            const [year, month, day] = workout.date.split('-');
-            const [hours, minutes] = workout.endTime.split(':');
-            const workoutEndTime = new Date(parseInt(year), parseInt(month) - 1, parseInt(day), parseInt(hours), parseInt(minutes));
-            
-            // אם האימון כבר הסתיים, נדלג עליו
-            if (workoutEndTime <= now) {
-              console.log(`אימון שכבר הסתיים: ${workout.date} ${workout.endTime}`);
-              return;
-            }
-            
             const dateKey = workout.date;
-            if (!workoutsByDate[dateKey]) {
-              workoutsByDate[dateKey] = [];
+            if (!workoutsByDateDisplay[dateKey]) {
+              workoutsByDateDisplay[dateKey] = [];
             }
             
             // בדיקה אם זה המשך של אימון קיים או אימון חדש
-            const lastWorkoutGroup = workoutsByDate[dateKey][workoutsByDate[dateKey].length - 1];
+            const lastWorkoutGroup = workoutsByDateDisplay[dateKey][workoutsByDateDisplay[dateKey].length - 1];
             if (lastWorkoutGroup && lastWorkoutGroup.length > 0) {
               const lastSlot = lastWorkoutGroup[lastWorkoutGroup.length - 1];
               
@@ -99,16 +127,16 @@ function StartWorkout({ onBackClick, user }) {
               } else {
                 // אימון חדש - יש פער אחר
                 console.log(`יוצר אימון חדש (הפרש ${timeDiff} דקות)`);
-                workoutsByDate[dateKey].push([workout]);
+                workoutsByDateDisplay[dateKey].push([workout]);
               }
             } else {
               // אימון ראשון ביום
               console.log(`יוצר אימון ראשון ביום`);
-              workoutsByDate[dateKey].push([workout]);
+              workoutsByDateDisplay[dateKey].push([workout]);
             }
           });
-          
-          setWorkoutsByField(workoutsByDate);
+
+          setWorkoutsByField(workoutsByDateDisplay);
         } else {
           console.log('לא נמצאו אימונים או שגיאה:', data.message);
           setError(data.message);
@@ -183,14 +211,27 @@ function StartWorkout({ onBackClick, user }) {
   const getTimeUntilWorkout = (dateKey) => {
     try {
       const today = new Date();
-      const workoutDate = new Date(dateKey);
       
-      // איפוס השעות כדי להשוות רק תאריכים
+      // חילוץ תאריך מהמחרוזת UTC
+      let dateString;
+      if (dateKey.includes('T')) {
+        // אם זה פורמט UTC, נחלץ רק את החלק של התאריך
+        dateString = dateKey.split('T')[0];
+      } else {
+        // אם זה כבר פורמט YYYY-MM-DD
+        dateString = dateKey;
+      }
+      
+      // יצירת תאריך מקומי מהמחרוזת YYYY-MM-DD
+      const [year, month, day] = dateString.split('-');
+      const workoutDate = new Date(parseInt(year), parseInt(month) - 1, parseInt(day));
+      
+      // איפוס השעות כדי להשוות רק תאריכים (בשימוש זמן מקומי)
       today.setHours(0, 0, 0, 0);
       workoutDate.setHours(0, 0, 0, 0);
       
       const diffTime = workoutDate.getTime() - today.getTime();
-      const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+      const diffDays = Math.floor(diffTime / (1000 * 60 * 60 * 24));
       
       if (isNaN(diffDays)) {
         return 'בקרוב';
@@ -214,19 +255,25 @@ function StartWorkout({ onBackClick, user }) {
   // פונקציה לספירה אחורה אם זה היום
   const getCountdownText = (dateKey, workouts) => {
     try {
-      console.log('חישוב ספירה אחורה עבור:', dateKey, workouts);
-      
       const today = new Date();
-      const workoutDate = new Date(dateKey);
       
-      console.log('היום:', today.toISOString().split('T')[0]);
-      console.log('תאריך אימון:', dateKey);
+      // חילוץ תאריך מהמחרוזת UTC
+      let dateString;
+      if (dateKey.includes('T')) {
+        // אם זה פורמט UTC, נחלץ רק את החלק של התאריך
+        dateString = dateKey.split('T')[0];
+      } else {
+        // אם זה כבר פורמט YYYY-MM-DD
+        dateString = dateKey;
+      }
       
-      // איפוס השעות כדי להשוות רק תאריכים
+      // יצירת תאריך מקומי מהמחרוזת YYYY-MM-DD
+      const [year, month, day] = dateString.split('-');
+      const workoutDate = new Date(parseInt(year), parseInt(month) - 1, parseInt(day));
+      
+      // איפוס השעות כדי להשוות רק תאריכים (בשימוש זמן מקומי)
       today.setHours(0, 0, 0, 0);
       workoutDate.setHours(0, 0, 0, 0);
-      
-      console.log('השוואת תאריכים:', today.getTime(), workoutDate.getTime());
       
       // תמיד נחשב ספירה אחורה (לא רק אם זה היום)
       const firstWorkout = workouts[0];
@@ -234,19 +281,12 @@ function StartWorkout({ onBackClick, user }) {
         return 'האימון התחיל!';
       }
       
-      console.log('שעת האימון:', firstWorkout.startTime);
-      
-      // יצירת תאריך מלא עם שעה
-      const [year, month, day] = dateKey.split('-');
+      // יצירת תאריך מלא עם שעה (בשימוש זמן מקומי)
       const [hours, minutes] = firstWorkout.startTime.split(':');
       const workoutTime = new Date(parseInt(year), parseInt(month) - 1, parseInt(day), parseInt(hours), parseInt(minutes));
       const now = new Date();
       
-      console.log('זמן אימון:', workoutTime);
-      console.log('עכשיו:', now);
-      
       const diffMs = workoutTime.getTime() - now.getTime();
-      console.log('הפרש במילישניות:', diffMs);
       
       if (diffMs <= 0) {
         return 'האימון התחיל!';
@@ -255,8 +295,6 @@ function StartWorkout({ onBackClick, user }) {
       const diffDays = Math.floor(diffMs / (1000 * 60 * 60 * 24));
       const diffHours = Math.floor((diffMs % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
       const diffMinutes = Math.floor((diffMs % (1000 * 60 * 60)) / (1000 * 60));
-      
-      console.log('ימים:', diffDays, 'שעות:', diffHours, 'דקות:', diffMinutes);
       
       if (diffDays > 0) {
         return `האימון מתחיל בעוד ${diffDays} ימים`;
@@ -355,12 +393,27 @@ function StartWorkout({ onBackClick, user }) {
                       <CountdownTimer 
                         targetDate={dateKey}
                         targetTime={firstWorkout.startTime}
+                        workoutGroup={workoutGroup}
                         onComplete={() => handleStartWorkout(`${dateKey}_${groupIndex}`)}
                       />
                       {/* מציג כפתור רק אם זה היום */}
                       {(() => {
                         const today = new Date();
-                        const workoutDate = new Date(dateKey);
+                        
+                        // חילוץ תאריך מהמחרוזת UTC
+                        let dateString;
+                        if (dateKey.includes('T')) {
+                          // אם זה פורמט UTC, נחלץ רק את החלק של התאריך
+                          dateString = dateKey.split('T')[0];
+                        } else {
+                          // אם זה כבר פורמט YYYY-MM-DD
+                          dateString = dateKey;
+                        }
+                        
+                        // יצירת תאריך מקומי מהמחרוזת YYYY-MM-DD
+                        const [year, month, day] = dateString.split('-');
+                        const workoutDate = new Date(parseInt(year), parseInt(month) - 1, parseInt(day));
+                        
                         today.setHours(0, 0, 0, 0);
                         workoutDate.setHours(0, 0, 0, 0);
                         const isToday = today.getTime() === workoutDate.getTime();

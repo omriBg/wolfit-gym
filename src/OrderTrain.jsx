@@ -4,12 +4,15 @@ import './EditUser.css';
 import DatePicker from "react-datepicker";
 import "react-datepicker/dist/react-datepicker.css";
 import CreateWorkout from './CreateWorkout';
+import { API_BASE_URL } from './config';
 
 function OrderTrain({ onBackClick, user }){
   const [selectDate, setSelectDate] = useState(null);
   const [startTime, setStartTime] = useState(null);
   const [endTime, setEndTime] = useState(null);
   const [showCreateWorkout, setShowCreateWorkout] = useState(false);
+  const [blockedTimes, setBlockedTimes] = useState([]);
+  const [loadingBlockedTimes, setLoadingBlockedTimes] = useState(false);
 
   useEffect(() => {
     // לא נחסום את הגלילה במסך הזמנת אימון
@@ -17,6 +20,41 @@ function OrderTrain({ onBackClick, user }){
       // רק נחזיר את הגלילה כשעוזבים
     };
   }, []);
+
+  // טעינת שעות תפוסות כשהתאריך משתנה
+  useEffect(() => {
+    if (selectDate && user?.id) {
+      loadBlockedTimes();
+    } else {
+      setBlockedTimes([]);
+    }
+  }, [selectDate, user?.id]);
+
+  const loadBlockedTimes = async () => {
+    try {
+      setLoadingBlockedTimes(true);
+      const dateStr = selectDate.toLocaleDateString('en-CA'); // YYYY-MM-DD
+      const url = `${API_BASE_URL}/api/user-booked-times/${user.id}/${dateStr}`;
+      
+      console.log('🔍 טוען שעות תפוסות מ:', url);
+      
+      const response = await fetch(url);
+      const data = await response.json();
+      
+      if (data.success) {
+        setBlockedTimes(data.blockedTimes);
+        console.log('🚫 שעות תפוסות נטענו:', data.blockedTimes);
+      } else {
+        console.log('⚠️ שגיאה בטעינת שעות תפוסות:', data.message);
+        setBlockedTimes([]);
+      }
+    } catch (error) {
+      console.error('❌ שגיאה בטעינת שעות תפוסות:', error);
+      setBlockedTimes([]);
+    } finally {
+      setLoadingBlockedTimes(false);
+    }
+  };
 
   function isDateAllowed(date){
     const today = new Date();
@@ -56,7 +94,11 @@ function OrderTrain({ onBackClick, user }){
         }
         
         const timeString = `${hour.toString().padStart(2, '0')}:${minute.toString().padStart(2, '0')}`;
-        times.push(timeString);
+        
+        // בדיקה אם השעה תפוסה (כולל רבע שעה לפני ואחרי)
+        if (!blockedTimes.includes(timeString)) {
+          times.push(timeString);
+        }
       }
     }
     return times;
@@ -76,7 +118,11 @@ function OrderTrain({ onBackClick, user }){
       
       if (endHour <= 23 && !(endHour === 23 && endMinute > 30)) {
         const timeString = `${endHour.toString().padStart(2, '0')}:${endMinute.toString().padStart(2, '0')}`;
-        times.push(timeString);
+        
+        // בדיקה אם השעה תפוסה (כולל רבע שעה לפני ואחרי)
+        if (!blockedTimes.includes(timeString)) {
+          times.push(timeString);
+        }
       }
     }
     
@@ -95,6 +141,10 @@ function OrderTrain({ onBackClick, user }){
 
   const handleBackFromCreateWorkout = () => {
     setShowCreateWorkout(false);
+    // חזרה לתפריט הראשי לאחר יצירת אימון
+    if (onBackClick) {
+      onBackClick();
+    }
   };
 
   if (showCreateWorkout) {
@@ -128,49 +178,57 @@ function OrderTrain({ onBackClick, user }){
         {selectDate != null && (
           <div style={{marginTop: window.innerWidth <= 768 ? '25px' : '160px'}}>
             <h3>בחר שעת התחלה</h3>
-            <select 
-              value={startTime || ''} 
-              onChange={(e) => {
-                setStartTime(e.target.value);
-                setEndTime(null);
-              }}
-              style={{
-                padding: '10px',
-                fontSize: '16px',
-                borderRadius: '5px',
-                border: '1px solid #ccc',
-                backgroundColor: 'white',
-                minWidth: '120px'
-              }}
-            >
-              <option value="">בחר שעה</option>
-              {generateTimeOptions().map(time => (
-                <option key={time} value={time}>{time}</option>
-              ))}
-            </select>
+            {loadingBlockedTimes ? (
+              <div style={{padding: '10px', color: '#666'}}>טוען שעות זמינות...</div>
+            ) : (
+              <select 
+                value={startTime || ''} 
+                onChange={(e) => {
+                  setStartTime(e.target.value);
+                  setEndTime(null);
+                }}
+                style={{
+                  padding: '10px',
+                  fontSize: '16px',
+                  borderRadius: '5px',
+                  border: '1px solid #ccc',
+                  backgroundColor: 'white',
+                  minWidth: '120px'
+                }}
+              >
+                <option value="">בחר שעה</option>
+                {generateTimeOptions().map(time => (
+                  <option key={time} value={time}>{time}</option>
+                ))}
+              </select>
+            )}
           </div>
         )}
 
         {startTime && (
           <div style={{marginTop: window.innerWidth <= 768 ? '25px' : '30px'}}>
             <h3>בחר שעת סיום</h3>
-            <select 
-              value={endTime || ''} 
-              onChange={(e) => setEndTime(e.target.value)}
-              style={{
-                padding: '10px',
-                fontSize: '16px',
-                borderRadius: '5px',
-                border: '1px solid #ccc',
-                backgroundColor: 'white',
-                minWidth: '120px'
-              }}
-            >
-              <option value="">בחר שעת סיום:</option>
-              {generateEndTimeOptions().map(time => (
-                <option key={time} value={time}>{time}</option>
-              ))}
-            </select>
+            {loadingBlockedTimes ? (
+              <div style={{padding: '10px', color: '#666'}}>טוען שעות זמינות...</div>
+            ) : (
+              <select 
+                value={endTime || ''} 
+                onChange={(e) => setEndTime(e.target.value)}
+                style={{
+                  padding: '10px',
+                  fontSize: '16px',
+                  borderRadius: '5px',
+                  border: '1px solid #ccc',
+                  backgroundColor: 'white',
+                  minWidth: '120px'
+                }}
+              >
+                <option value="">בחר שעת סיום:</option>
+                {generateEndTimeOptions().map(time => (
+                  <option key={time} value={time}>{time}</option>
+                ))}
+              </select>
+            )}
           </div>
         )}
       </div>

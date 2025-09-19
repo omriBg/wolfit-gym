@@ -1,10 +1,11 @@
 import React, { useState, useEffect } from 'react';
 import './SignUpPreferences.css';
+import { API_BASE_URL } from './config';
 
 
 async function sendRegistrationToServer(userData) {
     try {
-      const response = await fetch('https://wolfit-gym-backend-ijvq.onrender.com/api/register', {
+      const response = await fetch(`${API_BASE_URL}/api/register`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
