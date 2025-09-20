@@ -34,9 +34,9 @@ function MainMenu() {
 
   return (
     <div className={`main-menu ${isLoaded ? 'loaded' : ''}`}>
-      {/* כפתור התנתקות בצד ימין למעלה */}
+      {/* כפתור התנתקות */}
       <button 
-        className="logout-button"
+        className="logout-btn"
         onClick={() => logout()}
       >
         התנתק
@@ -46,11 +46,6 @@ function MainMenu() {
         <div className="header-section">
           <h1 className="brand-title">WOLFit</h1>
           <div className="title-line"></div>
-          {user && (
-            <p className="welcome-message">
-              ברוך הבא, {user.userName || user.email}!
-            </p>
-          )}
         </div>
         
         <div className="buttons-section">
@@ -91,7 +86,7 @@ function MainMenu() {
               className="menu-button start-workout"
               onClick={() => handleButtonClick('start-workout')}
             >
-              <span className="button-text">התחל אימון</span>
+              <span className="button-text">האימונים שלי</span>
               <div className="button-line"></div>
             </button>
           </div>

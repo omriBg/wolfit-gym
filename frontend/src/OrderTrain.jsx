@@ -17,6 +17,7 @@ function OrderTrain(){
   const [showCreateWorkout, setShowCreateWorkout] = useState(false);
   const [blockedTimes, setBlockedTimes] = useState([]);
   const [loadingBlockedTimes, setLoadingBlockedTimes] = useState(false);
+  const [availableTimes, setAvailableTimes] = useState([]);
 
   useEffect(() => {
     // לא נחסום את הגלילה במסך הזמנת אימון
@@ -34,6 +35,15 @@ function OrderTrain(){
     }
   }, [selectDate, user?.id]);
 
+  // עדכון שעות זמינות כשהשעות התפוסות משתנות
+  useEffect(() => {
+    if (selectDate) {
+      const times = generateTimeOptions();
+      setAvailableTimes(times);
+      console.log('🔄 עדכנתי שעות זמינות:', times);
+    }
+  }, [blockedTimes, selectDate]);
+
   const loadBlockedTimes = async () => {
     try {
       setLoadingBlockedTimes(true);
@@ -42,12 +52,23 @@ function OrderTrain(){
       
       console.log('🔍 טוען שעות תפוסות מ:', url);
       
-      const response = await fetch(url);
+      const token = localStorage.getItem('authToken');
+      console.log('🔑 טוקן:', token ? 'קיים' : 'חסר');
+      
+      const response = await fetch(url, {
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json',
+        },
+      });
+      
+      console.log('📡 תגובת השרת:', response.status, response.statusText);
       const data = await response.json();
       
       if (data.success) {
         setBlockedTimes(data.blockedTimes);
         console.log('🚫 שעות תפוסות נטענו:', data.blockedTimes);
+        console.log('📊 מספר שעות תפוסות:', data.blockedTimes.length);
       } else {
         console.log('⚠️ שגיאה בטעינת שעות תפוסות:', data.message);
         setBlockedTimes([]);
@@ -74,7 +95,66 @@ function OrderTrain(){
     return dateToCheck >= today && dateToCheck <= sevenDaysFromNow;
   }
 
+  // פונקציה לבדיקה אם שעה חסומה
+  // השרת כבר מחזיר את כל השעות החסומות כולל רבע שעה לפני ואחרי
+  function isTimeBlocked(timeString) {
+    // בדיקה אם השעות התפוסות נטענו בכלל
+    if (!blockedTimes || blockedTimes.length === 0) {
+      console.log(`⚠️ אין שעות תפוסות נטענות, שעה ${timeString} זמינה`);
+      return false;
+    }
+    
+    console.log(`🔍 בודק אם שעה ${timeString} חסומה`);
+    console.log(`📋 שעות תפוסות מהשרת:`, blockedTimes);
+    
+    // השרת כבר מחזיר את כל השעות החסומות כולל רבע שעה לפני ואחרי
+    const isBlocked = blockedTimes.includes(timeString);
+    
+    if (isBlocked) {
+      console.log(`❌ שעה ${timeString} חסומה`);
+    } else {
+      console.log(`✅ שעה ${timeString} זמינה`);
+    }
+    
+    return isBlocked;
+  }
+
+  // פונקציה לבדיקה אם טווח זמן חופף לאימון קיים
+  function isTimeRangeBlocked(startTime, endTime) {
+    if (!startTime || !endTime || !blockedTimes || blockedTimes.length === 0) {
+      return false;
+    }
+    
+    console.log(`🔍 בודק אם טווח ${startTime}-${endTime} חופף לאימון קיים`);
+    console.log(`📋 שעות תפוסות:`, blockedTimes);
+    
+    // המרה של הזמנים לדקות
+    const [startHour, startMinute] = startTime.split(':').map(Number);
+    const [endHour, endMinute] = endTime.split(':').map(Number);
+    const startMinutes = startHour * 60 + startMinute;
+    const endMinutes = endHour * 60 + endMinute;
+    
+    // בדיקה אם יש אימון בטווח
+    for (const blockedTime of blockedTimes) {
+      const [blockedHour, blockedMinute] = blockedTime.split(':').map(Number);
+      const blockedMinutes = blockedHour * 60 + blockedMinute;
+      
+      // בדיקה אם האימון התפוס נמצא בטווח שנבחר
+      if (blockedMinutes >= startMinutes && blockedMinutes < endMinutes) {
+        console.log(`❌ טווח ${startTime}-${endTime} חופף לאימון ב-${blockedTime}`);
+        return true;
+      }
+    }
+    
+    console.log(`✅ טווח ${startTime}-${endTime} לא חופף לאימון קיים`);
+    return false;
+  }
+
   function generateTimeOptions() {
+    console.log('🚀 מתחיל ליצור אפשרויות זמן');
+    console.log('📅 תאריך נבחר:', selectDate);
+    console.log('🚫 שעות תפוסות:', blockedTimes);
+    
     const times = [];
     const now = new Date();
     const isToday = selectDate && 
@@ -100,11 +180,14 @@ function OrderTrain(){
         const timeString = `${hour.toString().padStart(2, '0')}:${minute.toString().padStart(2, '0')}`;
         
         // בדיקה אם השעה תפוסה (כולל רבע שעה לפני ואחרי)
-        if (!blockedTimes.includes(timeString)) {
+        if (!isTimeBlocked(timeString)) {
           times.push(timeString);
+        } else {
+          console.log(`🚫 שעה ${timeString} נחסמה ולא נוספה לרשימה`);
         }
       }
     }
+    console.log(`📋 נוצרו ${times.length} שעות זמינות:`, times);
     return times;
   }
 
@@ -124,16 +207,25 @@ function OrderTrain(){
         const timeString = `${endHour.toString().padStart(2, '0')}:${endMinute.toString().padStart(2, '0')}`;
         
         // בדיקה אם השעה תפוסה (כולל רבע שעה לפני ואחרי)
-        if (!blockedTimes.includes(timeString)) {
+        if (!isTimeBlocked(timeString)) {
           times.push(timeString);
+        } else {
+          console.log(`🚫 שעת סיום ${timeString} נחסמה ולא נוספה לרשימה`);
         }
       }
     }
     
+    console.log(`📋 נוצרו ${times.length} שעות סיום זמינות:`, times);
     return times;
   }
 
   const handleCreateWorkout = () => {
+    // בדיקה אם הטווח שנבחר חופף לאימון קיים
+    if (isTimeRangeBlocked(startTime, endTime)) {
+      alert('הטווח שנבחר חופף לאימון קיים. אנא בחר טווח אחר.');
+      return;
+    }
+    
     console.log('עוברים ליצירת אימון עם הנתונים:', {
       user,
       selectDate,
@@ -181,26 +273,55 @@ function OrderTrain(){
             {loadingBlockedTimes ? (
               <div style={{padding: '10px', color: '#666'}}>טוען שעות זמינות...</div>
             ) : (
-              <select 
-                value={startTime || ''} 
-                onChange={(e) => {
-                  setStartTime(e.target.value);
-                  setEndTime(null);
-                }}
-                style={{
-                  padding: '10px',
-                  fontSize: '16px',
-                  borderRadius: '5px',
-                  border: '1px solid #ccc',
-                  backgroundColor: 'white',
-                  minWidth: '120px'
-                }}
-              >
-                <option value="">בחר שעה</option>
-                {generateTimeOptions().map(time => (
-                  <option key={time} value={time}>{time}</option>
-                ))}
-              </select>
+              <>
+                <select 
+                  value={startTime || ''} 
+                  onChange={(e) => {
+                    const newStartTime = e.target.value;
+                    setStartTime(newStartTime);
+                    setEndTime(null);
+                    
+                    // אם יש שעת סיום, נבדוק אם הטווח חופף לאימון קיים
+                    if (endTime && isTimeRangeBlocked(newStartTime, endTime)) {
+                      alert('הטווח שנבחר חופף לאימון קיים. אנא בחר שעת התחלה אחרת.');
+                      setStartTime(null);
+                    }
+                  }}
+                  style={{
+                    padding: '10px',
+                    fontSize: '16px',
+                    borderRadius: '5px',
+                    border: '1px solid #ccc',
+                    backgroundColor: 'white',
+                    minWidth: '120px'
+                  }}
+                >
+                  <option value="">בחר שעה</option>
+                  {availableTimes.map(time => (
+                    <option key={time} value={time}>{time}</option>
+                  ))}
+                </select>
+                <div style={{
+                  marginTop: '5px',
+                  fontSize: '12px',
+                  color: '#888'
+                }}>
+                  שעות תפוסות: {blockedTimes.length > 0 ? blockedTimes.join(', ') : 'אין'}
+                </div>
+                {blockedTimes.length > 0 && (
+                  <div style={{
+                    marginTop: '10px',
+                    padding: '8px',
+                    backgroundColor: 'rgba(255, 107, 107, 0.1)',
+                    border: '1px solid rgba(255, 107, 107, 0.3)',
+                    borderRadius: '5px',
+                    fontSize: '14px',
+                    color: '#ff6b6b'
+                  }}>
+                    ⚠️ שעות שכבר יש לך אימון בהן (כולל רבע שעה לפני ואחרי) לא זמינות לבחירה
+                  </div>
+                )}
+              </>
             )}
           </div>
         )}
@@ -211,18 +332,27 @@ function OrderTrain(){
             {loadingBlockedTimes ? (
               <div style={{padding: '10px', color: '#666'}}>טוען שעות זמינות...</div>
             ) : (
-              <select 
-                value={endTime || ''} 
-                onChange={(e) => setEndTime(e.target.value)}
-                style={{
-                  padding: '10px',
-                  fontSize: '16px',
-                  borderRadius: '5px',
-                  border: '1px solid #ccc',
-                  backgroundColor: 'white',
-                  minWidth: '120px'
-                }}
-              >
+                <select 
+                  value={endTime || ''} 
+                  onChange={(e) => {
+                    const newEndTime = e.target.value;
+                    setEndTime(newEndTime);
+                    
+                    // בדיקה אם הטווח חופף לאימון קיים
+                    if (newEndTime && isTimeRangeBlocked(startTime, newEndTime)) {
+                      alert('הטווח שנבחר חופף לאימון קיים. אנא בחר שעת סיום אחרת.');
+                      setEndTime(null);
+                    }
+                  }}
+                  style={{
+                    padding: '10px',
+                    fontSize: '16px',
+                    borderRadius: '5px',
+                    border: '1px solid #ccc',
+                    backgroundColor: 'white',
+                    minWidth: '120px'
+                  }}
+                >
                 <option value="">בחר שעת סיום:</option>
                 {generateEndTimeOptions().map(time => (
                   <option key={time} value={time}>{time}</option>

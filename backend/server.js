@@ -583,7 +583,7 @@ app.post('/api/save-workout', authenticateToken, async (req, res) => {
       
       // הכנסת ההזמנה
       await pool.query(
-        'INSERT INTO BookField (idfield, bookingdate, starttime, iduser) VALUES ($1, $2, $3, $4)',
+        'INSERT INTO BookField ("idField", "bookingDate", "startTime", "idUser") VALUES ($1, $2, $3, $4)',
         [idField, bookingDate, startTime, idUser]
       );
       
@@ -711,11 +711,11 @@ app.post('/api/available-fields-for-workout', authenticateToken, async (req, res
     // קבלת הזמנות קיימות של המשתמש לתאריך זה
     console.log('🔍 בודק הזמנות קיימות של המשתמש...');
     const existingBookings = await pool.query(
-      'SELECT starttime FROM BookField WHERE iduser = $1 AND bookingdate = $2',
+      'SELECT "startTime" FROM BookField WHERE "idUser" = $1 AND "bookingDate" = $2',
       [userId, date]
     );
     
-    const userBookedTimes = existingBookings.rows.map(row => row.starttime);
+    const userBookedTimes = existingBookings.rows.map(row => row.startTime);
     console.log(`📅 משתמש הזמין כבר ב-${date}:`, userBookedTimes);
     
     const fieldsByTime = {};
@@ -835,11 +835,11 @@ app.get('/api/user-booked-times/:userId/:date', authenticateToken, async (req, r
     
     // קבלת הזמנות קיימות של המשתמש לתאריך זה
     const existingBookings = await pool.query(
-      'SELECT starttime FROM BookField WHERE iduser = $1 AND bookingdate = $2',
+      'SELECT "startTime" FROM BookField WHERE "idUser" = $1 AND "bookingDate" = $2',
       [userId, date]
     );
     
-    const bookedTimes = existingBookings.rows.map(row => row.starttime);
+    const bookedTimes = existingBookings.rows.map(row => row.startTime);
     console.log(`📅 משתמש הזמין ב-${date}:`, bookedTimes);
     
     // יצירת רשימת שעות תפוסות כולל רבע שעה לפני ואחרי
@@ -1057,11 +1057,11 @@ app.post('/api/generate-optimal-workout', authenticateToken, async (req, res) =>
     // קבלת הזמנות קיימות של המשתמש לתאריך זה
     console.log('🔍 בודק הזמנות קיימות של המשתמש...');
     const existingBookings = await pool.query(
-      'SELECT starttime FROM BookField WHERE iduser = $1 AND bookingdate = $2',
+      'SELECT "startTime" FROM BookField WHERE "idUser" = $1 AND "bookingDate" = $2',
       [userId, date]
     );
     
-    const userBookedTimes = existingBookings.rows.map(row => row.starttime);
+    const userBookedTimes = existingBookings.rows.map(row => row.startTime);
     console.log(`📅 משתמש הזמין כבר ב-${date}:`, userBookedTimes);
     
     // קבלת מגרשים זמינים (שימוש בקוד הקיים)
@@ -1172,6 +1172,81 @@ app.post('/api/generate-optimal-workout', authenticateToken, async (req, res) =>
       message: 'שגיאה ביצירת האימון האופטימלי',
       error: err.message,
       details: err.stack
+    });
+  }
+});
+
+// API לביטול אימון
+app.delete('/api/cancel-workout', authenticateToken, async (req, res) => {
+  try {
+    const { userId, bookings } = req.body;
+    
+    console.log('🗑️ מקבל בקשה לביטול אימון:', { userId, bookings: bookings?.length });
+    
+    if (!userId || !bookings || !Array.isArray(bookings) || bookings.length === 0) {
+      return res.json({
+        success: false,
+        message: 'נתונים חסרים: userId ו-bookings נדרשים'
+      });
+    }
+    
+    // בדיקה שהמשתמש קיים
+    const userCheck = await pool.query(
+      'SELECT idUser FROM "User" WHERE idUser = $1',
+      [userId]
+    );
+    
+    if (userCheck.rows.length === 0) {
+      return res.json({
+        success: false,
+        message: 'משתמש לא נמצא'
+      });
+    }
+    
+    let deletedCount = 0;
+    const deletedBookings = [];
+    
+    // מחיקת כל ההזמנות
+    for (const booking of bookings) {
+      const { idField, bookingDate, startTime } = booking;
+      
+      console.log(`🗑️ מוחק הזמנה: מגרש ${idField}, תאריך ${bookingDate}, שעה ${startTime}`);
+      
+      // מחיקת ההזמנה
+      const deleteResult = await pool.query(
+        'DELETE FROM BookField WHERE "idField" = $1 AND "bookingDate" = $2 AND "startTime" = $3 AND "idUser" = $4',
+        [idField, bookingDate, startTime, userId]
+      );
+      
+      if (deleteResult.rowCount > 0) {
+        deletedCount++;
+        deletedBookings.push({
+          idField,
+          bookingDate,
+          startTime
+        });
+        console.log(`✅ נמחקה הזמנה: מגרש ${idField}, תאריך ${bookingDate}, שעה ${startTime}`);
+      } else {
+        console.log(`⚠️ לא נמצאה הזמנה למחיקה: מגרש ${idField}, תאריך ${bookingDate}, שעה ${startTime}`);
+      }
+    }
+    
+    console.log(`✅ בוטל אימון בהצלחה: נמחקו ${deletedCount} הזמנות מתוך ${bookings.length}`);
+    
+    res.json({
+      success: true,
+      message: `האימון בוטל בהצלחה! נמחקו ${deletedCount} הזמנות`,
+      deletedCount: deletedCount,
+      totalRequested: bookings.length,
+      deletedBookings: deletedBookings
+    });
+    
+  } catch (err) {
+    console.error('❌ שגיאה בביטול האימון:', err);
+    res.json({
+      success: false,
+      message: 'שגיאה בביטול האימון',
+      error: err.message
     });
   }
 });

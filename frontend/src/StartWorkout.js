@@ -11,6 +11,7 @@ function StartWorkout() {
   const navigate = useNavigate();
   const [workouts, setWorkouts] = useState([]);
   const [workoutsByField, setWorkoutsByField] = useState({});
+  const [currentWorkout, setCurrentWorkout] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
 
@@ -94,9 +95,10 @@ function StartWorkout() {
             const dayEndTime = new Date(workoutDate);
             dayEndTime.setHours(parseInt(hours), parseInt(minutes), 0, 0);
             
-            const isAfterNow = dayEndTime > now;
-            console.log(`בדיקת תאריך: ${workout.date} -> ${dateString} ${lastEndTime} -> ${dayEndTime.toISOString()}, אחרי עכשיו: ${isAfterNow}`);
-            return isAfterNow;
+            // נציג אימונים שעדיין לא הסתיימו לחלוטין (כולל אימונים נוכחיים)
+            const isNotFinished = dayEndTime > now;
+            console.log(`בדיקת תאריך: ${workout.date} -> ${dateString} ${lastEndTime} -> ${dayEndTime.toISOString()}, לא הסתיים: ${isNotFinished}`);
+            return isNotFinished;
           });
           
           console.log(`סוננו ${data.workouts.length - filteredWorkouts.length} אימונים שהיום שלהם כבר הסתיים`);
@@ -147,6 +149,59 @@ function StartWorkout() {
           });
 
           setWorkoutsByField(workoutsByDateDisplay);
+          
+          // זיהוי אימון נוכחי
+          const currentTime = new Date();
+          let foundCurrentWorkout = null;
+          
+          for (const [dateKey, workoutGroups] of Object.entries(workoutsByDateDisplay)) {
+            for (const workoutGroup of workoutGroups) {
+              const firstWorkout = workoutGroup[0];
+              const lastWorkout = workoutGroup[workoutGroup.length - 1];
+              
+              // חילוץ תאריך
+              let dateString;
+              if (dateKey.includes('T')) {
+                dateString = dateKey.split('T')[0];
+              } else {
+                dateString = dateKey;
+              }
+              
+              const [year, month, day] = dateString.split('-');
+              const workoutDate = new Date(parseInt(year), parseInt(month) - 1, parseInt(day));
+              
+              // יצירת זמן התחלה וסיום
+              const [startHours, startMinutes] = firstWorkout.startTime.split(':');
+              const [endHours, endMinutes] = lastWorkout.endTime.split(':');
+              
+              const startTime = new Date(workoutDate);
+              startTime.setHours(parseInt(startHours), parseInt(startMinutes), 0, 0);
+              
+              const endTime = new Date(workoutDate);
+              endTime.setHours(parseInt(endHours), parseInt(endMinutes), 0, 0);
+              
+              // בדיקה אם האימון נוכחי
+              if (currentTime >= startTime && currentTime <= endTime) {
+                foundCurrentWorkout = {
+                  date: dateKey,
+                  workoutGroup: workoutGroup,
+                  startTime: firstWorkout.startTime,
+                  endTime: lastWorkout.endTime,
+                  currentField: workoutGroup.find(w => {
+                    const [wHours, wMinutes] = w.startTime.split(':');
+                    const wStartTime = new Date(workoutDate);
+                    wStartTime.setHours(parseInt(wHours), parseInt(wMinutes), 0, 0);
+                    const wEndTime = new Date(wStartTime.getTime() + 15 * 60000); // 15 דקות
+                    return currentTime >= wStartTime && currentTime <= wEndTime;
+                  })
+                };
+                break;
+              }
+            }
+            if (foundCurrentWorkout) break;
+          }
+          
+          setCurrentWorkout(foundCurrentWorkout);
         } else {
           console.log('לא נמצאו אימונים או שגיאה:', data.message);
           setError(data.message);
@@ -172,10 +227,10 @@ function StartWorkout() {
     };
   }, [user?.id]);
 
-  // עדכון הספירה אחורה כל דקה
+  // עדכון הספירה אחורה וזמן נוכחי כל דקה
   useEffect(() => {
     const interval = setInterval(() => {
-      // עדכון כפוי של הקומפוננטה כדי לעדכן את הספירה אחורה
+      // עדכון כפוי של הקומפוננטה כדי לעדכן את הספירה אחורה והזמן הנוכחי
       setWorkouts(prevWorkouts => [...prevWorkouts]);
     }, 60000); // כל דקה
 
@@ -319,9 +374,52 @@ function StartWorkout() {
     }
   };
 
-  const handleStartWorkout = (workoutId) => {
-    console.log('מתחיל אימון:', workoutId);
-    // כאן תוסיף את הלוגיקה להתחלת אימון
+  const handleCancelWorkout = async (workoutGroup) => {
+    try {
+      console.log('מבטל אימון:', workoutGroup);
+      
+      if (!user || !user.id) {
+        setError('משתמש לא מחובר');
+        return;
+      }
+
+      // יצירת רשימת הזמנות למחיקה
+      const bookingsToDelete = workoutGroup.map(workout => ({
+        idField: workout.fieldId,
+        bookingDate: workout.date,
+        startTime: workout.startTime,
+        idUser: user.id
+      }));
+
+      console.log('מחיקת הזמנות:', bookingsToDelete);
+
+      const token = localStorage.getItem('authToken');
+      const response = await fetch(`${API_BASE_URL}/api/cancel-workout`, {
+        method: 'DELETE',
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          userId: user.id,
+          bookings: bookingsToDelete
+        })
+      });
+
+      const data = await response.json();
+
+      if (data.success) {
+        console.log('אימון בוטל בהצלחה');
+        // רענון רשימת האימונים
+        window.location.reload();
+      } else {
+        console.error('שגיאה בביטול האימון:', data.message);
+        setError(data.message || 'שגיאה בביטול האימון');
+      }
+    } catch (error) {
+      console.error('שגיאה בביטול האימון:', error);
+      setError('שגיאה בחיבור לשרת. נסה שוב.');
+    }
   };
 
   const handleBookNewWorkout = () => {
@@ -337,7 +435,38 @@ function StartWorkout() {
       </button>
       
       <div className="start-workout-content">
-        <h1>האימונים העתידיים שלך</h1>
+        <h1>האימונים שלך</h1>
+        
+        {/* חלון אימון נוכחי */}
+        {currentWorkout && (
+          <div className="current-workout-section">
+            <h2 className="current-workout-title">🏃‍♂️ אימון נוכחי</h2>
+            <div className="current-workout-card">
+              <div className="current-workout-info">
+                <div className="current-field">
+                  <span className="field-label">מגרש נוכחי:</span>
+                  <span className="field-name">{currentWorkout.currentField?.fieldName || 'לא זמין'}</span>
+                </div>
+                <div className="current-time">
+                  <span className="time-label">זמן נוכחי:</span>
+                  <span className="time-value">{new Date().toLocaleTimeString('he-IL', { hour: '2-digit', minute: '2-digit' })}</span>
+                </div>
+                <div className="workout-duration">
+                  <span className="duration-label">משך האימון:</span>
+                  <span className="duration-value">{currentWorkout.startTime} - {currentWorkout.endTime}</span>
+                </div>
+              </div>
+              <div className="current-workout-actions">
+                <button 
+                  className="cancel-current-workout-btn"
+                  onClick={() => handleCancelWorkout(currentWorkout.workoutGroup)}
+                >
+                  בטל אימון נוכחי
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
         
         {loading ? (
           <div className="loading">
@@ -401,7 +530,7 @@ function StartWorkout() {
                         targetDate={dateKey}
                         targetTime={firstWorkout.startTime}
                         workoutGroup={workoutGroup}
-                        onComplete={() => handleStartWorkout(`${dateKey}_${groupIndex}`)}
+                        onComplete={() => console.log('אימון הושלם:', `${dateKey}_${groupIndex}`)}
                       />
                       {/* מציג כפתור רק אם זה היום */}
                       {(() => {
@@ -427,13 +556,21 @@ function StartWorkout() {
                         
                         return isToday ? (
                           <button 
-                            className="start-workout-btn"
-                            onClick={() => handleStartWorkout(`${dateKey}_${groupIndex}`)}
+                            className="cancel-workout-btn"
+                            onClick={() => handleCancelWorkout(workoutGroup)}
                             style={{ marginTop: '15px' }}
                           >
-                            התחל אימון
+                            בטל אימון
                           </button>
-                        ) : null;
+                        ) : (
+                          <button 
+                            className="cancel-workout-btn"
+                            onClick={() => handleCancelWorkout(workoutGroup)}
+                            style={{ marginTop: '15px' }}
+                          >
+                            בטל אימון
+                          </button>
+                        );
                       })()}
                     </div>
                   );

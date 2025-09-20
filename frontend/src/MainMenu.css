@@ -14,25 +14,31 @@
   transition: all 0.8s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
-.logout-button {
+/* כפתור התנתקות */
+.logout-btn {
   position: absolute;
-  top: 20px;
-  right: 20px;
-  background: transparent;
-  border: 1px solid rgba(255, 107, 107, 0.3);
-  color: #ffffff;
-  padding: 8px 16px;
-  font-size: 0.9rem;
+  top: 30px;
+  right: 30px;
+  background: rgba(255, 107, 107, 0.1);
+  border: 2px solid rgba(255, 107, 107, 0.3);
+  color: #ff6b6b;
+  padding: 12px 24px;
+  font-size: 14px;
+  font-weight: 500;
   cursor: pointer;
   transition: all 0.3s ease;
-  border-radius: 4px;
+  border-radius: 8px;
+  backdrop-filter: blur(10px);
   z-index: 1000;
+  letter-spacing: 0.5px;
 }
 
-.logout-button:hover {
+.logout-btn:hover {
+  background: rgba(255, 107, 107, 0.2);
   border-color: rgba(255, 107, 107, 0.6);
-  background: rgba(255, 107, 107, 0.1);
-  box-shadow: 0 0 15px rgba(255, 107, 107, 0.2);
+  color: #ffffff;
+  transform: translateY(-2px);
+  box-shadow: 0 8px 25px rgba(255, 107, 107, 0.3);
 }
 
 .main-menu.loaded {
@@ -44,11 +50,7 @@
   display: flex;
   flex-direction: column;
   align-items: center;
-  justify-content: center;
   gap: 4rem;
-  width: 100%;
-  max-width: 600px;
-  margin: 0 auto;
 }
 
 .header-section {
@@ -73,15 +75,6 @@
   animation: expandLine 1.2s ease-out 0.6s both;
 }
 
-.welcome-message {
-  color: #ffffff;
-  font-size: 1.2rem;
-  font-weight: 300;
-  margin: 1.5rem 0 0 0;
-  opacity: 0.8;
-  letter-spacing: 1px;
-  animation: fadeIn 1s ease-out 0.9s both;
-}
 
 @keyframes expandLine {
   from {
@@ -94,16 +87,6 @@
   }
 }
 
-@keyframes fadeIn {
-  from {
-    opacity: 0;
-    transform: translateY(10px);
-  }
-  to {
-    opacity: 0.8;
-    transform: translateY(0);
-  }
-}
 
 .buttons-section {
   display: flex;
@@ -111,18 +94,11 @@
   align-items: center;
   gap: 2rem;
   animation: slideInUp 1s ease-out 0.9s both;
-  width: 100%;
 }
 
 .button-wrapper {
   position: relative;
   transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  width: 100%;
-  max-width: 350px;
-  margin: 0 auto;
 }
 
 .button-wrapper.hovered {
@@ -131,18 +107,17 @@
 
 .menu-button {
   position: relative;
-  width: 100%;
-  max-width: 350px;
-  height: 70px;
-  background: transparent;
-  border: 1px solid rgba(255, 255, 255, 0.2);
+  width: 380px;
+  height: 75px;
+  background: transparent !important;
+  border: 2px solid rgba(255, 255, 255, 0.3);
   color: #ffffff;
-  font-size: 1.1rem;
-  font-weight: 400;
+  font-size: 1.2rem;
+  font-weight: 500;
   cursor: pointer;
   transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
   overflow: hidden;
-  letter-spacing: 1px;
+  letter-spacing: 1.5px;
   border-radius: 0;
   box-sizing: border-box;
   margin: 0;
@@ -150,26 +125,44 @@
   font-family: inherit;
   text-decoration: none;
   outline: none;
-  display: flex;
-  align-items: center;
-  justify-content: center;
+}
+
+/* פירמידה של אורכים - הכפתור העליון הכי קצר */
+.user-edit {
+  width: 250px !important;
+  background: transparent !important;
+}
+
+.workout-booking {
+  width: 350px !important;
+  background: transparent !important;
+}
+
+.start-workout {
+  width: 450px !important;
+  background: transparent !important;
 }
 
 .menu-button:hover {
-  border-color: rgba(255, 255, 255, 0.4);
-  background: rgba(255, 255, 255, 0.05);
+  border-color: rgba(139, 92, 246, 0.8);
+  background: rgba(139, 92, 246, 0.1);
+  transform: translateY(-2px);
+  box-shadow: 0 8px 25px rgba(139, 92, 246, 0.3);
+  text-shadow: 0 0 15px rgba(255, 255, 255, 0.5);
 }
 
 .button-text {
   position: relative;
   z-index: 2;
-  transition: transform 0.3s ease;
-  text-align: center;
-  width: 100%;
+  transition: all 0.3s ease;
+  font-size: 1.2rem;
+  font-weight: 500;
 }
 
 .menu-button:hover .button-text {
   transform: translateX(10px);
+  text-shadow: 0 0 12px rgba(255, 255, 255, 0.6);
+  color: #ffffff;
 }
 
 
@@ -189,20 +182,7 @@
   transform: scaleX(1);
 }
 
-.user-edit:hover {
-  border-color: rgba(79, 172, 254, 0.5);
-  box-shadow: 0 0 30px rgba(79, 172, 254, 0.1);
-}
 
-.workout-booking:hover {
-  border-color: rgba(255, 107, 107, 0.5);
-  box-shadow: 0 0 30px rgba(255, 107, 107, 0.1);
-}
-
-.start-workout:hover {
-  border-color: rgba(46, 204, 113, 0.5);
-  box-shadow: 0 0 30px rgba(46, 204, 113, 0.1);
-}
 
 
 @keyframes slideInDown {
@@ -229,27 +209,24 @@
 
 /* מסכים קטנים מאוד - 480px ומטה */
 @media (max-width: 480px) {
-  .logout-button {
-    top: 15px;
-    right: 15px;
-    padding: 6px 12px;
-    font-size: 0.8rem;
+  .logout-btn {
+    top: 20px;
+    right: 20px;
+    padding: 10px 20px;
+    font-size: 13px;
   }
   
   .menu-container {
-    gap: 2rem;
-    padding: 0 20px;
+    gap: 2.5rem;
+    padding: 30px 20px;
+    margin: 0 20px;
   }
   
   .brand-title {
-    font-size: 1.8rem;
-    letter-spacing: 2px;
+    font-size: 2.2rem;
+    letter-spacing: 3px;
   }
   
-  .welcome-message {
-    font-size: 1rem;
-    margin: 1rem 0 0 0;
-  }
   
   .title-line {
     width: 60px;
@@ -257,11 +234,26 @@
   }
   
   .menu-button {
-    width: 280px;
     height: 55px;
     font-size: 0.9rem;
     letter-spacing: 0.5px;
   }
+  
+         /* פירמידה למובייל קטן */
+         .user-edit {
+           width: 200px !important;
+           background: transparent !important;
+         }
+         
+         .workout-booking {
+           width: 280px !important;
+           background: transparent !important;
+         }
+         
+         .start-workout {
+           width: 360px !important;
+           background: transparent !important;
+         }
   
   .buttons-section {
     gap: 1.2rem;
@@ -278,27 +270,24 @@
 
 /* מסכים קטנים - 481px עד 768px */
 @media (min-width: 481px) and (max-width: 768px) {
-  .logout-button {
-    top: 18px;
-    right: 18px;
-    padding: 7px 14px;
-    font-size: 0.85rem;
+  .logout-btn {
+    top: 25px;
+    right: 25px;
+    padding: 11px 22px;
+    font-size: 13.5px;
   }
   
   .menu-container {
-    gap: 3rem;
-    padding: 0 30px;
+    gap: 3.5rem;
+    padding: 35px 30px;
+    margin: 0 30px;
   }
   
   .brand-title {
-    font-size: 2.5rem;
+    font-size: 3rem;
     letter-spacing: 4px;
   }
   
-  .welcome-message {
-    font-size: 1.1rem;
-    margin: 1.2rem 0 0 0;
-  }
   
   .title-line {
     width: 70px;
@@ -306,11 +295,26 @@
   }
   
   .menu-button {
-    width: 320px;
     height: 60px;
     font-size: 1rem;
     letter-spacing: 1px;
   }
+  
+         /* פירמידה למובייל בינוני */
+         .user-edit {
+           width: 220px !important;
+           background: transparent !important;
+         }
+         
+         .workout-booking {
+           width: 300px !important;
+           background: transparent !important;
+         }
+         
+         .start-workout {
+           width: 380px !important;
+           background: transparent !important;
+         }
   
   .buttons-section {
     gap: 1.8rem;
@@ -340,13 +344,29 @@
   }
   
   .menu-button {
-    width: 380px;
     height: 70px;
     font-size: 1.15rem;
     letter-spacing: 1px;
   }
   
-  .buttons-section {
+         /* פירמידה למסכים בינוניים */
+         .user-edit {
+           width: 250px !important;
+           background: transparent !important;
+         }
+         
+         .workout-booking {
+           width: 350px !important;
+           background: transparent !important;
+         }
+         
+         .start-workout {
+           width: 450px !important;
+           background: transparent !important;
+         }
+  
+
+         .buttons-section {
     gap: 2.2rem;
   }
 }
@@ -574,152 +594,4 @@
 
 /* הוסף את זה בסוף הקובץ MainMenu.css - תיקון כפור */
 
-/* תיקון כפור לכפתור התחל אימון */
-.main-menu .menu-button.start-workout,
-.main-menu .start-workout,
-.start-workout.menu-button,
-button.start-workout,
-.buttons-section .start-workout,
-.button-wrapper .start-workout {
-  width: 350px !important;
-  height: 70px !important;
-  min-width: 350px !important;
-  max-width: 350px !important;
-  min-height: 70px !important;
-  max-height: 70px !important;
-  font-size: 1.1rem !important;
-  padding: 0 !important;
-  margin: 0 !important;
-  box-sizing: border-box !important;
-  border-radius: 0 !important;
-  background: transparent !important;
-  border: 1px solid rgba(255, 255, 255, 0.2) !important;
-  color: #ffffff !important;
-  font-weight: 400 !important;
-  letter-spacing: 1px !important;
-  position: relative !important;
-  overflow: hidden !important;
-  cursor: pointer !important;
-  transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1) !important;
-  font-family: inherit !important;
-  text-decoration: none !important;
-  outline: none !important;
-}
 
-/* תיקון כפור לאפקטי הובר */
-.main-menu .menu-button.start-workout:hover,
-.main-menu .start-workout:hover,
-.start-workout.menu-button:hover,
-button.start-workout:hover {
-  border-color: rgba(46, 204, 113, 0.5) !important;
-  box-shadow: 0 0 30px rgba(46, 204, 113, 0.1) !important;
-  background: rgba(255, 255, 255, 0.05) !important;
-  width: 350px !important;
-  height: 70px !important;
-}
-
-/* תיקון כפור למובייל */
-@media (max-width: 480px) {
-  .main-menu .menu-button.start-workout,
-  .main-menu .start-workout,
-  .start-workout.menu-button,
-  button.start-workout {
-    width: 280px !important;
-    height: 55px !important;
-    min-width: 280px !important;
-    max-width: 280px !important;
-    min-height: 55px !important;
-    max-height: 55px !important;
-    font-size: 0.9rem !important;
-  }
-}
-
-@media (min-width: 481px) and (max-width: 768px) {
-  .main-menu .menu-button.start-workout,
-  .main-menu .start-workout,
-  .start-workout.menu-button,
-  button.start-workout {
-    width: 320px !important;
-    height: 60px !important;
-    min-width: 320px !important;
-    max-width: 320px !important;
-    min-height: 60px !important;
-    max-height: 60px !important;
-    font-size: 1rem !important;
-  }
-}
-
-@media (min-width: 769px) and (max-width: 1024px) {
-  .main-menu .menu-button.start-workout,
-  .main-menu .start-workout,
-  .start-workout.menu-button,
-  button.start-workout {
-    width: 380px !important;
-    height: 70px !important;
-    min-width: 380px !important;
-    max-width: 380px !important;
-    min-height: 70px !important;
-    max-height: 70px !important;
-    font-size: 1.15rem !important;
-  }
-}
-
-@media (min-width: 1025px) and (max-width: 1199px) {
-  .main-menu .menu-button.start-workout,
-  .main-menu .start-workout,
-  .start-workout.menu-button,
-  button.start-workout {
-    width: 420px !important;
-    height: 75px !important;
-    min-width: 420px !important;
-    max-width: 420px !important;
-    min-height: 75px !important;
-    max-height: 75px !important;
-    font-size: 1.2rem !important;
-  }
-}
-
-@media (min-width: 1200px) and (max-width: 1399px) {
-  .main-menu .menu-button.start-workout,
-  .main-menu .start-workout,
-  .start-workout.menu-button,
-  button.start-workout {
-    width: 500px !important;
-    height: 85px !important;
-    min-width: 500px !important;
-    max-width: 500px !important;
-    min-height: 85px !important;
-    max-height: 85px !important;
-    font-size: 1.3rem !important;
-  }
-}
-
-@media (min-width: 1400px) and (max-width: 1599px) {
-  .main-menu .menu-button.start-workout,
-  .main-menu .start-workout,
-  .start-workout.menu-button,
-  button.start-workout {
-    width: 580px !important;
-    height: 95px !important;
-    min-width: 580px !important;
-    max-width: 580px !important;
-    min-height: 95px !important;
-    max-height: 95px !important;
-    font-size: 1.5rem !important;
-  }
-}
-
-@media (min-width: 1600px) {
-  .main-menu .menu-button.start-workout,
-  .main-menu .start-workout,
-  .start-workout.menu-button,
-  button.start-workout {
-    width: 650px !important;
-    height: 110px !important;
-    min-width: 650px !important;
-    max-width: 650px !important;
-    min-height: 110px !important;
-    max-height: 110px !important;
-    font-size: 1.7rem !important;
-  }
-}
