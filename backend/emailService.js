@@ -56,7 +56,7 @@ function createTransporter() {
 }
 
 // יצירת transporter בהתחלה
-createTransporter();
+// createTransporter(); // מושבת זמנית
 
 // פונקציה לשליחת אימייל הזמנת אימון
 async function sendWorkoutBookingEmail(userEmail, userName, workoutDetails) {

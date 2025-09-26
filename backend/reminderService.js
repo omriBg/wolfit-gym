@@ -134,15 +134,14 @@ async function checkAndSendReminders() {
 
 // הפעלת בדיקת תזכורות כל דקה
 function startReminderService() {
-  console.log('🚀 מתחיל שירות תזכורות...');
-  
+  console.log('🚀 שירות תזכורות מושבת זמנית');
   // בדיקה ראשונית
-  checkAndSendReminders();
+  // checkAndSendReminders();
   
   // בדיקה כל דקה
-  setInterval(checkAndSendReminders, 60 * 1000); // 60 שניות
+  // setInterval(checkAndSendReminders, 60 * 1000); // 60 שניות
   
-  console.log('✅ שירות תזכורות פועל - בדיקה כל דקה');
+  console.log('✅ שירות תזכורות מושבת - ממשיך ללא תזכורות');
 }
 
 module.exports = {
