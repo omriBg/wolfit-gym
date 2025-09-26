@@ -1553,9 +1553,18 @@ const gracefulShutdown = async (signal) => {
 };
 
 // Start server
+console.log('🔍 בדיקת משתני סביבה:');
+console.log('DB_HOST:', process.env.DB_HOST);
+console.log('DB_PORT:', process.env.DB_PORT);
+console.log('DB_NAME:', process.env.DB_NAME);
+console.log('DB_USER:', process.env.DB_USER);
+console.log('DB_SSL:', process.env.DB_SSL);
+console.log('HOST:', process.env.HOST);
+console.log('PORT:', process.env.PORT);
+
 const HOST = process.env.HOST || 'localhost';
-   const server = app.listen(PORT, HOST, () => {
-  logger.info(`השרת רץ על http://localhost:${PORT}`, {
+const server = app.listen(PORT, HOST, () => {
+  logger.info(`השרת רץ על http://${HOST}:${PORT}`, {
     port: PORT,
     environment: process.env.NODE_ENV || 'development',
     nodeVersion: process.version
