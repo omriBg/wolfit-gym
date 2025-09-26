@@ -107,15 +107,6 @@ const loginLimiter = rateLimit({
 app.use(limiter);
 
 // הגדרות CORS מאובטחות
-const corsOptions = {
-  origin: '*',  // מאפשר גישה מכל דומיין בשלב זה
-  credentials: true,
-  methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
-  allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With'],
-  optionsSuccessStatus: 200
-};
-
-// Middleware
 // CORS configuration
 const corsOptions = {
   origin: [
@@ -342,9 +333,10 @@ app.put('/api/save-user-preferences/:userId', authenticateToken, catchAsync(asyn
 // הסרנו את מערכת הסיסמאות הרגילות - רק Google OAuth נתמך
 
 // API להתחברות עם Google OAuth
-app.post('/api/google-login', loginLimiter, catchAsync(async (req, res) => {
-  console.log('🔍 Google Login Request:', req.body);
-  const { credential } = req.body;
+app.post('/api/google-login', loginLimiter, async (req, res) => {
+  try {
+    console.log('🔍 Google Login Request:', req.body);
+    const { credential } = req.body;
   
   if (!credential) {
     throw new AppError('נתוני Google חסרים', 400);
@@ -356,7 +348,11 @@ app.post('/api/google-login', loginLimiter, catchAsync(async (req, res) => {
   console.log('📦 Decoded Google data:', googleData);
   
   if (!googleData || !googleData.sub || !googleData.email) {
-    throw new AppError('נתוני Google לא תקינים', 400);
+    console.error('❌ נתוני Google לא תקינים:', { googleData });
+    return res.status(400).json({
+      success: false,
+      message: 'נתוני Google לא תקינים'
+    });
   }
   
   logger.info('מקבל בקשה להתחברות עם Google', {
