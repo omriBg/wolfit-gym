@@ -18,8 +18,8 @@ const dbConfig = {
   acquireTimeoutMillis: 60000, // timeout לקבלת חיבור מה-pool
   
   // הגדרות SSL
-  ssl: false,
-  
+  ssl: process.env.DB_SSL === 'true' ? { rejectUnauthorized: false } : false,
+    
   // הגדרות נוספות לביצועים
   statement_timeout: 30000, // 30 שניות timeout לשאילתות
   query_timeout: 30000,
