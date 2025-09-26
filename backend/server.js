@@ -336,79 +336,110 @@ app.put('/api/save-user-preferences/:userId', authenticateToken, catchAsync(asyn
 app.post('/api/google-login', loginLimiter, async (req, res) => {
   try {
     console.log('🔍 Google Login Request:', req.body);
+    
+    if (!req.body || !req.body.credential) {
+      console.error('❌ No credential in request body');
+      return res.status(400).json({
+        success: false,
+        message: 'נתוני Google חסרים'
+      });
+    }
+    
     const { credential } = req.body;
-  
-  if (!credential) {
-    throw new AppError('נתוני Google חסרים', 400);
-  }
-  
-  // פענוח הנתונים מ-Google
-  console.log('📦 Decoding credential:', credential);
-  const googleData = jwt.decode(credential);
-  console.log('📦 Decoded Google data:', googleData);
-  
-  if (!googleData || !googleData.sub || !googleData.email) {
-    console.error('❌ נתוני Google לא תקינים:', { googleData });
-    return res.status(400).json({
+    
+    // פענוח הנתונים מ-Google
+    console.log('📦 Decoding credential:', credential);
+    let googleData;
+    try {
+      googleData = jwt.decode(credential);
+      console.log('📦 Decoded Google data:', googleData);
+    } catch (error) {
+      console.error('❌ Error decoding Google token:', error);
+      return res.status(400).json({
+        success: false,
+        message: 'שגיאה בפענוח נתוני Google'
+      });
+    }
+    
+    if (!googleData || !googleData.sub || !googleData.email) {
+      console.error('❌ נתוני Google לא תקינים:', { googleData });
+      return res.status(400).json({
+        success: false,
+        message: 'נתוני Google לא תקינים'
+      });
+    }
+    
+    logger.info('מקבל בקשה להתחברות עם Google', {
+      googleId: googleData.sub,
+      email: googleData.email,
+      name: googleData.name
+    });
+    
+    // בדיקה אם המשתמש קיים
+    let existingUser;
+    try {
+      existingUser = await queryWithTimeout(
+        'SELECT * FROM "User" WHERE googleid = $1 OR email = $2',
+        [googleData.sub, googleData.email]
+      );
+      console.log('📦 Database query result:', existingUser.rows);
+    } catch (error) {
+      console.error('❌ Database error:', error);
+      return res.status(500).json({
+        success: false,
+        message: 'שגיאה בחיבור למסד הנתונים'
+      });
+    }
+    
+    if (existingUser.rows.length > 0) {
+      // משתמש קיים - התחברות ישירה
+      const user = existingUser.rows[0];
+      
+      // יצירת JWT token
+      const token = jwt.sign(
+        { 
+          userId: user.iduser,
+          email: user.email,
+          userName: user.username || googleData.name
+        },
+        JWT_SECRET,
+        { expiresIn: '24h' }
+      );
+      
+      logger.info('התחברות הצליחה', { userId: user.iduser, email: user.email });
+      
+      res.json({
+        success: true,
+        message: 'התחברות הצליחה!',
+        token: token,
+        user: {
+          id: user.iduser,
+          userName: user.username || googleData.name,
+          email: user.email
+        }
+      });
+    } else {
+      // משתמש חדש - צריך הרשמה
+      logger.info('משתמש חדש מנסה להתחבר', { email: googleData.email });
+      
+      res.json({
+        success: false,
+        message: 'משתמש לא קיים. אנא הירשם תחילה',
+        isNewUser: true,
+        googleData: {
+          googleId: googleData.sub,
+          email: googleData.email,
+          name: googleData.name
+        }
+      });
+    }
+  } catch (error) {
+    console.error('❌ שגיאה כללית:', error);
+    res.status(500).json({
       success: false,
-      message: 'נתוני Google לא תקינים'
+      message: 'שגיאה פנימית בשרת'
     });
   }
-  
-  logger.info('מקבל בקשה להתחברות עם Google', {
-    googleId: googleData.sub,
-    email: googleData.email,
-    name: googleData.name
-  });
-  
-  // בדיקה אם המשתמש קיים
-  const existingUser = await queryWithTimeout(
-    'SELECT * FROM "User" WHERE googleid = $1 OR email = $2',
-    [googleData.sub, googleData.email]
-  );
-  
-  if (existingUser.rows.length > 0) {
-    // משתמש קיים - התחברות ישירה
-    const user = existingUser.rows[0];
-    
-    // יצירת JWT token
-    const token = jwt.sign(
-      { 
-        userId: user.iduser,
-        email: user.email,
-        userName: user.username || googleData.name
-      },
-      JWT_SECRET,
-      { expiresIn: '24h' }
-    );
-    
-    logger.info('התחברות הצליחה', { userId: user.iduser, email: user.email });
-    
-    res.json({
-      success: true,
-      message: 'התחברות הצליחה!',
-      token: token,
-      user: {
-        id: user.iduser,
-        userName: user.username || googleData.name,
-        email: user.email
-      }
-    });
-  } else {
-    // משתמש חדש - צריך הרשמה
-    logger.info('משתמש חדש מנסה להתחבר', { email: googleData.email });
-    
-    res.json({
-      success: false,
-      message: 'משתמש לא קיים. אנא הירשם תחילה',
-      isNewUser: true,
-      googleData: {
-        googleId: googleData.sub,
-        name: googleData.name,
-        email: googleData.email,
-        picture: googleData.picture
-      }
-    });
   }
 }));
 
