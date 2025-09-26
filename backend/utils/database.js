@@ -4,33 +4,21 @@ const logger = require('./logger');
 
 // הגדרות connection pooling מתקדמות
 const dbConfig = {
-  host: process.env.DB_HOST,
-  // Force IPv4
-  family: 4,
-  // Force IPv4 for DNS resolution
-  hostaddr: process.env.DB_HOST,
-  port: process.env.DB_PORT || 5432,
-  database: process.env.DB_NAME,
-  user: process.env.DB_USER,
-  password: process.env.DB_PASSWORD,
-  
+  connectionString: `postgres://${process.env.DB_USER}:${process.env.DB_PASSWORD}@${process.env.DB_HOST}:${process.env.DB_PORT || 5432}/${process.env.DB_NAME}`,
+  ssl: {
+    rejectUnauthorized: false
+  },
   // הגדרות connection pooling
-  max: 20, // מקסימום חיבורים ב-pool
-  min: 2,  // מינימום חיבורים ב-pool
-  idleTimeoutMillis: 30000, // זמן המתנה לפני סגירת חיבור לא פעיל
-  connectionTimeoutMillis: 2000, // timeout לחיבור חדש
-  acquireTimeoutMillis: 60000, // timeout לקבלת חיבור מה-pool
-  
-  // הגדרות SSL
-  ssl: process.env.DB_SSL === 'true' ? { rejectUnauthorized: false } : false,
-    
-  // הגדרות נוספות לביצועים
-  statement_timeout: 30000, // 30 שניות timeout לשאילתות
-  query_timeout: 30000,
-  keepAlive: true,
-  keepAliveInitialDelayMillis: 10000,
-  
+  max: 20,
+  min: 2,
+  idleTimeoutMillis: 30000,
+  connectionTimeoutMillis: 5000,
+  acquireTimeoutMillis: 60000,
 };
+
+// Log connection string (without password)
+const logConnectionString = dbConfig.connectionString.replace(/:([^:@]+)@/, ':***@');
+console.log('🔌 Database connection string:', logConnectionString);
 
 // יצירת pool
 const pool = new Pool(dbConfig);
