@@ -108,32 +108,29 @@ app.use(limiter);
 
 // הגדרות CORS מאובטחות
 const corsOptions = {
-  origin: function (origin, callback) {
-    // רשימת דומיינים מורשים
-    const allowedOrigins = [
-      'http://localhost:3000',  // React development
-      'http://localhost:3001',  // Backend development
-      'https://wolfit-gym.vercel.app',  // Production domain
-      'https://www.wolfit-gym.vercel.app'  // Production domain with www
-    ];
-    
-    // בדיקה אם הדומיין מורשה או אם זה בקשה מהשרת עצמו (Postman, curl, etc.)
-    if (!origin || allowedOrigins.includes(origin)) {
-      console.log(`✅ CORS: דומיין מורשה: ${origin || 'no origin (server request)'}`);
-      callback(null, true);
-    } else {
-      console.warn(`🚫 CORS: דומיין לא מורשה מנסה לגשת: ${origin}`);
-      callback(new Error('לא מורשה על ידי מדיניות CORS'));
-    }
-  },
-  credentials: true,  // מאפשר שליחת cookies ו-headers
+  origin: '*',  // מאפשר גישה מכל דומיין בשלב זה
+  credentials: true,
   methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
   allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With'],
   optionsSuccessStatus: 200
 };
 
 // Middleware
+// CORS configuration
+const corsOptions = {
+  origin: [
+    'http://localhost:3000',
+    'https://wolfit-gym.vercel.app'
+  ],
+  methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
+  allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With'],
+  credentials: true,
+  optionsSuccessStatus: 200
+};
+
+// Enable CORS with security options
 app.use(cors(corsOptions));
+app.options('*', cors(corsOptions));
 app.use(express.json());
 
 // Route בסיסי
