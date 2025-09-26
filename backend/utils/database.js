@@ -7,6 +7,8 @@ const dbConfig = {
   host: process.env.DB_HOST,
   // Force IPv4
   family: 4,
+  // Force IPv4 for DNS resolution
+  hostaddr: process.env.DB_HOST,
   port: process.env.DB_PORT || 5432,
   database: process.env.DB_NAME,
   user: process.env.DB_USER,

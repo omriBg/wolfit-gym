@@ -36,6 +36,7 @@ process.on('unhandledRejection', handleUnhandledRejection);
 process.on('uncaughtException', handleUncaughtException);
 
 const app = express();
+app.set('trust proxy', 1);  // נדרש עבור Render/Heroku
 const PORT = process.env.PORT || 3001;
 
 // Request timeout middleware
