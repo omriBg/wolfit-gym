@@ -80,10 +80,25 @@ const testConnection = async () => {
 
 // פונקציה לביצוע שאילתה עם timeout
 const queryWithTimeout = async (text, params, timeoutMs = 30000) => {
-  const client = await pool.connect();
+  console.log('🔍 Attempting database query:', {
+    query: text,
+    params: params,
+    timeout: timeoutMs
+  });
+
+  let client;
+  try {
+    client = await pool.connect();
+    console.log('✅ Connected to database successfully');
+  } catch (err) {
+    console.error('❌ Failed to connect to database:', err);
+    throw err;
+  }
+
   try {
     // הגדרת timeout לשאילתה
     await client.query(`SET statement_timeout = ${timeoutMs}`);
+    console.log('✅ Set query timeout');
     
     const startTime = Date.now();
     const result = await client.query(text, params);

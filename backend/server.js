@@ -376,14 +376,22 @@ app.post('/api/google-login', loginLimiter, async (req, res) => {
       name: googleData.name
     });
     
-    // בדיקה אם המשתמש קיים
-    let existingUser;
-    try {
-      existingUser = await queryWithTimeout(
-        'SELECT * FROM "User" WHERE googleid = $1 OR email = $2',
-        [googleData.sub, googleData.email]
-      );
-      console.log('📦 Database query result:', existingUser.rows);
+  // בדיקה אם המשתמש קיים
+  let existingUser;
+  try {
+    console.log('🔍 Checking if user exists:', {
+      googleId: googleData.sub,
+      email: googleData.email
+    });
+
+    existingUser = await queryWithTimeout(
+      'SELECT * FROM "User" WHERE googleid = $1 OR email = $2',
+      [googleData.sub, googleData.email]
+    );
+    console.log('📦 Database query result:', {
+      rowCount: existingUser.rowCount,
+      rows: existingUser.rows
+    });
     } catch (error) {
       console.error('❌ Database error:', error);
       return res.status(500).json({
