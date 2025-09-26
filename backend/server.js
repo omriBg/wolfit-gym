@@ -46,19 +46,8 @@ app.use(compression());
 
 // Middleware אבטחה בסיסי
 app.use(helmet({
-  contentSecurityPolicy: {
-    directives: {
-      defaultSrc: ["'self'"],
-      styleSrc: ["'self'", "'unsafe-inline'"],
-      scriptSrc: ["'self'"],
-      imgSrc: ["'self'", "data:", "https:"],
-    },
-  },
-  hsts: {
-    maxAge: 31536000,
-    includeSubDomains: true,
-    preload: true
-  }
+  contentSecurityPolicy: false,
+  crossOriginEmbedderPolicy: false
 }));
 
 // Request logging middleware
@@ -146,6 +135,11 @@ const corsOptions = {
 // Middleware
 app.use(cors(corsOptions));
 app.use(express.json());
+
+// Route בסיסי
+app.get('/', (req, res) => {
+  res.json({ message: 'Welcome to Wolfit Gym API!' });
+});
 
 // JWT Secret - חובה להיות מוגדר במשתני סביבה
 const JWT_SECRET = process.env.JWT_SECRET;
