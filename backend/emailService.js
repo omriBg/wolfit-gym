@@ -1,18 +1,62 @@
 // backend/emailService.js
 const nodemailer = require('nodemailer');
 
-// הגדרת transporter עבור Gmail
-const transporter = nodemailer.createTransport({
-  service: 'gmail',
-  auth: {
-    user: process.env.EMAIL_USER,
-    pass: process.env.EMAIL_PASS
+// בדיקת הגדרות אימייל
+function validateEmailConfig() {
+  const requiredVars = ['EMAIL_USER', 'EMAIL_PASS', 'EMAIL_FROM'];
+  const missing = requiredVars.filter(varName => !process.env[varName] || process.env[varName].includes('your_'));
+  
+  if (missing.length > 0) {
+    console.warn('⚠️ הגדרות אימייל לא מוגדרות:', missing.join(', '));
+    return false;
   }
-});
+  return true;
+}
+
+// הגדרת transporter עבור Gmail
+let transporter = null;
+
+function createTransporter() {
+  if (!validateEmailConfig()) {
+    console.warn('⚠️ לא ניתן ליצור transporter - הגדרות אימייל חסרות');
+    return null;
+  }
+
+  try {
+    transporter = nodemailer.createTransport({
+      service: 'gmail',
+      auth: {
+        user: process.env.EMAIL_USER,
+        pass: process.env.EMAIL_PASS
+      },
+      // הגדרות נוספות לפתרון בעיות
+      secure: true,
+      port: 465,
+      tls: {
+        rejectUnauthorized: false
+      }
+    });
+    
+    console.log('✅ Transporter אימייל נוצר בהצלחה');
+    return transporter;
+  } catch (error) {
+    console.error('❌ שגיאה ביצירת transporter:', error);
+    return null;
+  }
+}
+
+// יצירת transporter בהתחלה
+createTransporter();
 
 // פונקציה לשליחת אימייל הזמנת אימון
 async function sendWorkoutBookingEmail(userEmail, userName, workoutDetails) {
   try {
+    // בדיקה אם transporter זמין
+    if (!transporter) {
+      console.warn('⚠️ Transporter אימייל לא זמין - מדלג על שליחת אימייל הזמנה');
+      return { success: false, error: 'Email service not configured' };
+    }
+
     const { date, startTime, endTime, slots } = workoutDetails;
     
     // יצירת תוכן האימייל
@@ -77,6 +121,12 @@ async function sendWorkoutBookingEmail(userEmail, userName, workoutDetails) {
 // פונקציה לשליחת אימייל תזכורת
 async function sendWorkoutReminderEmail(userEmail, userName, workoutDetails) {
   try {
+    // בדיקה אם transporter זמין
+    if (!transporter) {
+      console.warn('⚠️ Transporter אימייל לא זמין - מדלג על שליחת אימייל תזכורת');
+      return { success: false, error: 'Email service not configured' };
+    }
+
     const { date, startTime, endTime, slots } = workoutDetails;
     
     const emailContent = `
@@ -193,7 +243,72 @@ function generateScheduleHTML(slots) {
   return html;
 }
 
+// פונקציה לשליחת אימייל ביטול אימון
+async function sendWorkoutCancellationEmail(userEmail, userName, workoutDetails) {
+  try {
+    // בדיקה אם transporter זמין
+    if (!transporter) {
+      console.warn('⚠️ Transporter אימייל לא זמין - מדלג על שליחת אימייל ביטול');
+      return { success: false, error: 'Email service not configured' };
+    }
+
+    const { date, startTime, endTime, slots } = workoutDetails;
+    
+    const emailContent = `
+      <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px; background-color: #f8f9fa;">
+        <div style="background: linear-gradient(135deg, #e74c3c 0%, #c0392b 100%); color: white; padding: 30px; border-radius: 12px; text-align: center; margin-bottom: 20px;">
+          <h1 style="margin: 0; font-size: 28px;">❌ WOLFit</h1>
+          <p style="margin: 10px 0 0 0; font-size: 16px; opacity: 0.9;">האימון שלך בוטל</p>
+        </div>
+        
+        <div style="background: white; padding: 25px; border-radius: 12px; box-shadow: 0 2px 10px rgba(0,0,0,0.1);">
+          <h2 style="color: #e74c3c; margin-top: 0;">שלום ${userName}! 😔</h2>
+          
+          <p style="font-size: 16px; line-height: 1.6; color: #333;">
+            האימון שלך בוטל. הנה הפרטים של האימון שבוטל:
+          </p>
+          
+          <div style="background: #f8f9fa; padding: 20px; border-radius: 8px; margin: 20px 0;">
+            <h3 style="color: #e74c3c; margin-top: 0;">📅 פרטי האימון שבוטל</h3>
+            <p style="margin: 8px 0;"><strong>תאריך:</strong> ${formatDate(date)}</p>
+            <p style="margin: 8px 0;"><strong>שעה:</strong> ${startTime} - ${endTime}</p>
+            <p style="margin: 8px 0;"><strong>משך:</strong> ${calculateDuration(startTime, endTime)} דקות</p>
+          </div>
+          
+          <div style="background: linear-gradient(135deg, #e74c3c 0%, #c0392b 100%); color: white; padding: 20px; border-radius: 8px; text-align: center; margin: 20px 0;">
+            <h3 style="margin-top: 0;">💪 רוצים להזמין אימון חדש?</h3>
+            <p style="margin: 10px 0 0 0; opacity: 0.9;">
+              אתם מוזמנים להזמין אימון חדש בכל עת!<br>
+              נשמח לראות אתכם שוב.
+            </p>
+          </div>
+          
+          <p style="font-size: 14px; color: #666; text-align: center; margin-top: 30px;">
+            צוות WOLFit 🏋️‍♂️
+          </p>
+        </div>
+      </div>
+    `;
+
+    const mailOptions = {
+      from: process.env.EMAIL_FROM,
+      to: userEmail,
+      subject: `❌ WOLFit - האימון שלך בוטל - ${formatDate(date)} ב-${startTime}`,
+      html: emailContent
+    };
+
+    const result = await transporter.sendMail(mailOptions);
+    console.log('✅ אימייל ביטול אימון נשלח:', result.messageId);
+    return { success: true, messageId: result.messageId };
+    
+  } catch (error) {
+    console.error('❌ שגיאה בשליחת אימייל ביטול אימון:', error);
+    return { success: false, error: error.message };
+  }
+}
+
 module.exports = {
   sendWorkoutBookingEmail,
-  sendWorkoutReminderEmail
+  sendWorkoutReminderEmail,
+  sendWorkoutCancellationEmail
 };

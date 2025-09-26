@@ -18,6 +18,10 @@ function OrderTrain(){
   const [blockedTimes, setBlockedTimes] = useState([]);
   const [loadingBlockedTimes, setLoadingBlockedTimes] = useState(false);
   const [availableTimes, setAvailableTimes] = useState([]);
+  
+  // 🚀 תיקון 1: הוספת debouncing ו-cache
+  const [debounceTimer, setDebounceTimer] = useState(null);
+  const [blockedTimesCache, setBlockedTimesCache] = useState({});
 
   useEffect(() => {
     // לא נחסום את הגלילה במסך הזמנת אימון
@@ -26,13 +30,30 @@ function OrderTrain(){
     };
   }, []);
 
-  // טעינת שעות תפוסות כשהתאריך משתנה
+  // 🚀 תיקון 2: debouncing - מניעת קריאות מרובות מהירות
   useEffect(() => {
     if (selectDate && user?.id) {
-      loadBlockedTimes();
+      // ביטול טיימר קודם אם קיים
+      if (debounceTimer) {
+        clearTimeout(debounceTimer);
+      }
+      
+      // יצירת טיימר חדש - המתן 500ms לפני הקריאה
+      const timer = setTimeout(() => {
+        loadBlockedTimes();
+      }, 500);
+      
+      setDebounceTimer(timer);
     } else {
       setBlockedTimes([]);
     }
+    
+    // ניקוי טיימר כשהקומפוננטה נהרסת
+    return () => {
+      if (debounceTimer) {
+        clearTimeout(debounceTimer);
+      }
+    };
   }, [selectDate, user?.id]);
 
   // עדכון שעות זמינות כשהשעות התפוסות משתנות
@@ -44,10 +65,19 @@ function OrderTrain(){
     }
   }, [blockedTimes, selectDate]);
 
+  // 🚀 תיקון 3: הוספת cache למניעת קריאות מיותרות
   const loadBlockedTimes = async () => {
     try {
-      setLoadingBlockedTimes(true);
       const dateStr = selectDate.toLocaleDateString('en-CA'); // YYYY-MM-DD
+      
+      // בדיקה אם יש cache לתאריך הזה
+      if (blockedTimesCache[dateStr]) {
+        console.log('📦 משתמש ב-cache לשעות תפוסות עבור', dateStr);
+        setBlockedTimes(blockedTimesCache[dateStr]);
+        return;
+      }
+      
+      setLoadingBlockedTimes(true);
       const url = `${API_BASE_URL}/api/user-booked-times/${user.id}/${dateStr}`;
       
       console.log('🔍 טוען שעות תפוסות מ:', url);
@@ -67,6 +97,13 @@ function OrderTrain(){
       
       if (data.success) {
         setBlockedTimes(data.blockedTimes);
+        
+        // 🚀 שמירה ב-cache למניעת קריאות חוזרות
+        setBlockedTimesCache(prev => ({
+          ...prev,
+          [dateStr]: data.blockedTimes
+        }));
+        
         console.log('🚫 שעות תפוסות נטענו:', data.blockedTimes);
         console.log('📊 מספר שעות תפוסות:', data.blockedTimes.length);
       } else {
@@ -95,26 +132,28 @@ function OrderTrain(){
     return dateToCheck >= today && dateToCheck <= sevenDaysFromNow;
   }
 
-  // פונקציה לבדיקה אם שעה חסומה
-  // השרת כבר מחזיר את כל השעות החסומות כולל רבע שעה לפני ואחרי
+  // 🚀 תיקון 4: הפחתת לוגים - הסרת הודעות מיותרות
   function isTimeBlocked(timeString) {
     // בדיקה אם השעות התפוסות נטענו בכלל
     if (!blockedTimes || blockedTimes.length === 0) {
-      console.log(`⚠️ אין שעות תפוסות נטענות, שעה ${timeString} זמינה`);
+      // הסרת הלוג הזה - הוא יוצר רעש!
+      // console.log(`⚠️ אין שעות תפוסות נטענות, שעה ${timeString} זמינה`);
       return false;
     }
     
-    console.log(`🔍 בודק אם שעה ${timeString} חסומה`);
-    console.log(`📋 שעות תפוסות מהשרת:`, blockedTimes);
+    // הסרת לוגים מיותרים - רק בדיקה שקטה
+    // console.log(`🔍 בודק אם שעה ${timeString} חסומה`);
+    // console.log(`📋 שעות תפוסות מהשרת:`, blockedTimes);
     
     // השרת כבר מחזיר את כל השעות החסומות כולל רבע שעה לפני ואחרי
     const isBlocked = blockedTimes.includes(timeString);
     
-    if (isBlocked) {
-      console.log(`❌ שעה ${timeString} חסומה`);
-    } else {
-      console.log(`✅ שעה ${timeString} זמינה`);
-    }
+    // הסרת לוגים מיותרים
+    // if (isBlocked) {
+    //   console.log(`❌ שעה ${timeString} חסומה`);
+    // } else {
+    //   console.log(`✅ שעה ${timeString} זמינה`);
+    // }
     
     return isBlocked;
   }
@@ -150,10 +189,12 @@ function OrderTrain(){
     return false;
   }
 
+  // 🚀 תיקון 5: הפחתת לוגים ב-generateTimeOptions
   function generateTimeOptions() {
-    console.log('🚀 מתחיל ליצור אפשרויות זמן');
-    console.log('📅 תאריך נבחר:', selectDate);
-    console.log('🚫 שעות תפוסות:', blockedTimes);
+    // הסרת לוגים מיותרים - רק לוג אחד בסוף
+    // console.log('🚀 מתחיל ליצור אפשרויות זמן');
+    // console.log('📅 תאריך נבחר:', selectDate);
+    // console.log('🚫 שעות תפוסות:', blockedTimes);
     
     const times = [];
     const now = new Date();
@@ -183,14 +224,18 @@ function OrderTrain(){
         if (!isTimeBlocked(timeString)) {
           times.push(timeString);
         } else {
-          console.log(`🚫 שעה ${timeString} נחסמה ולא נוספה לרשימה`);
+          // הסרת לוג מיותר
+          // console.log(`🚫 שעה ${timeString} נחסמה ולא נוספה לרשימה`);
         }
       }
     }
-    console.log(`📋 נוצרו ${times.length} שעות זמינות:`, times);
+    
+    // רק לוג אחד בסוף במקום 49 לוגים
+    console.log(`📋 נוצרו ${times.length} שעות זמינות`);
     return times;
   }
 
+  // 🚀 תיקון 6: הפחתת לוגים ב-generateEndTimeOptions
   function generateEndTimeOptions() {
     if (!startTime) return [];
     
@@ -210,12 +255,14 @@ function OrderTrain(){
         if (!isTimeBlocked(timeString)) {
           times.push(timeString);
         } else {
-          console.log(`🚫 שעת סיום ${timeString} נחסמה ולא נוספה לרשימה`);
+          // הסרת לוג מיותר
+          // console.log(`🚫 שעת סיום ${timeString} נחסמה ולא נוספה לרשימה`);
         }
       }
     }
     
-    console.log(`📋 נוצרו ${times.length} שעות סיום זמינות:`, times);
+    // רק לוג אחד בסוף
+    console.log(`📋 נוצרו ${times.length} שעות סיום זמינות`);
     return times;
   }
 

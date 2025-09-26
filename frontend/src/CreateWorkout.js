@@ -32,6 +32,7 @@ function CreateWorkout({ selectedDate, startTime, endTime }) {
   const [error, setError] = useState('');
   const [isSaving, setIsSaving] = useState(false);
   const [saveSuccess, setSaveSuccess] = useState(false);
+  const [hasAttemptedGeneration, setHasAttemptedGeneration] = useState(false);
 
   useEffect(() => {
     console.log(' CreateWorkout נטען עם פרמטרים:', {
@@ -46,11 +47,12 @@ function CreateWorkout({ selectedDate, startTime, endTime }) {
 
   // יצירת אימון אוטומטית אחרי שהנתונים נטענו
   useEffect(() => {
-    if (!loading && timeSlots.length > 0 && !workoutPlan && !isGenerating) {
+    if (!loading && timeSlots.length > 0 && !workoutPlan && !isGenerating && !hasAttemptedGeneration) {
       console.log('🚀 יוצר אימון אוטומטית...');
+      setHasAttemptedGeneration(true);
       generateWorkout();
     }
-  }, [loading, timeSlots.length, workoutPlan, isGenerating]);
+  }, [loading, timeSlots.length]); // הסרת workoutPlan ו-isGenerating מהתלויות
 
   const initializeWorkoutData = async () => {
     try {
@@ -83,7 +85,18 @@ function CreateWorkout({ selectedDate, startTime, endTime }) {
       const url = `${API_BASE_URL}/api/user-preferences/${user.id}`;
       console.log('📡 קורא העדפות מ:', url);
       
-      const response = await fetch(url);
+      const token = localStorage.getItem('authToken');
+      console.log('🔑 טוקן לאימות:', token ? 'קיים' : 'חסר');
+      console.log('🔑 טוקן מלא:', token);
+      
+      const response = await fetch(url, {
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json',
+        },
+      });
+      
+      console.log('📡 תגובת השרת להעדפות:', response.status, response.statusText);
       const data = await response.json();
       
       if (data.success) {
@@ -195,7 +208,17 @@ function CreateWorkout({ selectedDate, startTime, endTime }) {
       
     } catch (error) {
       console.error('❌ שגיאה ביצירת אימון:', error);
-      setError(`שגיאה ביצירת האימון: ${error.message}`);
+      
+      // בדיקה אם זו שגיאת אימות - לא ננסה שוב
+      if (error.message.includes('401') || error.message.includes('403') || error.message.includes('Unauthorized')) {
+        setError('שגיאת אימות. אנא התחבר מחדש.');
+        setHasAttemptedGeneration(true); // מונע ניסיונות חוזרים
+      } else if (error.message.includes('429') || error.message.includes('Too Many Requests')) {
+        setError('יותר מדי בקשות. אנא המתן רגע ונסה שוב.');
+        setHasAttemptedGeneration(true); // מונע ניסיונות חוזרים
+      } else {
+        setError(`שגיאה ביצירת האימון: ${error.message}`);
+      }
     } finally {
       setIsGenerating(false);
     }
@@ -308,6 +331,28 @@ function CreateWorkout({ selectedDate, startTime, endTime }) {
             border: '1px solid #ccc'
           }}>
             ❌ {error}
+            {!error.includes('אימות') && !error.includes('יותר מדי בקשות') && (
+              <div style={{ marginTop: '10px' }}>
+                <button
+                  onClick={() => {
+                    setHasAttemptedGeneration(false);
+                    setError('');
+                    generateWorkout();
+                  }}
+                  disabled={isGenerating}
+                  style={{
+                    background: isGenerating ? '#ccc' : '#8b5cf6',
+                    color: 'white',
+                    border: 'none',
+                    padding: '8px 16px',
+                    borderRadius: '5px',
+                    cursor: isGenerating ? 'not-allowed' : 'pointer'
+                  }}
+                >
+                  {isGenerating ? 'מנסה שוב...' : 'נסה שוב'}
+                </button>
+              </div>
+            )}
           </div>
         )}
 

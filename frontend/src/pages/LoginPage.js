@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { GoogleLogin, GoogleOAuthProvider } from '@react-oauth/google';
 import { useAuth } from '../contexts/AuthContext';
@@ -11,6 +11,7 @@ function LoginPage() {
   const [googleUserData, setGoogleUserData] = useState(null);
   const { login } = useAuth();
   const navigate = useNavigate();
+  const googleButtonRef = useRef(null);
 
   // Google OAuth Client ID
   const GOOGLE_CLIENT_ID = "386514389479-impprp7mgpalddmuflkvev582v8idjug.apps.googleusercontent.com";
@@ -68,15 +69,9 @@ function LoginPage() {
         
         <div className="login-form">
           <h2 style={{ textAlign: 'center', marginBottom: '20px', color: '#333' }}>
-            התחבר עם Google
           </h2>
-          {/* כפתור Google OAuth */}
-          <div style={{ 
-            display: 'flex', 
-            justifyContent: 'center', 
-            marginBottom: '20px',
-            opacity: isLoading ? 0.6 : 1
-          }}>
+          {/* כפתור Google OAuth עם עיצוב מותאם */}
+          <div className="google-login-container">
             <GoogleLogin
               onSuccess={handleGoogleLogin}
               onError={() => setLoginMessage('שגיאה בהתחברות עם Google')}
@@ -86,6 +81,21 @@ function LoginPage() {
               shape="rectangular"
               logo_alignment="left"
               disabled={isLoading}
+              style={{
+                width: '100%',
+                maxWidth: '320px',
+                height: '56px',
+                borderRadius: '12px',
+                border: '2px solid #e0e0e0',
+                background: 'linear-gradient(135deg, #ffffff 0%, #f8f9fa 100%)',
+                boxShadow: '0 4px 12px rgba(0, 0, 0, 0.1)',
+                transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
+                fontFamily: "'Roboto', 'Segoe UI', sans-serif",
+                fontWeight: '500',
+                fontSize: '16px',
+                color: '#3c4043',
+                letterSpacing: '0.25px'
+              }}
             />
           </div>
           

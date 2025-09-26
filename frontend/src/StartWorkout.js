@@ -14,6 +14,8 @@ function StartWorkout() {
   const [currentWorkout, setCurrentWorkout] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
+  const [showCancelConfirm, setShowCancelConfirm] = useState(false);
+  const [workoutToCancel, setWorkoutToCancel] = useState(null);
 
   useEffect(() => {
     // מניעת גלילה של הגוף כשהמסך פתוח
@@ -374,9 +376,15 @@ function StartWorkout() {
     }
   };
 
-  const handleCancelWorkout = async (workoutGroup) => {
+  const handleCancelWorkout = (workoutGroup) => {
+    // הצגת דיאלוג אישור
+    setWorkoutToCancel(workoutGroup);
+    setShowCancelConfirm(true);
+  };
+
+  const confirmCancelWorkout = async () => {
     try {
-      console.log('מבטל אימון:', workoutGroup);
+      console.log('מבטל אימון:', workoutToCancel);
       
       if (!user || !user.id) {
         setError('משתמש לא מחובר');
@@ -384,7 +392,7 @@ function StartWorkout() {
       }
 
       // יצירת רשימת הזמנות למחיקה
-      const bookingsToDelete = workoutGroup.map(workout => ({
+      const bookingsToDelete = workoutToCancel.map(workout => ({
         idField: workout.fieldId,
         bookingDate: workout.date,
         startTime: workout.startTime,
@@ -410,16 +418,28 @@ function StartWorkout() {
 
       if (data.success) {
         console.log('אימון בוטל בהצלחה');
+        // סגירת דיאלוג האישור
+        setShowCancelConfirm(false);
+        setWorkoutToCancel(null);
         // רענון רשימת האימונים
         window.location.reload();
       } else {
         console.error('שגיאה בביטול האימון:', data.message);
         setError(data.message || 'שגיאה בביטול האימון');
+        setShowCancelConfirm(false);
+        setWorkoutToCancel(null);
       }
     } catch (error) {
       console.error('שגיאה בביטול האימון:', error);
       setError('שגיאה בחיבור לשרת. נסה שוב.');
+      setShowCancelConfirm(false);
+      setWorkoutToCancel(null);
     }
+  };
+
+  const cancelCancelWorkout = () => {
+    setShowCancelConfirm(false);
+    setWorkoutToCancel(null);
   };
 
   const handleBookNewWorkout = () => {
@@ -582,6 +602,37 @@ function StartWorkout() {
           </div>
         )}
       </div>
+
+      {/* דיאלוג אישור ביטול אימון */}
+      {showCancelConfirm && (
+        <div className="confirm-dialog-overlay">
+          <div className="confirm-dialog">
+            <div className="confirm-dialog-header">
+              <h3>אישור ביטול אימון</h3>
+            </div>
+            <div className="confirm-dialog-body">
+              <p>האם אתה בטוח שברצונך לבטל את האימון?</p>
+              <p className="confirm-dialog-warning">
+                ⚠️ פעולה זו לא ניתנת לביטול
+              </p>
+            </div>
+            <div className="confirm-dialog-actions">
+              <button 
+                className="confirm-btn cancel-btn"
+                onClick={cancelCancelWorkout}
+              >
+                לא, שמור על האימון
+              </button>
+              <button 
+                className="confirm-btn confirm-cancel-btn"
+                onClick={confirmCancelWorkout}
+              >
+                כן, בטל את האימון
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

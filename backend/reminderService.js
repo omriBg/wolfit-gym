@@ -1,4 +1,5 @@
 // backend/reminderService.js
+require('dotenv').config();
 const { Pool } = require('pg');
 const { sendWorkoutReminderEmail } = require('./emailService');
 
@@ -6,7 +7,7 @@ const { sendWorkoutReminderEmail } = require('./emailService');
 const pool = new Pool({
   host: process.env.DB_HOST || 'localhost',
   port: process.env.DB_PORT || 5432,
-  database: process.env.DB_NAME || 'Wolfit',
+  database: process.env.DB_NAME || 'postgres',
   user: process.env.DB_USER || 'postgres',
   password: process.env.DB_PASSWORD || '9526',
   ssl: process.env.NODE_ENV === 'production' ? {
@@ -23,6 +24,9 @@ async function checkAndSendReminders() {
     // חישוב זמן - שעה וחצי מהיום
     const now = new Date();
     const reminderTime = new Date(now.getTime() + (90 * 60 * 1000)); // 90 דקות
+    
+    console.log(`⏰ זמן נוכחי: ${now.toLocaleString('he-IL')}`);
+    console.log(`⏰ זמן תזכורת: ${reminderTime.toLocaleString('he-IL')}`);
     
     // פורמט תאריך ושעה לבדיקה
     const reminderDate = reminderTime.toISOString().split('T')[0]; // YYYY-MM-DD
