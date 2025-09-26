@@ -5,6 +5,8 @@ const logger = require('./logger');
 // הגדרות connection pooling מתקדמות
 const dbConfig = {
   host: process.env.DB_HOST,
+  // Force IPv4
+  family: 4,
   port: process.env.DB_PORT || 5432,
   database: process.env.DB_NAME,
   user: process.env.DB_USER,
