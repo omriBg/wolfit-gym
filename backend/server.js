@@ -343,6 +343,7 @@ app.put('/api/save-user-preferences/:userId', authenticateToken, catchAsync(asyn
 
 // API להתחברות עם Google OAuth
 app.post('/api/google-login', loginLimiter, catchAsync(async (req, res) => {
+  console.log('🔍 Google Login Request:', req.body);
   const { credential } = req.body;
   
   if (!credential) {
@@ -350,7 +351,9 @@ app.post('/api/google-login', loginLimiter, catchAsync(async (req, res) => {
   }
   
   // פענוח הנתונים מ-Google
+  console.log('📦 Decoding credential:', credential);
   const googleData = jwt.decode(credential);
+  console.log('📦 Decoded Google data:', googleData);
   
   if (!googleData || !googleData.sub || !googleData.email) {
     throw new AppError('נתוני Google לא תקינים', 400);
