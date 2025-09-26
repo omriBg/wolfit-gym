@@ -440,8 +440,7 @@ app.post('/api/google-login', loginLimiter, async (req, res) => {
       message: 'שגיאה פנימית בשרת'
     });
   }
-  }
-}));
+});
 
 // API לבדיקת טוקן ואימות משתמש
 app.get('/api/verify-token', authenticateToken, async (req, res) => {
