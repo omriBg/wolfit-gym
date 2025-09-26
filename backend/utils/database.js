@@ -4,7 +4,11 @@ const logger = require('./logger');
 
 // הגדרות connection pooling מתקדמות
 const dbConfig = {
-  connectionString: `postgres://${process.env.DB_USER}:${process.env.DB_PASSWORD}@${process.env.DB_HOST}:${process.env.DB_PORT || 5432}/${process.env.DB_NAME}`,
+  user: process.env.DB_USER,
+  password: process.env.DB_PASSWORD,
+  host: process.env.DB_HOST,
+  port: process.env.DB_PORT || 5432,
+  database: process.env.DB_NAME,
   ssl: {
     rejectUnauthorized: false
   },
@@ -16,9 +20,14 @@ const dbConfig = {
   acquireTimeoutMillis: 60000,
 };
 
-// Log connection string (without password)
-const logConnectionString = dbConfig.connectionString.replace(/:([^:@]+)@/, ':***@');
-console.log('🔌 Database connection string:', logConnectionString);
+// Log connection details (without password)
+console.log('🔌 Database connection details:', {
+  host: dbConfig.host,
+  port: dbConfig.port,
+  database: dbConfig.database,
+  user: dbConfig.user,
+  ssl: dbConfig.ssl
+});
 
 // יצירת pool
 const pool = new Pool(dbConfig);
