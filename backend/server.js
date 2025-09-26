@@ -113,8 +113,8 @@ const corsOptions = {
     const allowedOrigins = [
       'http://localhost:3000',  // React development
       'http://localhost:3001',  // Backend development
-      'https://your-production-domain.com',  // Production domain
-      'https://www.your-production-domain.com'  // Production domain with www
+      'https://wolfit-gym.vercel.app',  // Production domain
+      'https://www.wolfit-gym.vercel.app'  // Production domain with www
     ];
     
     // בדיקה אם הדומיין מורשה או אם זה בקשה מהשרת עצמו (Postman, curl, etc.)
