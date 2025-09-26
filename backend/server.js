@@ -1553,7 +1553,8 @@ const gracefulShutdown = async (signal) => {
 };
 
 // Start server
-const server = app.listen(PORT, '0.0.0.0', () => {
+const HOST = process.env.HOST || 'localhost';
+   const server = app.listen(PORT, HOST, () => {
   logger.info(`השרת רץ על http://localhost:${PORT}`, {
     port: PORT,
     environment: process.env.NODE_ENV || 'development',
