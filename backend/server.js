@@ -1623,27 +1623,23 @@ console.log('PORT:', process.env.PORT);
 
 console.log('🔍 מגיע לבדיקת חיבור למסד נתונים...');
 
-// בדיקת חיבור למסד נתונים
-console.log('🔍 בודק אם pool קיים...');
-if (!pool) {
-  console.error('❌ Pool לא קיים!');
-  process.exit(1);
-}
-console.log('✅ Pool קיים, ממשיך...');
-console.log('🔍 בודק חיבור למסד נתונים...');
-testConnection().then(result => {
-  if (result.success) {
-    console.log('✅ חיבור למסד נתונים הצליח!');
-  } else {
-    console.error('❌ חיבור למסד נתונים נכשל:', result.error);
-  }
-}).catch(error => {
-  console.error('❌ שגיאה בבדיקת חיבור למסד נתונים:', error);
-}).finally(() => {
-  console.log('🔍 סיים בדיקת חיבור למסד נתונים, ממשיך...');
-});
+// בדיקת חיבור למסד נתונים - מושבת זמנית
+console.log('🔍 מדלג על בדיקת חיבור למסד נתונים זמנית...');
+// testConnection().then(result => {
+//   if (result.success) {
+//     console.log('✅ חיבור למסד נתונים הצליח!');
+//   } else {
+//     console.error('❌ חיבור למסד נתונים נכשל:', result.error);
+//   }
+// }).catch(error => {
+//   console.error('❌ שגיאה בבדיקת חיבור למסד נתונים:', error);
+// }).finally(() => {
+//   console.log('🔍 סיים בדיקת חיבור למסד נתונים, ממשיך...');
+// });
 
 const HOST = process.env.HOST || 'localhost';
+
+console.log('🔍 מגיע להפעלת השרת...');
 
 try {
   console.log('🚀 מפעיל שרת...');
