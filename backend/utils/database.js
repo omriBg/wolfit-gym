@@ -16,8 +16,8 @@ if (process.env.DATABASE_URL) {
   let connectionString = process.env.DATABASE_URL;
   
   // כפיית IPv4 עבור Supabase
-  if (connectionString.includes('lfpkdtufzzisfeogifcr.supabase.co')) {
-    console.log('🔧 Forcing IPv4 for Supabase connection');
+  if (connectionString.includes('pooler.supabase.com')) {
+    console.log('🔧 Using Supabase Transaction Pooler (IPv4 compatible)');
   }
   
   dbConfig = {
@@ -44,8 +44,8 @@ if (process.env.DATABASE_URL) {
       dns.lookup(hostname, { family: 4 }, callback);
     },
     // כפיית IPv4 נוספת
-    host: 'lfpkdtufzzisfeogifcr.supabase.co',
-    port: 5432,
+    host: 'aws-1-eu-central-1.pooler.supabase.com',
+    port: 6543,
     // כפיית IPv4
     family: 4
   };
