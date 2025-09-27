@@ -202,9 +202,12 @@ initializePool().then(() => {
 // פונקציה לבדיקת חיבור
 const testConnection = async () => {
   try {
+    console.log('🔍 מנסה להתחבר למסד נתונים...');
     const client = await pool.connect();
+    console.log('✅ התחבר למסד נתונים, מבצע שאילתה...');
     try {
       const result = await client.query('SELECT NOW() as current_time, version() as version');
+      console.log('✅ שאילתה הצליחה:', result.rows[0]);
       logger.info('בדיקת חיבור למסד נתונים הצליחה', {
         currentTime: result.rows[0].current_time,
         version: result.rows[0].version.split(' ')[0]
@@ -214,6 +217,7 @@ const testConnection = async () => {
       client.release();
     }
   } catch (err) {
+    console.error('❌ שגיאה בחיבור למסד נתונים:', err);
     logger.warn('מסד הנתונים לא זמין:', err.message);
     return { success: false, error: err.message };
   }

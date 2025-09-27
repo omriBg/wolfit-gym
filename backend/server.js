@@ -154,6 +154,8 @@ if (JWT_SECRET.length < 32) {
   process.exit(1);
 }
 
+console.log('✅ JWT_SECRET תקין, ממשיך...');
+
 // Middleware לאימות JWT
 const authenticateToken = (req, res, next) => {
   const authHeader = req.headers['authorization'];
@@ -1608,6 +1610,8 @@ console.log('DATABASE_URL:', process.env.DATABASE_URL ? 'קיים' : 'חסר');
 console.log('HOST:', process.env.HOST);
 console.log('PORT:', process.env.PORT);
 
+console.log('🔍 מגיע לבדיקת חיבור למסד נתונים...');
+
 // בדיקת חיבור למסד נתונים
 console.log('🔍 בודק חיבור למסד נתונים...');
 testConnection().then(result => {
@@ -1618,6 +1622,8 @@ testConnection().then(result => {
   }
 }).catch(error => {
   console.error('❌ שגיאה בבדיקת חיבור למסד נתונים:', error);
+}).finally(() => {
+  console.log('🔍 סיים בדיקת חיבור למסד נתונים, ממשיך...');
 });
 
 const HOST = process.env.HOST || 'localhost';
