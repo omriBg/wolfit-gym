@@ -87,14 +87,48 @@ async function resolveHostToIPv4(host) {
   }
 }
 
+// פונקציה להמרת connection string ל-IPv4
+async function resolveConnectionStringToIPv4(connectionString) {
+  try {
+    // חילוץ host מה-connection string
+    const url = new URL(connectionString);
+    const host = url.hostname;
+    
+    // פתרון ל-IPv4
+    const ipv4Host = await resolveHostToIPv4(host);
+    
+    // החלפת ה-host ב-connection string
+    const newConnectionString = connectionString.replace(host, ipv4Host);
+    console.log(`✅ Converted connection string to IPv4: ${newConnectionString.replace(/:[^:]*@/, ':***@')}`);
+    
+    return newConnectionString;
+  } catch (error) {
+    console.warn('⚠️ Could not resolve connection string to IPv4, using original:', error.message);
+    return connectionString;
+  }
+}
+
 // המרת host ל-IPv4 אם נדרש
 async function createPoolWithIPv4() {
-  if (dbConfig.host && !dbConfig.connectionString) {
-    try {
-      const ipv4Host = await resolveHostToIPv4(dbConfig.host);
-      dbConfig.host = ipv4Host;
-    } catch (error) {
-      console.warn('⚠️ Could not resolve host to IPv4, proceeding with original host');
+  if (dbConfig.connectionString) {
+    // אם יש connection string, ננסה להמיר אותו ל-IPv4
+    if (process.env.DB_FORCE_IPV4 === 'true') {
+      try {
+        dbConfig.connectionString = await resolveConnectionStringToIPv4(dbConfig.connectionString);
+      } catch (error) {
+        console.warn('⚠️ Could not resolve connection string to IPv4, proceeding with original');
+      }
+    }
+  } else if (dbConfig.host) {
+    // אם יש host נפרד, ננסה לפתור אותו ל-IPv4
+    if (process.env.DB_FORCE_IPV4 === 'true') {
+      try {
+        const ipv4Host = await resolveHostToIPv4(dbConfig.host);
+        dbConfig.host = ipv4Host;
+        console.log(`✅ Forced IPv4 resolution: ${dbConfig.host}`);
+      } catch (error) {
+        console.warn('⚠️ Could not resolve host to IPv4, proceeding with original host');
+      }
     }
   }
   
