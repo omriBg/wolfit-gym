@@ -22,10 +22,10 @@ if (process.env.DATABASE_URL) {
   
   dbConfig = {
     connectionString: connectionString,
-    ssl: process.env.NODE_ENV === 'production' ? {
+    ssl: {
       rejectUnauthorized: false,
       require: true
-    } : false,
+    },
     // הגדרות connection pooling
     max: 20,
     min: 2,
