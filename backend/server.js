@@ -141,8 +141,16 @@ app.get('/', (req, res) => {
 // JWT Secret - חובה להיות מוגדר במשתני סביבה
 const JWT_SECRET = process.env.JWT_SECRET;
 
+console.log('🔍 בדיקת JWT_SECRET:', JWT_SECRET ? 'קיים' : 'חסר');
+console.log('🔍 אורך JWT_SECRET:', JWT_SECRET ? JWT_SECRET.length : 0);
+
 if (!JWT_SECRET) {
   console.error('❌ שגיאה קריטית: JWT_SECRET לא מוגדר במשתני הסביבה!');
+  process.exit(1);
+}
+
+if (JWT_SECRET.length < 32) {
+  console.error('❌ שגיאה קריטית: JWT_SECRET קצר מדי! צריך לפחות 32 תווים, יש:', JWT_SECRET.length);
   process.exit(1);
 }
 
@@ -1596,20 +1604,42 @@ console.log('DB_PORT:', process.env.DB_PORT);
 console.log('DB_NAME:', process.env.DB_NAME);
 console.log('DB_USER:', process.env.DB_USER);
 console.log('DB_SSL:', process.env.DB_SSL);
+console.log('DATABASE_URL:', process.env.DATABASE_URL ? 'קיים' : 'חסר');
 console.log('HOST:', process.env.HOST);
 console.log('PORT:', process.env.PORT);
 
+// בדיקת חיבור למסד נתונים
+console.log('🔍 בודק חיבור למסד נתונים...');
+testConnection().then(result => {
+  if (result.success) {
+    console.log('✅ חיבור למסד נתונים הצליח!');
+  } else {
+    console.error('❌ חיבור למסד נתונים נכשל:', result.error);
+  }
+}).catch(error => {
+  console.error('❌ שגיאה בבדיקת חיבור למסד נתונים:', error);
+});
+
 const HOST = process.env.HOST || 'localhost';
-const server = app.listen(PORT, HOST, () => {
-  logger.info(`השרת רץ על http://${HOST}:${PORT}`, {
-    port: PORT,
-    environment: process.env.NODE_ENV || 'development',
-    nodeVersion: process.version
+
+try {
+  console.log('🚀 מפעיל שרת...');
+  const server = app.listen(PORT, HOST, () => {
+    logger.info(`השרת רץ על http://${HOST}:${PORT}`, {
+      port: PORT,
+      environment: process.env.NODE_ENV || 'development',
+      nodeVersion: process.version
+    });
+    
+    // הפעלת שירות תזכורות
+    startReminderService();
   });
   
-  // הפעלת שירות תזכורות
-  startReminderService();
-});
+  console.log('✅ שרת הופעל בהצלחה!');
+} catch (error) {
+  console.error('❌ שגיאה בהפעלת השרת:', error);
+  process.exit(1);
+}
 
 // Handle graceful shutdown
 process.on('SIGTERM', () => gracefulShutdown('SIGTERM'));
