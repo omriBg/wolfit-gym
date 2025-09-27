@@ -158,8 +158,9 @@ console.log('✅ JWT_SECRET תקין, ממשיך...');
 
 console.log('🔍 יוצר middleware לאימות JWT...');
 
-// Middleware לאימות JWT
-const authenticateToken = (req, res, next) => {
+try {
+  // Middleware לאימות JWT
+  const authenticateToken = (req, res, next) => {
   const authHeader = req.headers['authorization'];
   const token = authHeader && authHeader.split(' ')[1]; // Bearer TOKEN
 
@@ -191,6 +192,12 @@ const authenticateToken = (req, res, next) => {
     next();
   });
 };
+
+  console.log('✅ Middleware לאימות JWT נוצר בהצלחה');
+} catch (error) {
+  console.error('❌ שגיאה ביצירת middleware לאימות JWT:', error);
+  process.exit(1);
+}
 
 // בדיקה שכל הנתונים החיוניים מוגדרים
 const requiredDbVars = ['DB_HOST', 'DB_NAME', 'DB_USER', 'DB_PASSWORD'];
