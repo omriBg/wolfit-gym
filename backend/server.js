@@ -15,6 +15,9 @@ const compression = require('compression');
 const rateLimit = require('express-rate-limit');
 const jwt = require('jsonwebtoken');
 
+// Database connection
+const { pool, testConnection } = require('./utils/database');
+
 const app = express();
 const PORT = process.env.PORT || 10000;
 
@@ -81,14 +84,36 @@ const authenticateToken = (req, res, next) => {
 };
 
 // Health Check
-app.get('/health', (req, res) => {
-    res.json({
-    status: 'healthy',
-    timestamp: new Date().toISOString(),
-    uptime: process.uptime(),
-    version: '1.0.0',
-    environment: process.env.NODE_ENV || 'development'
-  });
+app.get('/health', async (req, res) => {
+  try {
+    const dbTest = await testConnection();
+    const status = dbTest.success ? 'healthy' : 'unhealthy';
+    const statusCode = dbTest.success ? 200 : 503;
+    
+    res.status(statusCode).json({
+      status,
+      timestamp: new Date().toISOString(),
+      uptime: process.uptime(),
+      version: '1.0.0',
+      environment: process.env.NODE_ENV || 'development',
+      database: {
+        status: dbTest.success ? 'connected' : 'disconnected',
+        error: dbTest.success ? null : dbTest.error
+      }
+    });
+  } catch (error) {
+    res.status(503).json({
+      status: 'unhealthy',
+      timestamp: new Date().toISOString(),
+      uptime: process.uptime(),
+      version: '1.0.0',
+      environment: process.env.NODE_ENV || 'development',
+      database: {
+        status: 'error',
+        error: error.message
+      }
+    });
+  }
 });
 
 // Google Login API
@@ -127,31 +152,58 @@ app.post('/api/google-login', loginLimiter, async (req, res) => {
         message: 'נתוני Google לא תקינים'
       });
     }
-      
-      // יצירת JWT token
-      const token = jwt.sign(
-        { 
-        userId: googleData.sub,
-        email: googleData.email,
-        name: googleData.name 
-        },
-        JWT_SECRET,
-      { expiresIn: '7d' }
+    
+    // בדיקה אם המשתמש קיים במסד הנתונים
+    console.log('🔍 Checking if user exists:', {
+      googleId: googleData.sub,
+      email: googleData.email
+    });
+    
+    const existingUser = await pool.query(
+      'SELECT * FROM "User" WHERE googleid = $1 OR email = $2',
+      [googleData.sub, googleData.email]
+    );
+    
+    let user;
+    if (existingUser.rows.length > 0) {
+      // משתמש קיים - התחברות ישירה
+      user = existingUser.rows[0];
+      console.log('✅ משתמש קיים:', user.email);
+    } else {
+      // משתמש חדש - יצירת רשומה חדשה
+      console.log('🆕 יוצר משתמש חדש:', googleData.email);
+      const newUser = await pool.query(
+        'INSERT INTO "User" (googleid, email, name, picture) VALUES ($1, $2, $3, $4) RETURNING *',
+        [googleData.sub, googleData.email, googleData.name, googleData.picture]
       );
-      
-    console.log('✅ Google login successful for:', googleData.email);
-      
-      res.json({
-        success: true,
+      user = newUser.rows[0];
+      console.log('✅ משתמש חדש נוצר:', user.email);
+    }
+    
+    // יצירת JWT token
+    const token = jwt.sign(
+      { 
+        userId: user.iduser,
+        email: user.email,
+        name: user.name 
+      },
+      JWT_SECRET,
+      { expiresIn: '7d' }
+    );
+    
+    console.log('✅ Google login successful for:', user.email);
+    
+    res.json({
+      success: true,
       message: 'התחברות הצליחה',
       token,
-        user: {
-        id: googleData.sub,
-          email: googleData.email,
-        name: googleData.name,
-        picture: googleData.picture
-        }
-      });
+      user: {
+        id: user.iduser,
+        email: user.email,
+        name: user.name,
+        picture: user.picture
+      }
+    });
     
   } catch (error) {
     console.error('❌ Google login error:', error);
@@ -180,15 +232,405 @@ app.get('/api/verify-token', authenticateToken, async (req, res) => {
   }
 });
 
+// API לטעינת העדפות משתמש
+app.get('/api/user-preferences/:userId', authenticateToken, async (req, res) => {
+  try {
+    const { userId } = req.params;
+    
+    if (!userId || isNaN(userId)) {
+      return res.status(400).json({
+        success: false,
+        message: 'מזהה משתמש לא תקין'
+      });
+    }
+    
+    const userResult = await pool.query(
+      'SELECT * FROM "User" WHERE idUser = $1',
+      [userId]
+    );
+    
+    if (userResult.rows.length === 0) {
+      return res.status(404).json({
+        success: false,
+        message: 'משתמש לא נמצא'
+      });
+    }
+    
+    const preferencesResult = await pool.query(
+      'SELECT sporttype FROM UserPreferences WHERE idUser = $1 ORDER BY preferenceRank',
+      [userId]
+    );
+    
+    const selectedSports = preferencesResult.rows.map(row => row.sporttype);
+    
+    res.json({
+      success: true,
+      user: userResult.rows[0],
+      preferences: {
+        intensityLevel: userResult.rows[0].intensitylevel,
+        selectedSports: selectedSports
+      }
+    });
+    
+  } catch (error) {
+    console.error('❌ Error loading user preferences:', error);
+    res.status(500).json({
+      success: false,
+      message: 'שגיאה בטעינת העדפות'
+    });
+  }
+});
+
+// API לשמירת העדפות משתמש
+app.put('/api/save-user-preferences/:userId', authenticateToken, async (req, res) => {
+  try {
+    const { userId } = req.params;
+    const { intensityLevel, selectedSports } = req.body;
+    
+    if (!userId || isNaN(userId)) {
+      return res.status(400).json({
+        success: false,
+        message: 'מזהה משתמש לא תקין'
+      });
+    }
+    
+    if (intensityLevel === undefined && !selectedSports) {
+      return res.status(400).json({
+        success: false,
+        message: 'נתונים לשמירה חסרים'
+      });
+    }
+    
+    const client = await pool.connect();
+    
+    try {
+      // בדיקה שהמשתמש קיים
+      const userCheck = await client.query(
+        'SELECT idUser FROM "User" WHERE idUser = $1',
+        [userId]
+      );
+      
+      if (userCheck.rows.length === 0) {
+        return res.status(404).json({
+          success: false,
+          message: 'משתמש לא נמצא'
+        });
+      }
+      
+      // עדכון רמת אינטנסיביות
+      if (intensityLevel !== undefined) {
+        await client.query(
+          'UPDATE "User" SET intensityLevel = $1 WHERE idUser = $2',
+          [intensityLevel, userId]
+        );
+      }
+      
+      // עדכון העדפות ספורט
+      if (selectedSports && Array.isArray(selectedSports)) {
+        // מחיקת העדפות קיימות
+        await client.query(
+          'DELETE FROM UserPreferences WHERE idUser = $1',
+          [userId]
+        );
+        
+        // הוספת העדפות חדשות
+        for (let i = 0; i < selectedSports.length; i++) {
+          if (selectedSports[i]) { // וידוא שהערך לא ריק
+            await client.query(
+              'INSERT INTO UserPreferences (idUser, sportType, preferenceRank) VALUES ($1, $2, $3)',
+              [userId, selectedSports[i], i + 1]
+            );
+          }
+        }
+      }
+      
+      await client.query('COMMIT');
+      
+    } catch (error) {
+      await client.query('ROLLBACK');
+      throw error;
+    } finally {
+      client.release();
+    }
+    
+    res.json({
+      success: true,
+      message: 'העדפות נשמרו בהצלחה'
+    });
+    
+  } catch (error) {
+    console.error('❌ Error saving user preferences:', error);
+    res.status(500).json({
+      success: false,
+      message: 'שגיאה בשמירת העדפות'
+    });
+  }
+});
+
+// API לשמירת אימון
+app.post('/api/save-workout', authenticateToken, async (req, res) => {
+  try {
+    const { bookings, userId, date } = req.body;
+    
+    console.log('💾 מקבל בקשה לשמירת אימון:', { userId, date, bookings: bookings?.length });
+    
+    if (!bookings || !Array.isArray(bookings) || bookings.length === 0) {
+      return res.json({
+        success: false,
+        message: 'נתוני הזמנות חסרים'
+      });
+    }
+    
+    if (!userId) {
+      return res.json({
+        success: false,
+        message: 'מזהה משתמש חסר'
+      });
+    }
+    
+    const today = new Date().toISOString().split('T')[0];
+    if (date < today) {
+      return res.json({
+        success: false,
+        message: 'לא ניתן להזמין לתאריך בעבר'
+      });
+    }
+    
+    if (date === today) {
+      const now = new Date();
+      const currentTime = now.toTimeString().split(' ')[0]; // HH:MM:SS
+      const pastBookings = bookings.filter(booking => booking.startTime < currentTime);
+      
+      if (pastBookings.length > 0) {
+        return res.json({
+          success: false,
+          message: 'לא ניתן להזמין לזמן שכבר עבר'
+        });
+      }
+    }
+    
+    const client = await pool.connect();
+    
+    try {
+      // בדיקה שהמשתמש קיים
+      const userCheck = await client.query(
+        'SELECT idUser FROM "User" WHERE idUser = $1',
+        [userId]
+      );
+      
+      if (userCheck.rows.length === 0) {
+        return res.json({
+          success: false,
+          message: 'משתמש לא נמצא'
+        });
+      }
+      
+      let successCount = 0;
+      
+      for (const booking of bookings) {
+        const { idField, startTime, endTime } = booking;
+        
+        // בדיקת התנגשות עם הזמנות קיימות
+        const conflictCheck = await client.query(
+          'SELECT * FROM BookField WHERE idField = $1 AND bookingdate = $2 AND starttime = $3',
+          [idField, date, startTime]
+        );
+        
+        if (conflictCheck.rows.length > 0) {
+          const conflict = conflictCheck.rows[0];
+          return res.json({
+            success: false,
+            message: `המגרש תפוס ב-${startTime} על ידי משתמש אחר`
+          });
+        }
+        
+        // בדיקה שהמגרש קיים
+        const fieldCheck = await client.query(
+          'SELECT idField FROM Field WHERE idField = $1',
+          [idField]
+        );
+        
+        if (fieldCheck.rows.length === 0) {
+          console.warn(`⚠️ מגרש ${idField} לא נמצא, מדלג...`);
+          continue;
+        }
+        
+        // בדיקה שהמשתמש לא הזמין כבר באותו זמן
+        const existingBooking = await client.query(
+          'SELECT * FROM BookField WHERE iduser = $1 AND bookingdate = $2 AND starttime = $3',
+          [userId, date, startTime]
+        );
+        
+        if (existingBooking.rows.length > 0) {
+          console.warn(`⚠️ משתמש ${userId} כבר הזמין ב-${startTime}, מדלג...`);
+          continue;
+        }
+        
+        // שמירת ההזמנה
+        await client.query(
+          'INSERT INTO BookField (iduser, idField, bookingdate, starttime, endtime) VALUES ($1, $2, $3, $4, $5)',
+          [userId, idField, date, startTime, endTime]
+        );
+        
+        successCount++;
+      }
+      
+      await client.query('COMMIT');
+      
+      res.json({
+        success: true,
+        message: `נשמרו ${successCount} הזמנות מתוך ${bookings.length}`,
+        savedCount: successCount,
+        totalCount: bookings.length
+      });
+      
+    } catch (error) {
+      await client.query('ROLLBACK');
+      throw error;
+    } finally {
+      client.release();
+    }
+    
+  } catch (error) {
+    console.error('❌ Error saving workout:', error);
+    res.json({
+      success: false,
+      message: 'שגיאה בשמירת האימון',
+      error: error.message
+    });
+  }
+});
+
+// API לקבלת מגרשים זמינים
+app.post('/api/available-fields-for-workout', authenticateToken, async (req, res) => {
+  try {
+    const { date, timeSlots, userId } = req.body;
+    
+    console.log('🏃 מקבל בקשה למגרשים זמינים:', { userId, date, timeSlots: timeSlots?.length });
+    
+    if (!date || !timeSlots || !Array.isArray(timeSlots)) {
+      return res.json({
+        success: false,
+        message: 'נתונים חסרים: date ו-timeSlots נדרשים'
+      });
+    }
+    
+    if (!userId) {
+      return res.json({
+        success: false,
+        message: 'מזהה משתמש חסר'
+      });
+    }
+    
+    const today = new Date().toISOString().split('T')[0];
+    if (date < today) {
+      return res.json({
+        success: false,
+        message: 'לא ניתן להזמין לתאריך בעבר'
+      });
+    }
+    
+    // בדיקה שהמשתמש קיים
+    const userCheck = await pool.query(
+      'SELECT idUser FROM "User" WHERE idUser = $1',
+      [userId]
+    );
+    
+    if (userCheck.rows.length === 0) {
+      return res.json({
+        success: false,
+        message: 'משתמש לא נמצא'
+      });
+    }
+    
+    // קבלת הזמנות קיימות של המשתמש לתאריך זה
+    const existingBookings = await pool.query(
+      'SELECT starttime FROM BookField WHERE iduser = $1 AND bookingdate = $2',
+      [userId, date]
+    );
+    
+    const userBookedTimes = existingBookings.rows.map(row => row.starttime);
+    console.log(`📅 משתמש הזמין כבר ב-${date}:`, userBookedTimes);
+    
+    const fieldsByTime = {};
+    
+    for (const timeSlot of timeSlots) {
+      console.log(`⏰ בודק זמינות ל-${timeSlot}`);
+      
+      // בדיקה אם המשתמש כבר הזמין אימון בזמן זה
+      let isUserBooked = false;
+      for (const bookedTime of userBookedTimes) {
+        if (!bookedTime) {
+          console.log('⚠️ bookedTime הוא undefined, מדלג...');
+          continue;
+        }
+        
+        if (timeSlot === bookedTime) {
+          isUserBooked = true;
+          console.log(`❌ משתמש כבר הזמין אימון ב-${bookedTime}, לא ניתן להזמין ב-${timeSlot}`);
+          break;
+        }
+      }
+      
+      if (isUserBooked) {
+        fieldsByTime[timeSlot] = [];
+        continue;
+      }
+      
+      // קבלת כל המגרשים
+      const allFields = await pool.query('SELECT * FROM Field ORDER BY idField');
+      const availableFields = [];
+      
+      for (const field of allFields.rows) {
+        // בדיקה אם המגרש תפוס בזמן זה
+        const bookingCheck = await pool.query(
+          'SELECT * FROM BookField WHERE idField = $1 AND bookingdate = $2 AND starttime = $3',
+          [field.idfield, date, timeSlot]
+        );
+        
+        if (bookingCheck.rows.length === 0) {
+          // המגרש זמין
+          availableFields.push({
+            idField: field.idfield,
+            fieldName: field.fieldname,
+            fieldType: field.fieldtype,
+            capacity: field.capacity
+          });
+        }
+      }
+      
+      fieldsByTime[timeSlot] = availableFields;
+    }
+    
+    res.json({
+      success: true,
+      fieldsByTime,
+      userBookedTimes
+    });
+    
+  } catch (error) {
+    console.error('❌ Error getting available fields:', error);
+    res.json({
+      success: false,
+      message: 'שגיאה בקבלת מגרשים זמינים',
+      error: error.message
+    });
+  }
+});
+
 // Basic route
 app.get('/', (req, res) => {
-    res.json({
+  res.json({ 
     message: 'Wolfit Gym Backend Server is working!',
     version: '1.0.0',
     endpoints: [
       'GET /health',
       'POST /api/google-login',
-      'GET /api/verify-token'
+      'GET /api/verify-token',
+      'GET /api/user-preferences/:userId',
+      'PUT /api/save-user-preferences/:userId',
+      'POST /api/save-workout',
+      'POST /api/available-fields-for-workout'
     ]
   });
 });
