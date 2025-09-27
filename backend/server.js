@@ -22,7 +22,11 @@ const PORT = process.env.PORT || 10000;
 app.use(helmet());
 app.use(compression());
 app.use(cors({
-  origin: process.env.FRONTEND_URL || 'http://localhost:3000',
+  origin: [
+    'http://localhost:3000',
+    'https://wolfit-gym.vercel.app',
+    'https://wolfit-gym-frontend.vercel.app'
+  ],
   credentials: true
 }));
 app.use(express.json({ limit: '10mb' }));
@@ -78,7 +82,7 @@ const authenticateToken = (req, res, next) => {
 
 // Health Check
 app.get('/health', (req, res) => {
-  res.json({
+    res.json({
     status: 'healthy',
     timestamp: new Date().toISOString(),
     uptime: process.uptime(),
@@ -123,31 +127,31 @@ app.post('/api/google-login', loginLimiter, async (req, res) => {
         message: 'נתוני Google לא תקינים'
       });
     }
-    
-    // יצירת JWT token
-    const token = jwt.sign(
-      { 
+      
+      // יצירת JWT token
+      const token = jwt.sign(
+        { 
         userId: googleData.sub,
         email: googleData.email,
         name: googleData.name 
-      },
-      JWT_SECRET,
+        },
+        JWT_SECRET,
       { expiresIn: '7d' }
-    );
-    
+      );
+      
     console.log('✅ Google login successful for:', googleData.email);
-    
-    res.json({
-      success: true,
+      
+      res.json({
+        success: true,
       message: 'התחברות הצליחה',
       token,
-      user: {
+        user: {
         id: googleData.sub,
-        email: googleData.email,
+          email: googleData.email,
         name: googleData.name,
         picture: googleData.picture
-      }
-    });
+        }
+      });
     
   } catch (error) {
     console.error('❌ Google login error:', error);
@@ -178,7 +182,7 @@ app.get('/api/verify-token', authenticateToken, async (req, res) => {
 
 // Basic route
 app.get('/', (req, res) => {
-  res.json({ 
+    res.json({
     message: 'Wolfit Gym Backend Server is working!',
     version: '1.0.0',
     endpoints: [
