@@ -23,8 +23,7 @@ if (process.env.DATABASE_URL) {
   dbConfig = {
     connectionString: connectionString,
     ssl: {
-      rejectUnauthorized: false,
-      require: true
+      rejectUnauthorized: false
     },
     // הגדרות connection pooling
     max: 20,
@@ -32,8 +31,6 @@ if (process.env.DATABASE_URL) {
     idleTimeoutMillis: 30000,
     connectionTimeoutMillis: 10000,
     acquireTimeoutMillis: 60000,
-    // כפיית IPv4 עבור Supabase
-    family: 4,
     // הגדרות נוספות לחיבור יציב
     keepAlive: true,
     keepAliveInitialDelayMillis: 0,
