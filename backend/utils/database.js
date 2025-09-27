@@ -50,8 +50,7 @@ if (process.env.DATABASE_URL) {
     port: process.env.DB_PORT || 5432,
     database: process.env.DB_NAME,
     ssl: {
-      rejectUnauthorized: false,
-      require: true
+      rejectUnauthorized: false
     },
     // הגדרות connection pooling
     max: 20,
