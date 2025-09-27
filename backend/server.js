@@ -202,13 +202,17 @@ try {
 console.log('🔍 מגיע לבדיקת משתני סביבה...');
 
 // בדיקה שכל הנתונים החיוניים מוגדרים
-const requiredDbVars = ['DB_HOST', 'DB_NAME', 'DB_USER', 'DB_PASSWORD'];
-const missingVars = requiredDbVars.filter(varName => !process.env[varName]);
+if (process.env.DATABASE_URL) {
+  console.log('✅ DATABASE_URL קיים, משתמש ב-connection string');
+} else {
+  const requiredDbVars = ['DB_HOST', 'DB_NAME', 'DB_USER', 'DB_PASSWORD'];
+  const missingVars = requiredDbVars.filter(varName => !process.env[varName]);
 
-if (missingVars.length > 0) {
-  console.error('❌ שגיאה קריטית: משתני סביבה חסרים למסד הנתונים:', missingVars);
-  logger.error('שגיאה קריטית: משתני סביבה חסרים למסד הנתונים', { missingVars });
-  process.exit(1);
+  if (missingVars.length > 0) {
+    console.error('❌ שגיאה קריטית: משתני סביבה חסרים למסד הנתונים:', missingVars);
+    logger.error('שגיאה קריטית: משתני סביבה חסרים למסד הנתונים', { missingVars });
+    process.exit(1);
+  }
 }
 
 console.log('✅ כל משתני הסביבה קיימים, ממשיך...');
