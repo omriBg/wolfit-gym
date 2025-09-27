@@ -37,6 +37,14 @@ if (process.env.DATABASE_URL) {
   if (!process.env.DATABASE_URL.includes('sslmode=')) {
     process.env.DATABASE_URL += '?sslmode=require';
   }
+  // תיקון הכתובת
+  if (process.env.DATABASE_URL.includes('db.lfpkdtufzzisfeogifcr.supabase.co')) {
+    process.env.DATABASE_URL = process.env.DATABASE_URL.replace(
+      'db.lfpkdtufzzisfeogifcr.supabase.co',
+      'lfpkdtufzzisfeogifcr.supabase.co'
+    );
+    console.log('🔧 Fixed Supabase hostname in DATABASE_URL');
+  }
   console.log('🔧 Database URL configured for IPv4');
 }
 

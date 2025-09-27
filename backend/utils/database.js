@@ -16,7 +16,7 @@ if (process.env.DATABASE_URL) {
   let connectionString = process.env.DATABASE_URL;
   
   // כפיית IPv4 עבור Supabase
-  if (connectionString.includes('db.lfpkdtufzzisfeogifcr.supabase.co')) {
+  if (connectionString.includes('lfpkdtufzzisfeogifcr.supabase.co')) {
     console.log('🔧 Forcing IPv4 for Supabase connection');
   }
   
@@ -44,7 +44,7 @@ if (process.env.DATABASE_URL) {
       dns.lookup(hostname, { family: 4 }, callback);
     },
     // כפיית IPv4 נוספת
-    host: 'db.lfpkdtufzzisfeogifcr.supabase.co',
+    host: 'lfpkdtufzzisfeogifcr.supabase.co',
     port: 5432,
     // כפיית IPv4
     family: 4
