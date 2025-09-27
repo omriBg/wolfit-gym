@@ -156,6 +156,8 @@ if (JWT_SECRET.length < 32) {
 
 console.log('✅ JWT_SECRET תקין, ממשיך...');
 
+console.log('🔍 יוצר middleware לאימות JWT...');
+
 // Middleware לאימות JWT
 const authenticateToken = (req, res, next) => {
   const authHeader = req.headers['authorization'];
@@ -347,6 +349,8 @@ app.put('/api/save-user-preferences/:userId', authenticateToken, catchAsync(asyn
     message: 'העדפות נשמרו בהצלחה'
   });
 }));
+
+console.log('🔍 מגיע ל-API routes...');
 
 // API להתחברות עם Google OAuth בלבד
 // הסרנו את מערכת הסיסמאות הרגילות - רק Google OAuth נתמך
@@ -1613,6 +1617,12 @@ console.log('PORT:', process.env.PORT);
 console.log('🔍 מגיע לבדיקת חיבור למסד נתונים...');
 
 // בדיקת חיבור למסד נתונים
+console.log('🔍 בודק אם pool קיים...');
+if (!pool) {
+  console.error('❌ Pool לא קיים!');
+  process.exit(1);
+}
+console.log('✅ Pool קיים, ממשיך...');
 console.log('🔍 בודק חיבור למסד נתונים...');
 testConnection().then(result => {
   if (result.success) {
@@ -1656,3 +1666,5 @@ server.on('error', (err) => {
   logger.error('Server error:', err);
   process.exit(1);
 });
+
+console.log('🔍 סיים הגדרת השרת, ממשיך...');
