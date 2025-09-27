@@ -13,8 +13,15 @@ let dbConfig;
 
 if (process.env.DATABASE_URL) {
   // אם יש connection string מלא (כמו ב-Supabase)
+  let connectionString = process.env.DATABASE_URL;
+  
+  // כפיית IPv4 עבור Supabase
+  if (connectionString.includes('db.lfpkdtufzzisfeogifcr.supabase.co')) {
+    console.log('🔧 Forcing IPv4 for Supabase connection');
+  }
+  
   dbConfig = {
-    connectionString: process.env.DATABASE_URL,
+    connectionString: connectionString,
     ssl: process.env.NODE_ENV === 'production' ? {
       rejectUnauthorized: false,
       require: true
@@ -33,8 +40,14 @@ if (process.env.DATABASE_URL) {
     // כפיית IPv4 נוספת
     lookup: (hostname, options, callback) => {
       const dns = require('dns');
+      console.log('🔍 DNS lookup for:', hostname, 'forcing IPv4');
       dns.lookup(hostname, { family: 4 }, callback);
-    }
+    },
+    // כפיית IPv4 נוספת
+    host: 'db.lfpkdtufzzisfeogifcr.supabase.co',
+    port: 5432,
+    // כפיית IPv4
+    family: 4
   };
 } else {
   // משתנים נפרדים - נוסיף הגדרות DNS ספציפיות

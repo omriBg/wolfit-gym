@@ -16,7 +16,19 @@ dns.lookup = function(hostname, options, callback) {
     options = {};
   }
   options.family = 4; // כפיית IPv4
+  console.log('🔍 DNS lookup override for:', hostname, 'forcing IPv4');
   return originalLookup.call(this, hostname, options, callback);
+};
+
+// כפיית IPv4 נוספת
+const originalResolve = dns.resolve;
+dns.resolve = function(hostname, rrtype, callback) {
+  if (typeof rrtype === 'function') {
+    callback = rrtype;
+    rrtype = 'A'; // כפיית IPv4
+  }
+  console.log('🔍 DNS resolve override for:', hostname, 'forcing IPv4');
+  return originalResolve.call(this, hostname, rrtype, callback);
 };
 
 // כפיית IPv4 עבור מסד הנתונים
