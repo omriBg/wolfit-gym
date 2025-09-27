@@ -236,6 +236,8 @@ console.log('🔍 מדלג על בדיקת חיבור ראשונית למסד ה
 //   }
 // })();
 
+console.log('🔍 מגיע ל-Health Check Endpoints...');
+
 // Health Check Endpoints
 app.get('/health', catchAsync(async (req, res) => {
   const health = await basicHealthCheck();
@@ -259,6 +261,8 @@ app.get('/live', (req, res) => {
   const liveness = livenessCheck();
   res.status(200).json(liveness);
 });
+
+console.log('✅ Health Check Endpoints נוצרו בהצלחה');
 
 // Legacy test endpoint
 app.get('/test', catchAsync(async (req, res) => {
@@ -370,6 +374,8 @@ app.put('/api/save-user-preferences/:userId', authenticateToken, catchAsync(asyn
 }));
 
 console.log('🔍 מגיע ל-API routes...');
+
+console.log('🔍 יוצר Google OAuth routes...');
 
 // API להתחברות עם Google OAuth בלבד
 // הסרנו את מערכת הסיסמאות הרגילות - רק Google OAuth נתמך
