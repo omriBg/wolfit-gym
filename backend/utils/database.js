@@ -22,9 +22,7 @@ if (process.env.DATABASE_URL) {
   
   dbConfig = {
     connectionString: connectionString,
-    ssl: {
-      rejectUnauthorized: false
-    },
+    ssl: false,
     // הגדרות connection pooling
     max: 20,
     min: 2,
@@ -49,9 +47,7 @@ if (process.env.DATABASE_URL) {
     host: process.env.DB_HOST,
     port: process.env.DB_PORT || 5432,
     database: process.env.DB_NAME,
-    ssl: {
-      rejectUnauthorized: false
-    },
+    ssl: false,
     // הגדרות connection pooling
     max: 20,
     min: 2,
