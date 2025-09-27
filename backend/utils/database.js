@@ -42,12 +42,7 @@ if (process.env.DATABASE_URL) {
       const dns = require('dns');
       console.log('🔍 DNS lookup for:', hostname, 'forcing IPv4');
       dns.lookup(hostname, { family: 4 }, callback);
-    },
-    // כפיית IPv4 נוספת
-    host: 'aws-1-eu-central-1.pooler.supabase.com',
-    port: 6543,
-    // כפיית IPv4
-    family: 4
+    }
   };
 } else {
   // משתנים נפרדים - נוסיף הגדרות DNS ספציפיות
