@@ -32,6 +32,25 @@ const jwt = require('jsonwebtoken');
 // Database connection
 const { pool, testConnection } = require('./utils/database');
 
+// פונקציה להמתנה ל-pool להיות מוכן
+async function waitForPool() {
+  let attempts = 0;
+  const maxAttempts = 30; // 30 שניות
+  
+  while (!pool && attempts < maxAttempts) {
+    console.log(`⏳ ממתין ל-pool להיות מוכן... ניסיון ${attempts + 1}/${maxAttempts}`);
+    await new Promise(resolve => setTimeout(resolve, 1000));
+    attempts++;
+  }
+  
+  if (!pool) {
+    throw new Error('Pool לא התאתחל אחרי 30 שניות');
+  }
+  
+  console.log('✅ Pool מוכן לשימוש');
+  return pool;
+}
+
 const app = express();
 const PORT = process.env.PORT || 10000;
 
@@ -183,16 +202,10 @@ app.post('/api/google-login', loginLimiter, async (req, res) => {
       email: googleData.email
     });
     
-    // בדיקה שה-pool מוכן
-    if (!pool) {
-      console.error('❌ Database pool not ready');
-      return res.status(500).json({
-        success: false,
-        message: 'מסד הנתונים לא מוכן'
-      });
-    }
+    // המתנה ל-pool להיות מוכן
+    const readyPool = await waitForPool();
     
-    const existingUser = await pool.query(
+    const existingUser = await readyPool.query(
       'SELECT * FROM "User" WHERE googleid = $1 OR email = $2',
       [googleData.sub, googleData.email]
     );
@@ -205,7 +218,7 @@ app.post('/api/google-login', loginLimiter, async (req, res) => {
     } else {
       // משתמש חדש - יצירת רשומה חדשה
       console.log('🆕 יוצר משתמש חדש:', googleData.email);
-      const newUser = await pool.query(
+      const newUser = await readyPool.query(
         'INSERT INTO "User" (googleid, email, name, picture) VALUES ($1, $2, $3, $4) RETURNING *',
         [googleData.sub, googleData.email, googleData.name, googleData.picture]
       );
@@ -277,15 +290,10 @@ app.get('/api/user-preferences/:userId', authenticateToken, async (req, res) => 
       });
     }
     
-    // בדיקה שה-pool מוכן
-    if (!pool) {
-      return res.status(500).json({
-        success: false,
-        message: 'מסד הנתונים לא מוכן'
-      });
-    }
+    // המתנה ל-pool להיות מוכן
+    const readyPool = await waitForPool();
     
-    const userResult = await pool.query(
+    const userResult = await readyPool.query(
       'SELECT * FROM "User" WHERE idUser = $1',
       [userId]
     );
@@ -297,7 +305,7 @@ app.get('/api/user-preferences/:userId', authenticateToken, async (req, res) => 
       });
     }
     
-    const preferencesResult = await pool.query(
+    const preferencesResult = await readyPool.query(
       'SELECT sporttype FROM UserPreferences WHERE idUser = $1 ORDER BY preferenceRank',
       [userId]
     );
@@ -342,15 +350,10 @@ app.put('/api/save-user-preferences/:userId', authenticateToken, async (req, res
       });
     }
     
-    // בדיקה שה-pool מוכן
-    if (!pool) {
-      return res.status(500).json({
-        success: false,
-        message: 'מסד הנתונים לא מוכן'
-      });
-    }
+    // המתנה ל-pool להיות מוכן
+    const readyPool = await waitForPool();
     
-    const client = await pool.connect();
+    const client = await readyPool.connect();
     
     try {
       // בדיקה שהמשתמש קיים
@@ -458,15 +461,10 @@ app.post('/api/save-workout', authenticateToken, async (req, res) => {
       }
     }
     
-    // בדיקה שה-pool מוכן
-    if (!pool) {
-      return res.json({
-        success: false,
-        message: 'מסד הנתונים לא מוכן'
-      });
-    }
+    // המתנה ל-pool להיות מוכן
+    const readyPool = await waitForPool();
     
-    const client = await pool.connect();
+    const client = await readyPool.connect();
     
     try {
       // בדיקה שהמשתמש קיים
@@ -587,16 +585,11 @@ app.post('/api/available-fields-for-workout', authenticateToken, async (req, res
       });
     }
     
-    // בדיקה שה-pool מוכן
-    if (!pool) {
-      return res.json({
-        success: false,
-        message: 'מסד הנתונים לא מוכן'
-      });
-    }
+    // המתנה ל-pool להיות מוכן
+    const readyPool = await waitForPool();
     
     // בדיקה שהמשתמש קיים
-    const userCheck = await pool.query(
+    const userCheck = await readyPool.query(
       'SELECT idUser FROM "User" WHERE idUser = $1',
       [userId]
     );
@@ -609,7 +602,7 @@ app.post('/api/available-fields-for-workout', authenticateToken, async (req, res
     }
     
     // קבלת הזמנות קיימות של המשתמש לתאריך זה
-    const existingBookings = await pool.query(
+    const existingBookings = await readyPool.query(
       'SELECT starttime FROM BookField WHERE iduser = $1 AND bookingdate = $2',
       [userId, date]
     );
@@ -643,12 +636,12 @@ app.post('/api/available-fields-for-workout', authenticateToken, async (req, res
       }
       
       // קבלת כל המגרשים
-      const allFields = await pool.query('SELECT * FROM Field ORDER BY idField');
+      const allFields = await readyPool.query('SELECT * FROM Field ORDER BY idField');
       const availableFields = [];
       
       for (const field of allFields.rows) {
         // בדיקה אם המגרש תפוס בזמן זה
-        const bookingCheck = await pool.query(
+        const bookingCheck = await readyPool.query(
           'SELECT * FROM BookField WHERE idField = $1 AND bookingdate = $2 AND starttime = $3',
           [field.idfield, date, timeSlot]
         );
