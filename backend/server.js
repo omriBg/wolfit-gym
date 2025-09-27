@@ -268,8 +268,8 @@ console.log('🔍 מגיע ל-Legacy test endpoint...');
 
 console.log('✅ Legacy test endpoint מושבת, ממשיך...');
 
-// Legacy test endpoint - מושבת זמנית
-// app.get('/test', catchAsync(async (req, res) => {
+// Legacy test endpoint
+app.get('/test', catchAsync(async (req, res) => {
 //   const connectionTest = await testConnection();
 //   if (connectionTest.success) {
 //     res.json({
@@ -283,6 +283,8 @@ console.log('✅ Legacy test endpoint מושבת, ממשיך...');
 // }));
 
 console.log('🔍 מגיע ל-API לטעינת העדפות משתמש...');
+
+console.log('✅ API לטעינת העדפות משתמש מושבת זמנית, ממשיך...');
 
 // API לטעינת העדפות משתמש
 app.get('/api/user-preferences/:userId', authenticateToken, catchAsync(async (req, res) => {
@@ -383,6 +385,8 @@ app.put('/api/save-user-preferences/:userId', authenticateToken, catchAsync(asyn
 console.log('🔍 מגיע ל-API routes...');
 
 console.log('🔍 יוצר Google OAuth routes...');
+
+console.log('⚠️ משבית זמנית את כל ה-APIs שמשתמשים במסד נתונים...');
 
 // API להתחברות עם Google OAuth בלבד
 // הסרנו את מערכת הסיסמאות הרגילות - רק Google OAuth נתמך
