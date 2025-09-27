@@ -266,19 +266,19 @@ console.log('✅ Health Check Endpoints נוצרו בהצלחה');
 
 console.log('🔍 מגיע ל-Legacy test endpoint...');
 
-// Legacy test endpoint
-app.get('/test', catchAsync(async (req, res) => {
-  const connectionTest = await testConnection();
-  if (connectionTest.success) {
-    res.json({
-      success: true,
-      message: 'חיבור למסד הנתונים הצליח!',
-      timestamp: connectionTest.data.current_time
-    });
-  } else {
-    throw new AppError('שגיאה בחיבור למסד הנתונים', 503);
-  }
-}));
+// Legacy test endpoint - מושבת זמנית
+// app.get('/test', catchAsync(async (req, res) => {
+//   const connectionTest = await testConnection();
+//   if (connectionTest.success) {
+//     res.json({
+//       success: true,
+//       message: 'חיבור למסד הנתונים הצליח!',
+//       timestamp: connectionTest.data.current_time
+//     });
+//   } else {
+//     throw new AppError('שגיאה בחיבור למסד הנתונים', 503);
+//   }
+// }));
 // API לטעינת העדפות משתמש
 app.get('/api/user-preferences/:userId', authenticateToken, catchAsync(async (req, res) => {
   const { userId } = req.params;
