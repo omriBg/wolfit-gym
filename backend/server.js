@@ -31,6 +31,10 @@ const {
 
 require('dotenv').config();
 
+// כפיית IPv4 עבור Supabase (פתרון לבעיית ENETUNREACH)
+process.env.NODE_OPTIONS = '--dns-result-order=ipv4first';
+process.env.NODE_DNS_RESOLVER = 'ipv4first';
+
 // Handle unhandled promise rejections
 process.on('unhandledRejection', handleUnhandledRejection);
 process.on('uncaughtException', handleUncaughtException);

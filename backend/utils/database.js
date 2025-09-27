@@ -3,31 +3,70 @@ const { Pool } = require('pg');
 const logger = require('./logger');
 
 // הגדרות connection pooling מתקדמות
-const dbConfig = {
-  user: process.env.DB_USER,
-  password: process.env.DB_PASSWORD,
-  host: process.env.DB_HOST,
-  port: process.env.DB_PORT || 5432,
-  database: process.env.DB_NAME,
-  ssl: {
-    rejectUnauthorized: false
-  },
-  // הגדרות connection pooling
-  max: 20,
-  min: 2,
-  idleTimeoutMillis: 30000,
-  connectionTimeoutMillis: 5000,
-  acquireTimeoutMillis: 60000,
-};
+// תמיכה ב-Supabase connection string או משתנים נפרדים
+let dbConfig;
+
+if (process.env.DATABASE_URL) {
+  // אם יש connection string מלא (כמו ב-Supabase)
+  dbConfig = {
+    connectionString: process.env.DATABASE_URL,
+    ssl: process.env.NODE_ENV === 'production' ? {
+      rejectUnauthorized: false,
+      require: true
+    } : false,
+    // הגדרות connection pooling
+    max: 20,
+    min: 2,
+    idleTimeoutMillis: 30000,
+    connectionTimeoutMillis: 10000,
+    acquireTimeoutMillis: 60000,
+    // כפיית IPv4 עבור Supabase
+    family: 4,
+    // הגדרות נוספות לחיבור יציב
+    keepAlive: true,
+    keepAliveInitialDelayMillis: 0,
+  };
+} else {
+  // משתנים נפרדים
+  dbConfig = {
+    user: process.env.DB_USER,
+    password: process.env.DB_PASSWORD,
+    host: process.env.DB_HOST,
+    port: process.env.DB_PORT || 5432,
+    database: process.env.DB_NAME,
+    ssl: process.env.NODE_ENV === 'production' ? {
+      rejectUnauthorized: false,
+      require: true
+    } : false,
+    // הגדרות connection pooling
+    max: 20,
+    min: 2,
+    idleTimeoutMillis: 30000,
+    connectionTimeoutMillis: 10000,
+    acquireTimeoutMillis: 60000,
+    // כפיית IPv4 עבור Supabase
+    family: 4,
+    // הגדרות נוספות לחיבור יציב
+    keepAlive: true,
+    keepAliveInitialDelayMillis: 0,
+  };
+}
 
 // Log connection details (without password)
-console.log('🔌 Database connection details:', {
-  host: dbConfig.host,
-  port: dbConfig.port,
-  database: dbConfig.database,
-  user: dbConfig.user,
-  ssl: dbConfig.ssl
-});
+if (dbConfig.connectionString) {
+  console.log('🔌 Database connection details:', {
+    connectionString: '***HIDDEN***',
+    ssl: dbConfig.ssl
+  });
+} else {
+  console.log('🔌 Database connection details:', {
+    host: dbConfig.host,
+    port: dbConfig.port,
+    database: dbConfig.database,
+    user: dbConfig.user,
+    ssl: dbConfig.ssl
+  });
+}
 
 // יצירת pool
 const pool = new Pool(dbConfig);
