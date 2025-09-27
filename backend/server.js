@@ -199,18 +199,26 @@ try {
   process.exit(1);
 }
 
+console.log('🔍 מגיע לבדיקת משתני סביבה...');
+
 // בדיקה שכל הנתונים החיוניים מוגדרים
 const requiredDbVars = ['DB_HOST', 'DB_NAME', 'DB_USER', 'DB_PASSWORD'];
 const missingVars = requiredDbVars.filter(varName => !process.env[varName]);
 
 if (missingVars.length > 0) {
+  console.error('❌ שגיאה קריטית: משתני סביבה חסרים למסד הנתונים:', missingVars);
   logger.error('שגיאה קריטית: משתני סביבה חסרים למסד הנתונים', { missingVars });
   process.exit(1);
 }
 
+console.log('✅ כל משתני הסביבה קיימים, ממשיך...');
+
+console.log('🔍 מגיע לבדיקת חיבור ראשונית למסד הנתונים...');
+
 // בדיקת חיבור ראשונית למסד הנתונים
 (async () => {
   try {
+    console.log('🔍 מבצע בדיקת חיבור ראשונית...');
     const connectionTest = await testConnection();
     if (connectionTest.success) {
       logger.info('חיבור למסד הנתונים הוקם בהצלחה');
