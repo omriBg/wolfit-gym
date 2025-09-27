@@ -381,6 +381,7 @@ console.log('🔍 יוצר Google OAuth routes...');
 // הסרנו את מערכת הסיסמאות הרגילות - רק Google OAuth נתמך
 
 // API להתחברות עם Google OAuth
+console.log('🔍 יוצר /api/google-login route...');
 app.post('/api/google-login', loginLimiter, async (req, res) => {
   try {
     console.log('🔍 Google Login Request:', req.body);
@@ -497,6 +498,8 @@ app.post('/api/google-login', loginLimiter, async (req, res) => {
     });
   }
 });
+
+console.log('✅ /api/google-login route נוצר בהצלחה');
 
 // API לבדיקת טוקן ואימות משתמש
 app.get('/api/verify-token', authenticateToken, async (req, res) => {
