@@ -96,7 +96,16 @@ if (dbConfig.connectionString) {
 // פונקציה להמרת host ל-IPv4
 async function resolveHostToIPv4(host) {
   try {
-    const result = await lookup(host, { family: 4 });
+    const dns = require('dns');
+    const result = await new Promise((resolve, reject) => {
+      dns.lookup(host, { family: 4 }, (err, address) => {
+        if (err) {
+          reject(err);
+        } else {
+          resolve({ address });
+        }
+      });
+    });
     console.log(`🔍 Resolved ${host} to IPv4: ${result.address}`);
     return result.address;
   } catch (error) {
