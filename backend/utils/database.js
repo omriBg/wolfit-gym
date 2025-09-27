@@ -191,13 +191,34 @@ function setupPoolEventListeners(poolInstance) {
 initializePool().then(() => {
   if (pool) {
     setupPoolEventListeners(pool);
+    console.log('✅ Pool initialization completed and ready for use');
   }
 }).catch((error) => {
   console.error('❌ Failed to initialize pool, creating fallback pool:', error);
   // fallback ל-pool רגיל
   pool = new Pool(dbConfig);
   setupPoolEventListeners(pool);
+  console.log('✅ Fallback pool created and ready for use');
 });
+
+// פונקציה להמתנה ל-pool להיות מוכן
+const waitForPoolReady = async () => {
+  let attempts = 0;
+  const maxAttempts = 30; // 30 שניות
+  
+  while (!pool && attempts < maxAttempts) {
+    console.log(`⏳ ממתין ל-pool להיות מוכן... ניסיון ${attempts + 1}/${maxAttempts}`);
+    await new Promise(resolve => setTimeout(resolve, 1000));
+    attempts++;
+  }
+  
+  if (!pool) {
+    throw new Error('Pool לא התאתחל אחרי 30 שניות');
+  }
+  
+  console.log('✅ Pool מוכן לשימוש');
+  return pool;
+};
 
 // פונקציה לבדיקת חיבור
 const testConnection = async () => {
@@ -321,6 +342,7 @@ process.on('SIGTERM', async () => {
 module.exports = {
   pool,
   testConnection,
+  waitForPoolReady,
   queryWithTimeout,
   withTransaction,
   closePool,

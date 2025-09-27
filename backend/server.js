@@ -30,26 +30,7 @@ const rateLimit = require('express-rate-limit');
 const jwt = require('jsonwebtoken');
 
 // Database connection
-const { pool, testConnection } = require('./utils/database');
-
-// פונקציה להמתנה ל-pool להיות מוכן
-async function waitForPool() {
-  let attempts = 0;
-  const maxAttempts = 30; // 30 שניות
-  
-  while (!pool && attempts < maxAttempts) {
-    console.log(`⏳ ממתין ל-pool להיות מוכן... ניסיון ${attempts + 1}/${maxAttempts}`);
-    await new Promise(resolve => setTimeout(resolve, 1000));
-    attempts++;
-  }
-  
-  if (!pool) {
-    throw new Error('Pool לא התאתחל אחרי 30 שניות');
-  }
-  
-  console.log('✅ Pool מוכן לשימוש');
-  return pool;
-}
+const { pool, testConnection, waitForPoolReady } = require('./utils/database');
 
 const app = express();
 const PORT = process.env.PORT || 10000;
@@ -203,7 +184,7 @@ app.post('/api/google-login', loginLimiter, async (req, res) => {
     });
     
     // המתנה ל-pool להיות מוכן
-    const readyPool = await waitForPool();
+    const readyPool = await waitForPoolReady();
     
     const existingUser = await readyPool.query(
       'SELECT * FROM "User" WHERE googleid = $1 OR email = $2',
@@ -291,7 +272,7 @@ app.get('/api/user-preferences/:userId', authenticateToken, async (req, res) => 
     }
     
     // המתנה ל-pool להיות מוכן
-    const readyPool = await waitForPool();
+    const readyPool = await waitForPoolReady();
     
     const userResult = await readyPool.query(
       'SELECT * FROM "User" WHERE idUser = $1',
@@ -351,7 +332,7 @@ app.put('/api/save-user-preferences/:userId', authenticateToken, async (req, res
     }
     
     // המתנה ל-pool להיות מוכן
-    const readyPool = await waitForPool();
+    const readyPool = await waitForPoolReady();
     
     const client = await readyPool.connect();
     
@@ -462,7 +443,7 @@ app.post('/api/save-workout', authenticateToken, async (req, res) => {
     }
     
     // המתנה ל-pool להיות מוכן
-    const readyPool = await waitForPool();
+    const readyPool = await waitForPoolReady();
     
     const client = await readyPool.connect();
     
@@ -586,7 +567,7 @@ app.post('/api/available-fields-for-workout', authenticateToken, async (req, res
     }
     
     // המתנה ל-pool להיות מוכן
-    const readyPool = await waitForPool();
+    const readyPool = await waitForPoolReady();
     
     // בדיקה שהמשתמש קיים
     const userCheck = await readyPool.query(
