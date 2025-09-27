@@ -30,6 +30,11 @@ if (process.env.DATABASE_URL) {
     // הגדרות נוספות לחיבור יציב
     keepAlive: true,
     keepAliveInitialDelayMillis: 0,
+    // כפיית IPv4 נוספת
+    lookup: (hostname, options, callback) => {
+      const dns = require('dns');
+      dns.lookup(hostname, { family: 4 }, callback);
+    }
   };
 } else {
   // משתנים נפרדים - נוסיף הגדרות DNS ספציפיות

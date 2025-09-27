@@ -8,6 +8,17 @@ process.env.NODE_DNS_RESOLVER = 'ipv4first';
 const dns = require('dns');
 dns.setDefaultResultOrder('ipv4first');
 
+// כפיית IPv4 נוספת
+const originalLookup = dns.lookup;
+dns.lookup = function(hostname, options, callback) {
+  if (typeof options === 'function') {
+    callback = options;
+    options = {};
+  }
+  options.family = 4; // כפיית IPv4
+  return originalLookup.call(this, hostname, options, callback);
+};
+
 // כפיית IPv4 עבור מסד הנתונים
 if (process.env.DATABASE_URL) {
   // הוספת sslmode=require ל-connection string
