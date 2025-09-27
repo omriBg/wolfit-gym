@@ -264,6 +264,8 @@ app.get('/live', (req, res) => {
 
 console.log('✅ Health Check Endpoints נוצרו בהצלחה');
 
+console.log('🔍 מגיע ל-Legacy test endpoint...');
+
 // Legacy test endpoint
 app.get('/test', catchAsync(async (req, res) => {
   const connectionTest = await testConnection();
@@ -1692,3 +1694,5 @@ server.on('error', (err) => {
 });
 
 console.log('🔍 סיים הגדרת השרת, ממשיך...');
+
+console.log('🔍 מגיע להפעלת השרת...');
