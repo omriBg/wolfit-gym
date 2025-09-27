@@ -37,14 +37,7 @@ if (process.env.DATABASE_URL) {
   if (!process.env.DATABASE_URL.includes('sslmode=')) {
     process.env.DATABASE_URL += '?sslmode=require';
   }
-  // תיקון הכתובת ל-Transaction Pooler
-  if (process.env.DATABASE_URL.includes('db.lfpkdtufzzisfeogifcr.supabase.co')) {
-    process.env.DATABASE_URL = process.env.DATABASE_URL.replace(
-      'db.lfpkdtufzzisfeogifcr.supabase.co:5432',
-      'aws-1-eu-central-1.pooler.supabase.com:6543'
-    );
-    console.log('🔧 Updated to Supabase Transaction Pooler (IPv4 compatible)');
-  }
+  console.log('🔧 Using Supabase Transaction Pooler (IPv4 compatible)');
   console.log('🔧 Database URL configured for IPv4');
 }
 
