@@ -8,6 +8,15 @@ process.env.NODE_DNS_RESOLVER = 'ipv4first';
 const dns = require('dns');
 dns.setDefaultResultOrder('ipv4first');
 
+// כפיית IPv4 עבור מסד הנתונים
+if (process.env.DATABASE_URL) {
+  // הוספת sslmode=require ו-sslmode=prefer ל-connection string
+  if (!process.env.DATABASE_URL.includes('sslmode=')) {
+    process.env.DATABASE_URL += '?sslmode=require';
+  }
+  console.log('🔧 Database URL configured for IPv4');
+}
+
 const express = require('express');
 const cors = require('cors');
 const helmet = require('helmet');
@@ -86,19 +95,26 @@ const authenticateToken = (req, res, next) => {
 // Health Check
 app.get('/health', async (req, res) => {
   try {
-    // בדיקה זמנית ללא מסד נתונים
-    res.status(200).json({
-      status: 'healthy',
+    console.log('🔍 Testing database connection...');
+    const dbTest = await testConnection();
+    const status = dbTest.success ? 'healthy' : 'unhealthy';
+    const statusCode = dbTest.success ? 200 : 503;
+    
+    console.log('🔍 Database test result:', dbTest.success ? 'SUCCESS' : 'FAILED');
+    
+    res.status(statusCode).json({
+      status,
       timestamp: new Date().toISOString(),
       uptime: process.uptime(),
       version: '1.0.0',
       environment: process.env.NODE_ENV || 'development',
       database: {
-        status: 'temporarily_disabled',
-        message: 'Database check temporarily disabled for deployment'
+        status: dbTest.success ? 'connected' : 'disconnected',
+        error: dbTest.success ? null : dbTest.error
       }
     });
   } catch (error) {
+    console.error('❌ Health check error:', error);
     res.status(503).json({
       status: 'unhealthy',
       timestamp: new Date().toISOString(),
@@ -150,28 +166,55 @@ app.post('/api/google-login', loginLimiter, async (req, res) => {
       });
     }
     
-    // יצירת JWT token (ללא מסד נתונים זמנית)
+    // בדיקה אם המשתמש קיים במסד הנתונים
+    console.log('🔍 Checking if user exists:', {
+      googleId: googleData.sub,
+      email: googleData.email
+    });
+    
+    const existingUser = await pool.query(
+      'SELECT * FROM "User" WHERE googleid = $1 OR email = $2',
+      [googleData.sub, googleData.email]
+    );
+    
+    let user;
+    if (existingUser.rows.length > 0) {
+      // משתמש קיים - התחברות ישירה
+      user = existingUser.rows[0];
+      console.log('✅ משתמש קיים:', user.email);
+    } else {
+      // משתמש חדש - יצירת רשומה חדשה
+      console.log('🆕 יוצר משתמש חדש:', googleData.email);
+      const newUser = await pool.query(
+        'INSERT INTO "User" (googleid, email, name, picture) VALUES ($1, $2, $3, $4) RETURNING *',
+        [googleData.sub, googleData.email, googleData.name, googleData.picture]
+      );
+      user = newUser.rows[0];
+      console.log('✅ משתמש חדש נוצר:', user.email);
+    }
+    
+    // יצירת JWT token
     const token = jwt.sign(
       { 
-        userId: googleData.sub,
-        email: googleData.email,
-        name: googleData.name 
+        userId: user.iduser,
+        email: user.email,
+        name: user.name 
       },
       JWT_SECRET,
       { expiresIn: '7d' }
     );
     
-    console.log('✅ Google login successful for:', googleData.email);
+    console.log('✅ Google login successful for:', user.email);
     
     res.json({
       success: true,
       message: 'התחברות הצליחה',
       token,
       user: {
-        id: googleData.sub,
-        email: googleData.email,
-        name: googleData.name,
-        picture: googleData.picture
+        id: user.iduser,
+        email: user.email,
+        name: user.name,
+        picture: user.picture
       }
     });
     
