@@ -35,6 +35,10 @@ require('dotenv').config();
 process.env.NODE_OPTIONS = '--dns-result-order=ipv4first';
 process.env.NODE_DNS_RESOLVER = 'ipv4first';
 
+// הגדרת DNS ל-IPv4 בלבד
+const dns = require('dns');
+dns.setDefaultResultOrder('ipv4first');
+
 // Handle unhandled promise rejections
 process.on('unhandledRejection', handleUnhandledRejection);
 process.on('uncaughtException', handleUncaughtException);

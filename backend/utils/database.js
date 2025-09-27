@@ -1,6 +1,11 @@
 // utils/database.js - ניהול חיבורי מסד נתונים מתקדם
 const { Pool } = require('pg');
+const dns = require('dns');
+const { promisify } = require('util');
 const logger = require('./logger');
+
+// פונקציה להמרת host ל-IPv4
+const lookup = promisify(dns.lookup);
 
 // הגדרות connection pooling מתקדמות
 // תמיכה ב-Supabase connection string או משתנים נפרדים
@@ -27,7 +32,7 @@ if (process.env.DATABASE_URL) {
     keepAliveInitialDelayMillis: 0,
   };
 } else {
-  // משתנים נפרדים
+  // משתנים נפרדים - נוסיף הגדרות DNS ספציפיות
   dbConfig = {
     user: process.env.DB_USER,
     password: process.env.DB_PASSWORD,
@@ -49,6 +54,8 @@ if (process.env.DATABASE_URL) {
     // הגדרות נוספות לחיבור יציב
     keepAlive: true,
     keepAliveInitialDelayMillis: 0,
+    // הגדרות DNS ספציפיות
+    lookup: require('dns').lookup,
   };
 }
 
@@ -68,42 +75,94 @@ if (dbConfig.connectionString) {
   });
 }
 
+// פונקציה להמרת host ל-IPv4
+async function resolveHostToIPv4(host) {
+  try {
+    const result = await lookup(host, { family: 4 });
+    console.log(`🔍 Resolved ${host} to IPv4: ${result.address}`);
+    return result.address;
+  } catch (error) {
+    console.warn(`⚠️ Failed to resolve ${host} to IPv4, using original:`, error.message);
+    return host;
+  }
+}
+
+// המרת host ל-IPv4 אם נדרש
+async function createPoolWithIPv4() {
+  if (dbConfig.host && !dbConfig.connectionString) {
+    try {
+      const ipv4Host = await resolveHostToIPv4(dbConfig.host);
+      dbConfig.host = ipv4Host;
+    } catch (error) {
+      console.warn('⚠️ Could not resolve host to IPv4, proceeding with original host');
+    }
+  }
+  
+  return new Pool(dbConfig);
+}
+
 // יצירת pool
-const pool = new Pool(dbConfig);
+let pool;
 
-// Event listeners לניטור ה-pool
-pool.on('connect', (client) => {
-  logger.info('חיבור חדש למסד נתונים נוצר', {
-    totalCount: pool.totalCount,
-    idleCount: pool.idleCount,
-    waitingCount: pool.waitingCount
-  });
-});
+// פונקציה לאתחול ה-pool
+async function initializePool() {
+  try {
+    pool = await createPoolWithIPv4();
+    console.log('✅ Database pool initialized successfully');
+  } catch (error) {
+    console.error('❌ Failed to initialize database pool:', error);
+    // fallback ל-pool רגיל
+    pool = new Pool(dbConfig);
+  }
+}
 
-pool.on('acquire', (client) => {
-  logger.debug('חיבור נרכש מה-pool', {
-    totalCount: pool.totalCount,
-    idleCount: pool.idleCount,
-    waitingCount: pool.waitingCount
+// פונקציה לחיבור event listeners
+function setupPoolEventListeners(poolInstance) {
+  poolInstance.on('connect', (client) => {
+    logger.info('חיבור חדש למסד נתונים נוצר', {
+      totalCount: poolInstance.totalCount,
+      idleCount: poolInstance.idleCount,
+      waitingCount: poolInstance.waitingCount
+    });
   });
-});
 
-pool.on('remove', (client) => {
-  logger.info('חיבור הוסר מה-pool', {
-    totalCount: pool.totalCount,
-    idleCount: pool.idleCount,
-    waitingCount: pool.waitingCount
+  poolInstance.on('acquire', (client) => {
+    logger.debug('חיבור נרכש מה-pool', {
+      totalCount: poolInstance.totalCount,
+      idleCount: poolInstance.idleCount,
+      waitingCount: poolInstance.waitingCount
+    });
   });
-});
 
-pool.on('error', (err, client) => {
-  logger.error('שגיאה ב-pool של מסד הנתונים:', {
-    error: err.message,
-    code: err.code,
-    totalCount: pool.totalCount,
-    idleCount: pool.idleCount,
-    waitingCount: pool.waitingCount
+  poolInstance.on('remove', (client) => {
+    logger.info('חיבור הוסר מה-pool', {
+      totalCount: poolInstance.totalCount,
+      idleCount: poolInstance.idleCount,
+      waitingCount: poolInstance.waitingCount
+    });
   });
+
+  poolInstance.on('error', (err, client) => {
+    logger.error('שגיאה ב-pool של מסד הנתונים:', {
+      error: err.message,
+      code: err.code,
+      totalCount: poolInstance.totalCount,
+      idleCount: poolInstance.idleCount,
+      waitingCount: poolInstance.waitingCount
+    });
+  });
+}
+
+// אתחול ה-pool
+initializePool().then(() => {
+  if (pool) {
+    setupPoolEventListeners(pool);
+  }
+}).catch((error) => {
+  console.error('❌ Failed to initialize pool, creating fallback pool:', error);
+  // fallback ל-pool רגיל
+  pool = new Pool(dbConfig);
+  setupPoolEventListeners(pool);
 });
 
 // פונקציה לבדיקת חיבור
