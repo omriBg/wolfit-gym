@@ -180,6 +180,15 @@ app.post('/api/google-login', loginLimiter, async (req, res) => {
       email: googleData.email
     });
     
+    // בדיקה שה-pool מוכן
+    if (!pool) {
+      console.error('❌ Database pool not ready');
+      return res.status(500).json({
+        success: false,
+        message: 'מסד הנתונים לא מוכן'
+      });
+    }
+    
     const existingUser = await pool.query(
       'SELECT * FROM "User" WHERE googleid = $1 OR email = $2',
       [googleData.sub, googleData.email]
@@ -265,6 +274,14 @@ app.get('/api/user-preferences/:userId', authenticateToken, async (req, res) => 
       });
     }
     
+    // בדיקה שה-pool מוכן
+    if (!pool) {
+      return res.status(500).json({
+        success: false,
+        message: 'מסד הנתונים לא מוכן'
+      });
+    }
+    
     const userResult = await pool.query(
       'SELECT * FROM "User" WHERE idUser = $1',
       [userId]
@@ -319,6 +336,14 @@ app.put('/api/save-user-preferences/:userId', authenticateToken, async (req, res
       return res.status(400).json({
         success: false,
         message: 'נתונים לשמירה חסרים'
+      });
+    }
+    
+    // בדיקה שה-pool מוכן
+    if (!pool) {
+      return res.status(500).json({
+        success: false,
+        message: 'מסד הנתונים לא מוכן'
       });
     }
     
@@ -428,6 +453,14 @@ app.post('/api/save-workout', authenticateToken, async (req, res) => {
           message: 'לא ניתן להזמין לזמן שכבר עבר'
         });
       }
+    }
+    
+    // בדיקה שה-pool מוכן
+    if (!pool) {
+      return res.json({
+        success: false,
+        message: 'מסד הנתונים לא מוכן'
+      });
     }
     
     const client = await pool.connect();
@@ -548,6 +581,14 @@ app.post('/api/available-fields-for-workout', authenticateToken, async (req, res
       return res.json({
         success: false,
         message: 'לא ניתן להזמין לתאריך בעבר'
+      });
+    }
+    
+    // בדיקה שה-pool מוכן
+    if (!pool) {
+      return res.json({
+        success: false,
+        message: 'מסד הנתונים לא מוכן'
       });
     }
     
