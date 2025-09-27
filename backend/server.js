@@ -1703,5 +1703,3 @@ server.on('error', (err) => {
 });
 
 console.log('🔍 סיים הגדרת השרת, ממשיך...');
-
-console.log('🔍 מגיע להפעלת השרת...');
