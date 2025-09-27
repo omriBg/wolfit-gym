@@ -33,9 +33,9 @@ dns.resolve = function(hostname, rrtype, callback) {
 
 // כפיית IPv4 עבור מסד הנתונים
 if (process.env.DATABASE_URL) {
-  // הוספת sslmode=require ל-connection string
+  // הוספת sslmode=prefer ל-connection string (יותר גמיש)
   if (!process.env.DATABASE_URL.includes('sslmode=')) {
-    process.env.DATABASE_URL += '?sslmode=require';
+    process.env.DATABASE_URL += '?sslmode=prefer';
   }
   console.log('🔧 Using Supabase Transaction Pooler (IPv4 compatible)');
   console.log('🔧 Database URL configured for IPv4');
