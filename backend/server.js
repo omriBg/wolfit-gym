@@ -1703,3 +1703,30 @@ server.on('error', (err) => {
 });
 
 console.log('🔍 סיים הגדרת השרת, ממשיך...');
+
+const HOST = process.env.HOST || 'localhost';
+
+console.log('🔍 מגיע להפעלת השרת...');
+
+try {
+  console.log('🚀 מפעיל שרת...');
+  const server = app.listen(PORT, HOST, () => {
+    logger.info(`השרת רץ על http://${HOST}:${PORT}`, {
+      port: PORT,
+      environment: process.env.NODE_ENV || 'development',
+      nodeVersion: process.version
+    });
+    
+    // הפעלת שירות תזכורות
+    startReminderService();
+  });
+  
+  console.log('✅ שרת הופעל בהצלחה!');
+} catch (error) {
+  console.error('❌ שגיאה בהפעלת השרת:', error);
+  process.exit(1);
+}
+
+// Handle graceful shutdown
+process.on('SIGTERM', () => gracefulShutdown('SIGTERM'));
+process.on('SIGINT', () => gracefulShutdown('SIGINT'));
