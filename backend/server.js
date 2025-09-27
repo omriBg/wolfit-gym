@@ -35,6 +35,9 @@ const { pool, testConnection } = require('./utils/database');
 const app = express();
 const PORT = process.env.PORT || 10000;
 
+// Trust proxy for rate limiting (fixes X-Forwarded-For error)
+app.set('trust proxy', 1);
+
 // Middleware
 app.use(helmet());
 app.use(compression());
