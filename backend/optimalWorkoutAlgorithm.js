@@ -1,5 +1,4 @@
 // backend/optimalWorkoutAlgorithm.js
-// אלגוריתם הונגרי מלא ומתוקן לאופטימליות מקסימלית
 
 // מיפוי ספורטים (תואם לשרת)
 const SPORT_MAPPING = {
@@ -343,7 +342,7 @@ class CompleteOptimalWorkoutScheduler {
   }
 
   // חישוב ניקוד מדויק לכל שילוב זמן-ספורט
-  calculatePreciseScore(timeSlot, sportId, currentUsage = 0, priority = 1) {
+  calculatePreciseScore(timeSlot, sportId, currentUsage = 0) {
     const availableFields = this.fieldsByTime[timeSlot] || [];
     const hasAvailableField = availableFields.some(field => 
       field.sportTypeId === sportId && field.isAvailable !== false
@@ -360,10 +359,6 @@ class CompleteOptimalWorkoutScheduler {
     if (preferenceIndex !== -1) {
       score += (this.userPreferences.length - preferenceIndex) * 500;
     }
-    
-    // עונש חזק על עדיפות נמוכה (גיוון חשוב!)
-    const priorityPenalty = (priority - 1) * 2000;
-    score -= priorityPenalty;
     
     // עונש על שימוש יתר בספורט
     const usagePenalty = currentUsage * 100;
