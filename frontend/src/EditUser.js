@@ -49,16 +49,24 @@ function EditUser() {
         const result = await response.json();
         console.log('נתונים שהתקבלו:', result);
         
-        if (result.success && result.data) {
-          const { intensityLevel, selectedSports, preferenceMode } = result.data;
-          
-          console.log('רמת עצימות:', intensityLevel);
-          console.log('ספורט נבחרים:', selectedSports);
-          console.log('מצב העדפה:', preferenceMode);
-          
-          setIntensityLevel(intensityLevel || 2);
-          setSelectedSports(selectedSports || []);
-          setPreferenceMode(preferenceMode || 'simple');
+          if (result.success && result.data) {
+            const { intensityLevel, sports, preferenceMode } = result.data;
+            
+            console.log('רמת עצימות:', intensityLevel);
+            console.log('כל הספורטים:', sports);
+            console.log('מצב העדפה:', preferenceMode);
+            
+            // מחלץ את הספורטים הנבחרים
+            const selectedIds = sports
+              .filter(sport => sport.selected)
+              .sort((a, b) => (a.rank || 0) - (b.rank || 0))
+              .map(sport => sport.id);
+            
+            console.log('ספורטים נבחרים:', selectedIds);
+            
+            setIntensityLevel(intensityLevel || 2);
+            setSelectedSports(selectedIds);
+            setPreferenceMode(preferenceMode || 'simple');
           
           console.log('State עודכן בהצלחה');
         } else {
