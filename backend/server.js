@@ -180,24 +180,40 @@ app.get('/ready', async (req, res) => {
 console.log('✅ Health Check Endpoints נוצרו בהצלחה');
 
 // Google Login API
-app.post('/api/google-login', loginLimiter, async (req, res) => {
+app.post('/api/google-login', async (req, res) => {  // הסרנו את loginLimiter כרגע לצורך דיבוג
   try {
-    console.log('🔍 Google Login Request:', req.body);
+    console.log('=== התחלת תהליך התחברות Google ===');
+    console.log('📝 Request Body:', req.body);
+    console.log('📝 Request Headers:', req.headers);
     
     const { credential } = req.body;
     if (!credential) {
-      console.error('❌ Credential חסר');
+      console.error('❌ Credential חסר בבקשה');
       return res.status(400).json({
         success: false,
         message: 'Credential נדרש'
       });
     }
     
-    console.log('📦 Decoding credential:', credential);
+    console.log('📦 מנסה לפענח credential');
     
     // פענוח ה-credential מ-Google
-    const googleData = jwt.decode(credential);
-    console.log('📦 Decoded Google data:', googleData);
+    let googleData;
+    try {
+      googleData = jwt.decode(credential);
+      console.log('✅ Credential פוענח בהצלחה:', {
+        sub: googleData?.sub,
+        email: googleData?.email,
+        name: googleData?.name
+      });
+    } catch (error) {
+      console.error('❌ שגיאה בפענוח Credential:', error);
+      return res.status(400).json({
+        success: false,
+        message: 'Credential לא תקין',
+        error: error.message
+      });
+    }
     
     if (!googleData || !googleData.sub || !googleData.email) {
       console.error('❌ נתוני Google לא תקינים:', { googleData });
@@ -208,22 +224,67 @@ app.post('/api/google-login', loginLimiter, async (req, res) => {
     }
     
     // בדיקה אם המשתמש קיים במסד הנתונים
-    console.log('🔍 Checking if user exists:', {
+    console.log('🔍 בודק אם המשתמש קיים:', {
       googleId: googleData.sub,
       email: googleData.email
     });
 
     // המתנה ל-pool להיות מוכן
-    console.log('⏳ Waiting for pool to be ready...');
-    const readyPool = await waitForPoolReady();
-    console.log('✅ Pool is ready, proceeding with database query');
+    console.log('⏳ מחכה שהדאטהבייס יהיה מוכן...');
+    let readyPool;
+    try {
+      readyPool = await waitForPoolReady();
+      console.log('✅ הדאטהבייס מוכן');
+    } catch (error) {
+      console.error('❌ שגיאה בהתחברות לדאטהבייס:', error);
+      return res.status(500).json({
+        success: false,
+        message: 'שגיאה בהתחברות לדאטהבייס',
+        error: error.message
+      });
+    }
     
-    console.log('🔍 Executing database query...');
-    const existingUser = await readyPool.query(
-      'SELECT * FROM User WHERE googleid = $1 OR email = $2',
-      [googleData.sub, googleData.email]
-    );
-    console.log('✅ Database query completed, found users:', existingUser.rows.length);
+    // בדיקה שהטבלה קיימת
+    try {
+      const tableCheck = await readyPool.query(`
+        SELECT EXISTS (
+          SELECT FROM information_schema.tables 
+          WHERE table_name = 'user'
+        );
+      `);
+      if (!tableCheck.rows[0].exists) {
+        console.error('❌ טבלת User לא קיימת');
+        return res.status(500).json({
+          success: false,
+          message: 'שגיאה במבנה הדאטהבייס'
+        });
+      }
+    } catch (error) {
+      console.error('❌ שגיאה בבדיקת טבלת User:', error);
+      return res.status(500).json({
+        success: false,
+        message: 'שגיאה בבדיקת מבנה הדאטהבייס',
+        error: error.message
+      });
+    }
+    
+    // חיפוש המשתמש
+    console.log('🔍 מחפש את המשתמש בדאטהבייס...');
+    let existingUser;
+    try {
+      existingUser = await readyPool.query(
+        'SELECT * FROM User WHERE googleid = $1 OR email = $2',
+        [googleData.sub, googleData.email]
+      );
+      console.log('✅ החיפוש הושלם, נמצאו:', existingUser.rows.length, 'משתמשים');
+    } catch (error) {
+      console.error('❌ שגיאה בחיפוש המשתמש:', error);
+      return res.status(500).json({
+        success: false,
+        message: 'שגיאה בחיפוש המשתמש',
+        error: error.message
+      });
+    }
     
     if (existingUser.rows.length > 0) {
       // משתמש קיים - התחברות ישירה
