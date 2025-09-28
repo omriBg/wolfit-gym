@@ -35,9 +35,9 @@ app.use(cors({
   ],
   credentials: true,
   methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
-  allowedHeaders: ['Content-Type', 'Authorization', 'Origin', 'Accept'],
-  exposedHeaders: ['Access-Control-Allow-Origin'],
-  maxAge: 600
+  allowedHeaders: ['Content-Type', 'Authorization', 'Origin', 'Accept', 'X-Requested-With'],
+  exposedHeaders: ['Access-Control-Allow-Origin', 'Access-Control-Allow-Credentials'],
+  maxAge: 86400
 }));
 
 // Pre-flight requests
@@ -1199,6 +1199,90 @@ app.post('/api/generate-optimal-workout', workoutLimiter, authenticateToken, asy
       message: 'שגיאה ביצירת האימון האופטימלי',
       error: err.message,
       details: err.stack
+    });
+  }
+});
+
+// API לקבלת שעות תפוסות של משתמש לתאריך מסוים
+app.get('/api/user-booked-times/:userId/:date', authenticateToken, async (req, res) => {
+  try {
+    const { userId, date } = req.params;
+    
+    console.log(`🔍 מחפש שעות תפוסות עבור משתמש ${userId} בתאריך ${date}`);
+    
+    if (!userId || !date) {
+      return res.json({
+        success: false,
+        message: 'מזהה משתמש ותאריך נדרשים'
+      });
+    }
+    
+    // בדיקה שהמשתמש קיים
+    const userCheck = await pool.query(
+      'SELECT iduser FROM "User" WHERE iduser = $1',
+      [userId]
+    );
+    
+    if (userCheck.rows.length === 0) {
+      return res.json({
+        success: false,
+        message: 'משתמש לא נמצא'
+      });
+    }
+    
+    // קבלת הזמנות קיימות של המשתמש לתאריך זה
+    const existingBookings = await pool.query(
+      'SELECT starttime FROM bookfield WHERE iduser = $1 AND bookingdate = $2',
+      [userId, date]
+    );
+    
+    const bookedTimes = existingBookings.rows.map(row => row.starttime);
+    console.log(`📅 משתמש הזמין ב-${date}:`, bookedTimes);
+    
+    // יצירת רשימת שעות תפוסות כולל רבע שעה לפני ואחרי
+    const blockedTimes = new Set();
+    
+    for (const bookedTime of bookedTimes) {
+      // חישוב רבע שעה לפני ואחרי הזמן הקיים
+      if (!bookedTime) {
+        console.log('⚠️ bookedTime הוא undefined, מדלג...');
+        continue;
+      }
+      const [hours, minutes] = bookedTime.split(':');
+      const bookedMinutes = parseInt(hours) * 60 + parseInt(minutes);
+      const beforeMinutes = bookedMinutes - 15;
+      const afterMinutes = bookedMinutes + 15;
+      
+      // המרה חזרה לפורמט זמן
+      const beforeHours = Math.floor(beforeMinutes / 60);
+      const beforeMins = beforeMinutes % 60;
+      const beforeTime = `${beforeHours.toString().padStart(2, '0')}:${beforeMins.toString().padStart(2, '0')}`;
+      
+      const afterHours = Math.floor(afterMinutes / 60);
+      const afterMins = afterMinutes % 60;
+      const afterTime = `${afterHours.toString().padStart(2, '0')}:${afterMins.toString().padStart(2, '0')}`;
+      
+      // הוספה לרשימת השעות התפוסות
+      blockedTimes.add(beforeTime);
+      blockedTimes.add(bookedTime);
+      blockedTimes.add(afterTime);
+    }
+    
+    const blockedTimesArray = Array.from(blockedTimes).sort();
+    console.log(`🚫 שעות תפוסות כולל רבע שעה לפני ואחרי:`, blockedTimesArray);
+    
+    res.json({
+      success: true,
+      blockedTimes: blockedTimesArray,
+      message: `נמצאו ${blockedTimesArray.length} שעות תפוסות`
+    });
+    
+  } catch (err) {
+    console.error('❌ שגיאה בקבלת שעות תפוסות:', err);
+    res.status(500).json({
+      success: false,
+      message: 'שגיאה בשרת',
+      error: err.message
     });
   }
 });
