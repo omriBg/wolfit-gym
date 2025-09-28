@@ -434,15 +434,36 @@ app.get('/api/user-preferences/:userId', async (req, res) => {
     console.log('🔍 שולף העדפות ספורט למשתמש:', userId);
     let preferencesResult;
     try {
+      // בדיקה אם הטבלה קיימת
+      const tableCheck = await pool.query(`
+        SELECT EXISTS (
+          SELECT FROM information_schema.tables 
+          WHERE table_name = 'userpreferences'
+        );
+      `);
+      
+      if (!tableCheck.rows[0].exists) {
+        // אם הטבלה לא קיימת, ניצור אותה
+        await pool.query(`
+          CREATE TABLE IF NOT EXISTS UserPreferences (
+            id SERIAL PRIMARY KEY,
+            idUser INTEGER REFERENCES "User"(idUser) ON DELETE CASCADE,
+            sportType INTEGER REFERENCES SportTypes(sportType),
+            preferenceRank INTEGER
+          );
+        `);
+        console.log('✅ טבלת UserPreferences נוצרה');
+      }
+
       preferencesResult = await pool.query(
         `SELECT 
-          up."sportType" as id, 
-          up."preferenceRank" as rank, 
-          st."sportName" as name
-         FROM "UserPreferences" up 
-         JOIN "SportTypes" st ON up."sportType" = st."sportType" 
-         WHERE up."idUser" = $1 
-         ORDER BY up."preferenceRank"`,
+          up.sporttype as id, 
+          up.preferencerank as rank, 
+          st.sportname as name
+         FROM userpreferences up 
+         JOIN sporttypes st ON up.sporttype = st.sporttype 
+         WHERE up.iduser = $1 
+         ORDER BY up.preferencerank`,
         [userId]
       );
       console.log('📊 נמצאו', preferencesResult.rows.length, 'העדפות ספורט');
@@ -554,10 +575,31 @@ app.put('/api/save-user-preferences/:userId', async (req, res) => {
     );
     console.log('✅ נתוני משתמש אחרי עדכון:', afterUpdate.rows[0]);
     
+    // בדיקה אם הטבלה קיימת
+    const tableCheck = await pool.query(`
+      SELECT EXISTS (
+        SELECT FROM information_schema.tables 
+        WHERE table_name = 'userpreferences'
+      );
+    `);
+    
+    if (!tableCheck.rows[0].exists) {
+      // אם הטבלה לא קיימת, ניצור אותה
+      await pool.query(`
+        CREATE TABLE IF NOT EXISTS UserPreferences (
+          id SERIAL PRIMARY KEY,
+          idUser INTEGER REFERENCES "User"(idUser) ON DELETE CASCADE,
+          sportType INTEGER REFERENCES SportTypes(sportType),
+          preferenceRank INTEGER
+        );
+      `);
+      console.log('✅ טבלת UserPreferences נוצרה');
+    }
+
     // מחיקת העדפות קיימות
     console.log('🗑️ מוחק העדפות קיימות למשתמש:', userId);
     await pool.query(
-      'DELETE FROM "UserPreferences" WHERE "idUser" = $1',
+      'DELETE FROM userpreferences WHERE iduser = $1',
       [userId]
     );
     
@@ -569,7 +611,7 @@ app.put('/api/save-user-preferences/:userId', async (req, res) => {
       if (typeof selectedSports[0] === 'object') {
         for (let i = 0; i < selectedSports.length; i++) {
           await pool.query(
-            'INSERT INTO "UserPreferences" ("idUser", "sportType", "preferenceRank") VALUES ($1, $2, $3)',
+            'INSERT INTO userpreferences (iduser, sporttype, preferencerank) VALUES ($1, $2, $3)',
             [userId, selectedSports[i].id, selectedSports[i].rank || (i + 1)]
           );
         }
@@ -578,7 +620,7 @@ app.put('/api/save-user-preferences/:userId', async (req, res) => {
       else {
         for (let i = 0; i < selectedSports.length; i++) {
           await pool.query(
-            'INSERT INTO "UserPreferences" ("idUser", "sportType", "preferenceRank") VALUES ($1, $2, $3)',
+            'INSERT INTO userpreferences (iduser, sporttype, preferencerank) VALUES ($1, $2, $3)',
             [userId, selectedSports[i], i + 1]
           );
         }
