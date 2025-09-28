@@ -402,22 +402,33 @@ app.get('/api/user-preferences/:userId', async (req, res) => {
       });
     }
 
-    // שליפת העדפות ספורט
+    // שליפת כל סוגי הספורט
+    const allSportsResult = await pool.query(
+      'SELECT sporttype as id, sportname as name FROM sporttypes ORDER BY sporttype'
+    );
+    console.log('📊 כל סוגי הספורט:', allSportsResult.rows);
+
+    // שליפת העדפות ספורט של המשתמש
     const preferencesResult = await pool.query(
-      'SELECT up.sporttype, up.preferencerank, st.sportname FROM UserPreferences up JOIN SportTypes st ON up.sporttype = st.sporttype WHERE up.iduser = $1 ORDER BY up.preferencerank',
+      `SELECT 
+        up.sporttype as id, 
+        up.preferencerank as rank, 
+        st.sportname as name
+       FROM userpreferences up 
+       JOIN sporttypes st ON up.sporttype = st.sporttype 
+       WHERE up.iduser = $1 
+       ORDER BY up.preferencerank`,
       [userId]
     );
-    
-    console.log('📊 העדפות ספורט:', preferencesResult.rows);
-    
+    console.log('📊 העדפות ספורט של המשתמש:', preferencesResult.rows);
+
+    // המרת התוצאות למבנה הנכון
     const selectedSports = preferencesResult.rows.map(row => ({
-      id: row.sporttype,
-      name: row.sportname,
-      rank: row.preferencerank
+      id: row.id,
+      name: row.name,
+      rank: row.rank
     }));
-    
-    // שליפת כל סוגי הספורט
-    const allSportsResult = await pool.query('SELECT sporttype as id, sportname as name FROM SportTypes ORDER BY sporttype');
+    console.log('📊 ספורטים נבחרים מעובדים:', selectedSports);
     
     res.json({
       success: true,
@@ -496,19 +507,45 @@ app.put('/api/save-user-preferences/:userId', async (req, res) => {
     );
     console.log('✅ נתוני משתמש אחרי עדכון:', afterUpdate.rows[0]);
     
+    // מחיקת העדפות קיימות
+    console.log('🗑️ מוחק העדפות קיימות למשתמש:', userId);
     await pool.query(
-      'DELETE FROM UserPreferences WHERE idUser = $1',
+      'DELETE FROM userpreferences WHERE iduser = $1',
       [userId]
     );
     
+    // שמירת העדפות חדשות
     if (selectedSports && selectedSports.length > 0) {
-      for (let i = 0; i < selectedSports.length; i++) {
-        await pool.query(
-          'INSERT INTO UserPreferences (idUser, sportType, preferenceRank) VALUES ($1, $2, $3)',
-          [userId, selectedSports[i], i + 1]
-        );
+      console.log('📝 שומר העדפות חדשות:', selectedSports);
+      
+      // אם זה מערך של אובייקטים
+      if (typeof selectedSports[0] === 'object') {
+        for (let i = 0; i < selectedSports.length; i++) {
+          await pool.query(
+            'INSERT INTO userpreferences (iduser, sporttype, preferencerank) VALUES ($1, $2, $3)',
+            [userId, selectedSports[i].id, selectedSports[i].rank || (i + 1)]
+          );
+        }
+      } 
+      // אם זה מערך של מספרים
+      else {
+        for (let i = 0; i < selectedSports.length; i++) {
+          await pool.query(
+            'INSERT INTO userpreferences (iduser, sporttype, preferencerank) VALUES ($1, $2, $3)',
+            [userId, selectedSports[i], i + 1]
+          );
+        }
       }
+      
+      console.log('✅ העדפות נשמרו בהצלחה');
     }
+
+    // בדיקה שהכל נשמר
+    const savedPreferences = await pool.query(
+      'SELECT sporttype, preferencerank FROM userpreferences WHERE iduser = $1 ORDER BY preferencerank',
+      [userId]
+    );
+    console.log('📊 העדפות שנשמרו:', savedPreferences.rows);
     
     res.json({
       success: true,
