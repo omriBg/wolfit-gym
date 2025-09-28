@@ -1,256 +1,288 @@
-// utils/database.js - ניהול חיבורי מסד נתונים מתקדם
-const { Pool } = require('pg');
-const logger = require('./logger');
+// Wolfit Gym Backend Server
+require('dotenv').config();
 
-// הגדרות connection pooling מתקדמות
-let dbConfig;
+// הגדרות בסיסיות
+const dns = require('dns');
+dns.setDefaultResultOrder('ipv4first');
+
+const express = require('express');
+const cors = require('cors');
+const jwt = require('jsonwebtoken');
+const rateLimit = require('express-rate-limit');
+
+// Database connection
+const { pool, testConnection, waitForPoolReady } = require('./utils/database');
+
+const app = express();
+const PORT = process.env.PORT || 10000;
+
+// Trust proxy for rate limiting (fixes X-Forwarded-For error)
+app.set('trust proxy', 1);
+
+// Middleware
+app.use(express.json({ limit: '10mb' }));
+app.use(express.urlencoded({ extended: true, limit: '10mb' }));
+
+// CORS configuration
+app.use(cors({
+  origin: [
+    'http://localhost:3000',
+    'https://wolfit-gym.vercel.app',
+    'https://wolfit-gym-frontend.vercel.app'
+  ],
+  credentials: true,
+  methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
+  allowedHeaders: ['Content-Type', 'Authorization']
+}));
+
+// Rate limiting
+const loginLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000, // 15 minutes
+  max: 5, // limit each IP to 5 requests per windowMs
+  message: 'Too many login attempts, please try again later.',
+  standardHeaders: true,
+  legacyHeaders: false,
+});
+
+// JWT Secret validation
+const JWT_SECRET = process.env.JWT_SECRET;
+if (!JWT_SECRET) {
+  console.error('❌ JWT_SECRET לא מוגדר');
+  process.exit(1);
+}
+
+if (JWT_SECRET.length < 32) {
+  console.error('❌ JWT_SECRET חייב להיות לפחות 32 תווים');
+  process.exit(1);
+}
+
+console.log('🔍 בדיקת JWT_SECRET: קיים');
+console.log('🔍 אורך JWT_SECRET:', JWT_SECRET.length);
+console.log('✅ JWT_SECRET תקין, ממשיך...');
+
+// JWT Authentication Middleware
+const authenticateToken = (req, res, next) => {
+  const authHeader = req.headers['authorization'];
+  const token = authHeader && authHeader.split(' ')[1];
+
+  if (!token) {
+    return res.status(401).json({ error: 'Access token required' });
+  }
+
+  jwt.verify(token, JWT_SECRET, (err, user) => {
+    if (err) {
+      return res.status(403).json({ error: 'Invalid or expired token' });
+    }
+    req.user = user;
+    next();
+  });
+};
+
+console.log('🔍 יוצר middleware לאימות JWT...');
+console.log('✅ Middleware לאימות JWT נוצר בהצלחה');
+
+// Environment variables check
+console.log('🔍 מגיע לבדיקת משתני סביבה...');
 
 if (process.env.DATABASE_URL) {
-  // וודא שאנחנו משתמשים ב-postgresql:// ולא postgres://
-  let connectionString = process.env.DATABASE_URL;
-  if (connectionString.startsWith('postgres://')) {
-    connectionString = connectionString.replace('postgres://', 'postgresql://');
-  }
-
-  // הסר sslmode=verify-full אם קיים
-  connectionString = connectionString.replace('?sslmode=verify-full', '');
-  connectionString = connectionString.replace('?sslmode=prefer', '');
-  
-  // הוסף sslmode=require
-  if (!connectionString.includes('sslmode=')) {
-    connectionString += '?sslmode=require';
-  }
-
-  dbConfig = {
-    connectionString,
-    ssl: {
-      rejectUnauthorized: false
-    },
-    // הגדרות connection pooling
-    max: 10,
-    min: 1,
-    idleTimeoutMillis: 30000,
-    connectionTimeoutMillis: 15000,
-    // הגדרות נוספות לחיבור יציב
-    keepAlive: true,
-    keepAliveInitialDelayMillis: 0
-  };
+  console.log('✅ DATABASE_URL קיים, משתמש ב-connection string');
+} else if (process.env.DB_HOST && process.env.DB_NAME && process.env.DB_USER && process.env.DB_PASSWORD) {
+  console.log('✅ משתני סביבה נפרדים קיימים');
 } else {
-  // משתנים נפרדים
-  dbConfig = {
-    user: process.env.DB_USER,
-    password: process.env.DB_PASSWORD,
-    host: process.env.DB_HOST,
-    port: process.env.DB_PORT || 5432,
-    database: process.env.DB_NAME,
-    ssl: {
-      rejectUnauthorized: false
-    },
-    // הגדרות connection pooling
-    max: 10,
-    min: 1,
-    idleTimeoutMillis: 30000,
-    connectionTimeoutMillis: 15000,
-    // הגדרות נוספות לחיבור יציב
-    keepAlive: true,
-    keepAliveInitialDelayMillis: 0
-  };
+  console.error('❌ שגיאה קריטית: משתני סביבה חסרים למסד הנתונים:', [
+    'DB_HOST', 'DB_NAME', 'DB_USER', 'DB_PASSWORD'
+  ].filter(key => !process.env[key]));
+  process.exit(1);
 }
 
-// Log connection details (without password)
-console.log('🔌 Database connection details:', {
-  connectionString: dbConfig.connectionString ? '***HIDDEN***' : undefined,
-  host: dbConfig.host,
-  port: dbConfig.port,
-  database: dbConfig.database,
-  user: dbConfig.user,
-  ssl: dbConfig.ssl,
-  maxConnections: dbConfig.max,
-  minConnections: dbConfig.min
-});
+console.log('✅ כל משתני הסביבה קיימים, ממשיך...');
 
-// יצירת pool ישירות ללא בדיקות
-const pool = new Pool(dbConfig);
+// Health Check Endpoints
+console.log('🔍 מגיע ל-Health Check Endpoints...');
 
-// פונקציה לחיבור event listeners
-function setupPoolEventListeners(poolInstance) {
-  poolInstance.on('connect', (client) => {
-    logger.info('חיבור חדש למסד נתונים נוצר', {
-      totalCount: poolInstance.totalCount,
-      idleCount: poolInstance.idleCount,
-      waitingCount: poolInstance.waitingCount
-    });
-  });
-
-  poolInstance.on('acquire', (client) => {
-    logger.debug('חיבור נרכש מה-pool', {
-      totalCount: poolInstance.totalCount,
-      idleCount: poolInstance.idleCount,
-      waitingCount: poolInstance.waitingCount
-    });
-  });
-
-  poolInstance.on('remove', (client) => {
-    logger.info('חיבור הוסר מה-pool', {
-      totalCount: poolInstance.totalCount,
-      idleCount: poolInstance.idleCount,
-      waitingCount: poolInstance.waitingCount
-    });
-  });
-
-  poolInstance.on('error', (err, client) => {
-    logger.error('שגיאה ב-pool של מסד הנתונים:', {
-      error: err.message,
-      code: err.code,
-      totalCount: poolInstance.totalCount,
-      idleCount: poolInstance.idleCount,
-      waitingCount: poolInstance.waitingCount
-    });
-  });
-}
-
-// הגדר event listeners
-setupPoolEventListeners(pool);
-
-// פונקציה להמתנה ל-pool להיות מוכן
-const waitForPoolReady = async () => {
+app.get('/health', async (req, res) => {
   try {
-    const client = await pool.connect();
-    await client.query('SELECT 1');
-    client.release();
-    console.log('✅ Pool מוכן לשימוש');
-    return pool;
+    const dbStatus = await testConnection();
+    res.json({
+      status: dbStatus.success ? 'healthy' : 'unhealthy',
+      timestamp: new Date().toISOString(),
+      uptime: process.uptime(),
+      version: '1.0.0',
+      environment: process.env.NODE_ENV || 'development',
+      database: {
+        status: dbStatus.success ? 'connected' : 'disconnected',
+        error: dbStatus.success ? null : dbStatus.error
+      }
+    });
   } catch (error) {
-    console.error('❌ Pool connection test failed:', error.message);
-    throw error;
+    res.status(500).json({
+      status: 'unhealthy',
+      timestamp: new Date().toISOString(),
+      uptime: process.uptime(),
+      version: '1.0.0',
+      environment: process.env.NODE_ENV || 'development',
+      database: {
+        status: 'disconnected',
+        error: error.message
+      }
+    });
   }
-};
+});
 
-// פונקציה לבדיקת חיבור
-const testConnection = async () => {
+app.get('/ready', async (req, res) => {
   try {
-    console.log('🔍 מנסה להתחבר למסד נתונים...');
-    const client = await pool.connect();
-    console.log('✅ התחבר למסד נתונים, מבצע שאילתה...');
-    try {
-      const result = await client.query('SELECT NOW() as current_time, version() as version');
-      console.log('✅ שאילתה הצליחה:', result.rows[0]);
-      logger.info('בדיקת חיבור למסד נתונים הצליחה', {
-        currentTime: result.rows[0].current_time,
-        version: result.rows[0].version.split(' ')[0]
+    const dbStatus = await testConnection();
+    const poolStats = pool ? {
+      totalCount: pool.totalCount,
+      idleCount: pool.idleCount,
+      waitingCount: pool.waitingCount
+    } : null;
+  
+    res.json({
+      ready: dbStatus.success && pool,
+      timestamp: new Date().toISOString(),
+      checks: {
+        database: dbStatus.success,
+        pool: !!pool,
+        memory: process.memoryUsage().heapUsed < 100 * 1024 * 1024 // 100MB
+      },
+      details: {
+        database: dbStatus.success ? 'Connected' : 'Disconnected',
+        pool: poolStats,
+        memory: Math.round(process.memoryUsage().heapUsed / 1024 / 1024) + 'MB'
+      }
+    });
+  } catch (error) {
+    res.status(500).json({
+      ready: false,
+      timestamp: new Date().toISOString(),
+      error: error.message
+    });
+  }
+});
+
+console.log('✅ Health Check Endpoints נוצרו בהצלחה');
+
+// Google Login API
+app.post('/api/google-login', loginLimiter, async (req, res) => {
+  try {
+    console.log('🔍 Google Login Request:', req.body);
+    
+    const { credential } = req.body;
+    if (!credential) {
+      console.error('❌ Credential חסר');
+      return res.status(400).json({
+        success: false,
+        message: 'Credential נדרש'
       });
-      return { success: true, data: result.rows[0] };
-    } finally {
-      client.release();
     }
-  } catch (err) {
-    console.error('❌ שגיאה בחיבור למסד נתונים:', err);
-    logger.warn('מסד הנתונים לא זמין:', err.message);
-    return { success: false, error: err.message };
-  }
-};
+    
+    console.log('📦 Decoding credential:', credential);
+    
+    // פענוח ה-credential מ-Google
+    const googleData = jwt.decode(credential);
+    console.log('📦 Decoded Google data:', googleData);
+    
+    if (!googleData || !googleData.sub || !googleData.email) {
+      console.error('❌ נתוני Google לא תקינים:', { googleData });
+      return res.status(400).json({
+        success: false,
+        message: 'נתוני Google לא תקינים'
+      });
+    }
+    
+    // בדיקה אם המשתמש קיים במסד הנתונים
+    console.log('🔍 Checking if user exists:', {
+      googleId: googleData.sub,
+      email: googleData.email
+    });
 
-// פונקציה לביצוע שאילתה עם timeout
-const queryWithTimeout = async (text, params, timeoutMs = 30000) => {
-  console.log('🔍 Attempting database query:', {
-    query: text,
-    params: params,
-    timeout: timeoutMs
+    // המתנה ל-pool להיות מוכן
+    console.log('⏳ Waiting for pool to be ready...');
+    const readyPool = await waitForPoolReady();
+    console.log('✅ Pool is ready, proceeding with database query');
+    
+    console.log('🔍 Executing database query...');
+    const existingUser = await readyPool.query(
+      'SELECT * FROM "User" WHERE googleid = $1 OR email = $2',
+      [googleData.sub, googleData.email]
+    );
+    console.log('✅ Database query completed, found users:', existingUser.rows.length);
+    
+    let user;
+    if (existingUser.rows.length > 0) {
+      // משתמש קיים - התחברות ישירה
+      user = existingUser.rows[0];
+      console.log('✅ משתמש קיים:', user.email);
+    } else {
+      // משתמש חדש - יצירת רשומה חדשה
+      console.log('🆕 יוצר משתמש חדש:', googleData.email);
+      const newUser = await readyPool.query(
+        'INSERT INTO "User" (googleid, email, name, picture) VALUES ($1, $2, $3, $4) RETURNING *',
+        [googleData.sub, googleData.email, googleData.name, googleData.picture]
+      );
+      user = newUser.rows[0];
+      console.log('✅ משתמש חדש נוצר:', user.email);
+    }
+      
+    // יצירת JWT token
+    const token = jwt.sign(
+      { 
+        userId: user.iduser,
+        email: user.email,
+        name: user.name 
+      },
+      JWT_SECRET,
+      { expiresIn: '7d' }
+    );
+      
+    console.log('✅ Google login successful for user:', user.email);
+      
+    res.json({
+      success: true,
+      token,
+      user: {
+        id: user.iduser,
+        email: user.email,
+        name: user.name,
+        picture: user.picture
+      }
+    });
+
+  } catch (error) {
+    console.error('❌ Google login error:', error);
+    console.error('❌ Error details:', {
+      message: error.message,
+      code: error.code,
+      stack: error.stack
+    });
+    res.status(500).json({
+      success: false,
+      error: 'Google login failed',
+      details: error.message 
+    });
+  }
+});
+
+console.log('✅ Google Login API ready');
+
+// Root route
+app.get('/', (req, res) => {
+  res.json({
+    message: 'Wolfit Gym Backend API',
+    version: '1.0.0',
+    status: 'running',
+    endpoints: {
+      'POST /api/google-login': 'Google OAuth login',
+      'GET /health': 'Health check',
+      'GET /ready': 'Readiness check'
+    }
   });
-
-  let client;
-  try {
-    client = await pool.connect();
-    console.log('✅ Connected to database successfully');
-  } catch (err) {
-    console.error('❌ Failed to connect to database:', err);
-    throw err;
-  }
-
-  try {
-    // הגדרת timeout לשאילתה
-    await client.query(`SET statement_timeout = ${timeoutMs}`);
-    console.log('✅ Set query timeout');
-    
-    const startTime = Date.now();
-    const result = await client.query(text, params);
-    const duration = Date.now() - startTime;
-    
-    logger.debug('שאילתה בוצעה בהצלחה', {
-      duration: `${duration}ms`,
-      rowCount: result.rowCount,
-      query: text.substring(0, 100) + (text.length > 100 ? '...' : '')
-    });
-    
-    return result;
-  } catch (err) {
-    logger.error('שגיאה בביצוע שאילתה:', {
-      error: err.message,
-      code: err.code,
-      query: text.substring(0, 100) + (text.length > 100 ? '...' : ''),
-      params: params
-    });
-    throw err;
-  } finally {
-    client.release();
-  }
-};
-
-// פונקציה לביצוע transaction
-const withTransaction = async (callback) => {
-  const client = await pool.connect();
-  try {
-    await client.query('BEGIN');
-    const result = await callback(client);
-    await client.query('COMMIT');
-    return result;
-  } catch (err) {
-    await client.query('ROLLBACK');
-    logger.error('Transaction נכשל, בוצע rollback:', err);
-    throw err;
-  } finally {
-    client.release();
-  }
-};
-
-// פונקציה לניקוי ה-pool
-const closePool = async () => {
-  try {
-    await pool.end();
-    logger.info('Pool של מסד הנתונים נסגר בהצלחה');
-  } catch (err) {
-    logger.error('שגיאה בסגירת pool של מסד הנתונים:', err);
-  }
-};
-
-// פונקציה לקבלת סטטיסטיקות ה-pool
-const getPoolStats = () => {
-  return {
-    totalCount: pool.totalCount,
-    idleCount: pool.idleCount,
-    waitingCount: pool.waitingCount
-  };
-};
-
-// Graceful shutdown
-process.on('SIGINT', async () => {
-  logger.info('מקבל SIGINT, סוגר חיבורי מסד נתונים...');
-  await closePool();
-  process.exit(0);
 });
 
-process.on('SIGTERM', async () => {
-  logger.info('מקבל SIGTERM, סוגר חיבורי מסד נתונים...');
-  await closePool();
-  process.exit(0);
+// Start server
+app.listen(PORT, '0.0.0.0', () => {
+  console.log('🚀 Server running on http://0.0.0.0:' + PORT);
 });
 
-module.exports = {
-  pool,
-  testConnection,
-  waitForPoolReady,
-  queryWithTimeout,
-  withTransaction,
-  closePool,
-  getPoolStats
-};
+console.log('✅ Health check ready');
