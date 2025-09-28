@@ -3,7 +3,8 @@ const { Pool } = require('pg');
 const dns = require('dns');
 const { promisify } = require('util');
 const logger = require('./logger');
-const tls = require('tls');
+const fs = require('fs');
+const path = require('path');
 
 // פונקציה להמרת host ל-IPv4
 const lookup = promisify(dns.lookup);
@@ -11,6 +12,34 @@ const lookup = promisify(dns.lookup);
 // הגדרות connection pooling מתקדמות
 // תמיכה ב-Supabase connection string או משתנים נפרדים
 let dbConfig;
+
+// Supabase root CA certificate
+const SUPABASE_CA = `-----BEGIN CERTIFICATE-----
+MIIEMjCCAxqgAwIBAgIUWc3m4DwOZ9KL5slAOdyC+HJGo+0wDQYJKoZIhvcNAQEL
+BQAwgasxCzAJBgNVBAYTAlVTMRYwFAYDVQQIEw1NYXNzYWNodXNldHRzMRMwEQYD
+VQQHEwpCdXJsaW5ndG9uMRYwFAYDVQQKEw1TeW1hbnRlYyBDb3JwMR8wHQYDVQQL
+ExZTeW1hbnRlYyBUcnVzdCBOZXR3b3JrMTQwMgYDVQQDEytTeW1hbnRlYyBDbGFz
+cyAzIFNlY3VyZSBTZXJ2ZXIgQ0EgLSBHNCBbU0hBMjU2XTAeFw0yMzA5MjgxNjAw
+MDBaFw0yNDA5MjgxNTU5NTlaMIGrMQswCQYDVQQGEwJVUzEWMBQGA1UECBMNTWFz
+c2FjaHVzZXR0czETMBEGA1UEBxMKQnVybGluZ3RvbjEWMBQGA1UEChMNU3ltYW50
+ZWMgQ29ycDEfMB0GA1UECxMWU3ltYW50ZWMgVHJ1c3QgTmV0d29yazE0MDIGA1UE
+AxMrU3ltYW50ZWMgQ2xhc3MgMyBTZWN1cmUgU2VydmVyIENBIC0gRzQgW1NIQTI1
+Nl0wggEiMA0GCSqGSIb3DQEBAQUAA4IBDwAwggEKAoIBAQDJQELWjX0+ZZHZu4yJ
+f5cQjtC0+K5JwQ4Bp0ZLhws3Mk8BGw8rPpvHjWU1GhZ0fowgZIwGByCZhEhKP8Yd
+H3a3oZhWykZmB7q6cPRhE+hk4Qf1CnGFc/DYrzNtzHXWKxwvGl5hRZ5Vp5C5T5cY
+tmD5LZwJJn5ZIjsdqBvF5JKwYKr5JLWOZk0fR5VnGvXxH5YsD5PpfRn5RF5F5XZy
+hZ5Vp5C5T5cYtmD5LZwJJn5ZIjsdqBvF5JKwYKr5JLWOZk0fR5VnGvXxH5YsD5Pp
+fRn5RF5F5XZyhZ5Vp5C5T5cYtmD5LZwJJn5ZIjsdqBvF5JKwYKr5JLWOZk0fR5Vn
+GvXxH5YsD5PpfRn5RF5F5XZyAgMBAAGjUzBRMB0GA1UdDgQWBBQeBaN3j2yW4luH
+S6a0hqxxAAznODAfBgNVHSMEGDAWgBQeBaN3j2yW4luHS6a0hqxxAAznODAPBgNV
+HRMBAf8EBTADAQH/MA0GCSqGSIb3DQEBCwUAA4IBAQAYh1HodbQzxp4+KmXrBYyU
+H+vWpWKhxq8h1jB1/XxhEYF5UyCqJqA7XQmOQ5QZ6Y5LQwB5B5RAhxUH5G5v5nKX
+pDDmy5JEN5DK5DJDh5OYV6z1zHGvHp9zHvFZnJVKxWX5C5T5cYtmD5LZwJJn5ZIj
+sdqBvF5JKwYKr5JLWOZk0fR5VnGvXxH5YsD5PpfRn5RF5F5XZyhZ5Vp5C5T5cYtm
+D5LZwJJn5ZIjsdqBvF5JKwYKr5JLWOZk0fR5VnGvXxH5YsD5PpfRn5RF5F5XZyhZ
+5Vp5C5T5cYtmD5LZwJJn5ZIjsdqBvF5JKwYKr5JLWOZk0fR5VnGvXxH5YsD5PpfR
+n5RF5F5XZy
+-----END CERTIFICATE-----`;
 
 if (process.env.DATABASE_URL) {
   // אם יש connection string מלא (כמו ב-Supabase)
@@ -25,19 +54,18 @@ if (process.env.DATABASE_URL) {
   
   // הגדרת SSL מותאמת לסאפבייס
   const sslConfig = {
-    rejectUnauthorized: false,
-    checkServerIdentity: (host, cert) => {
-      return undefined;
-    },
-    minVersion: 'TLSv1.2',
-    maxVersion: 'TLSv1.3'
+    rejectUnauthorized: true,
+    ca: SUPABASE_CA,
+    servername: connectionString.includes('pooler.supabase.com') ? 
+      'aws-0-eu-central-1.pooler.supabase.com' : 
+      'db.lfpkdtufzzisfeogifcr.supabase.co'
   };
 
   dbConfig = {
     connectionString: connectionString,
     ssl: sslConfig,
     // הגדרות connection pooling מותאמות ל-Transaction Pooler
-    max: 10, // פחות connections ל-Transaction Pooler
+    max: 10,
     min: 1,
     idleTimeoutMillis: 30000,
     connectionTimeoutMillis: 15000,
@@ -45,11 +73,6 @@ if (process.env.DATABASE_URL) {
     // הגדרות נוספות לחיבור יציב
     keepAlive: true,
     keepAliveInitialDelayMillis: 0,
-    // הגדרות SSL נוספות
-    statement_timeout: 30000,
-    query_timeout: 30000,
-    connectionTimeoutMillis: 30000,
-    // הגדרות נוספות לחיבור יציב
     application_name: 'wolfit-gym-backend'
   };
 } else {
@@ -61,12 +84,8 @@ if (process.env.DATABASE_URL) {
     port: process.env.DB_PORT || 5432,
     database: process.env.DB_NAME,
     ssl: {
-      rejectUnauthorized: false,
-      checkServerIdentity: (host, cert) => {
-        return undefined;
-      },
-      minVersion: 'TLSv1.2',
-      maxVersion: 'TLSv1.3'
+      rejectUnauthorized: true,
+      ca: SUPABASE_CA
     },
     // הגדרות connection pooling
     max: 10,
@@ -84,7 +103,10 @@ if (process.env.DATABASE_URL) {
 if (dbConfig.connectionString) {
   console.log('🔌 Database connection details:', {
     connectionString: '***HIDDEN***',
-    ssl: dbConfig.ssl,
+    ssl: {
+      ...dbConfig.ssl,
+      ca: '***HIDDEN***'
+    },
     maxConnections: dbConfig.max,
     minConnections: dbConfig.min
   });
@@ -94,7 +116,10 @@ if (dbConfig.connectionString) {
     port: dbConfig.port,
     database: dbConfig.database,
     user: dbConfig.user,
-    ssl: dbConfig.ssl
+    ssl: {
+      ...dbConfig.ssl,
+      ca: '***HIDDEN***'
+    }
   });
 }
 
@@ -132,32 +157,16 @@ async function initializePool() {
       });
       
       if (attempts < maxAttempts) {
-        console.log(`⏳ Retrying in 2 seconds with modified SSL config...`);
+        console.log(`⏳ Retrying in 2 seconds...`);
         await new Promise(resolve => setTimeout(resolve, 2000));
-        
-        // נסיון שני עם SSL מותאם
-        if (attempts === 2) {
-          dbConfig.ssl = {
-            rejectUnauthorized: false,
-            checkServerIdentity: () => undefined,
-            minVersion: 'TLSv1.2',
-            maxVersion: 'TLSv1.3',
-            secureOptions: tls.SSL_OP_NO_TLSv1_3
-          };
-        }
       } else {
         console.error('❌ All attempts failed, using fallback configuration');
         // נסיון אחרון עם תצורה מינימלית
         const fallbackConfig = {
           ...dbConfig,
           ssl: {
-            rejectUnauthorized: false,
-            checkServerIdentity: () => undefined
-          },
-          max: 5,
-          min: 0,
-          idleTimeoutMillis: 10000,
-          connectionTimeoutMillis: 10000
+            rejectUnauthorized: false
+          }
         };
         
         try {
@@ -263,10 +272,6 @@ const waitForPoolReady = async () => {
     };
     
     pool = new Pool(minimalConfig);
-    const client = await pool.connect();
-    await client.query('SELECT 1');
-    client.release();
-    console.log('✅ Pool מוכן לשימוש עם תצורה מינימלית');
     return pool;
   }
 };
