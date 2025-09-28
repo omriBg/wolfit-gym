@@ -36,31 +36,56 @@ function EditUser() {
     setIsLoading(true);
     
     try {
+      console.log('🔍 מתחיל לטעון העדפות עבור משתמש:', currentUser.id);
       const token = localStorage.getItem('authToken');
+      console.log('🔑 נמצא טוקן:', token ? 'כן' : 'לא');
+      
       const response = await fetch(`${API_BASE_URL}/api/user-preferences/${currentUser.id}`, {
         headers: {
           'Authorization': `Bearer ${token}`,
           'Content-Type': 'application/json',
         },
       });
-      console.log('תגובה מהשרת:', response.status);
+      console.log('📡 תגובה מהשרת:', {
+        status: response.status,
+        ok: response.ok,
+        statusText: response.statusText
+      });
       
       if (response.ok) {
         const result = await response.json();
         console.log('נתונים שהתקבלו:', result);
         
           if (result.success && result.data) {
+            console.log('✅ התקבלו נתונים תקינים מהשרת');
             const { intensityLevel, sports, preferenceMode } = result.data;
             
-            console.log('רמת עצימות:', intensityLevel);
-            console.log('כל הספורטים:', sports);
-            console.log('מצב העדפה:', preferenceMode);
+            console.log('💪 רמת עצימות:', intensityLevel);
+            console.log('🎯 כל הספורטים:', sports);
+            console.log('🔄 מצב העדפה:', preferenceMode);
+            
+            console.log('📝 מתחיל לעבד את הנתונים...');
             
             // מחלץ את הספורטים הנבחרים
-            const selectedIds = sports
-              .filter(sport => sport.selected)
-              .sort((a, b) => (a.rank || 0) - (b.rank || 0))
-              .map(sport => sport.id);
+            // מחלץ את הספורטים הנבחרים
+            let selectedIds;
+            if (Array.isArray(sports)) {
+              // אם זה מערך של אובייקטים עם selected
+              if (sports.some(sport => 'selected' in sport)) {
+                selectedIds = sports
+                  .filter(sport => sport.selected)
+                  .sort((a, b) => (a.rank || 0) - (b.rank || 0))
+                  .map(sport => sport.id);
+              } 
+              // אם זה מערך של אובייקטים עם id ישירות
+              else {
+                selectedIds = sports
+                  .sort((a, b) => (a.rank || 0) - (b.rank || 0))
+                  .map(sport => sport.id);
+              }
+            } else {
+              selectedIds = [];
+            }
             
             console.log('ספורטים נבחרים:', selectedIds);
             

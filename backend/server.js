@@ -403,12 +403,15 @@ app.get('/api/user-preferences/:userId', async (req, res) => {
     }
 
     // שליפת כל סוגי הספורט
+    console.log('🔍 מתחיל שליפת סוגי ספורט...');
     const allSportsResult = await pool.query(
       'SELECT "sportType" as id, "sportName" as name FROM "SportTypes" ORDER BY "sportType"'
     );
     console.log('📊 כל סוגי הספורט:', allSportsResult.rows);
+    console.log('📊 מספר סוגי ספורט שנמצאו:', allSportsResult.rows.length);
 
     // שליפת העדפות ספורט של המשתמש
+    console.log('🔍 מתחיל שליפת העדפות משתמש:', userId);
     const preferencesResult = await pool.query(
       `SELECT 
         up."sportType" as id, 
@@ -421,6 +424,13 @@ app.get('/api/user-preferences/:userId', async (req, res) => {
       [userId]
     );
     console.log('📊 העדפות ספורט של המשתמש:', preferencesResult.rows);
+    console.log('📊 מספר העדפות שנמצאו:', preferencesResult.rows.length);
+    
+    if (preferencesResult.rows.length === 0) {
+      console.log('⚠️ לא נמצאו העדפות למשתמש זה');
+    } else {
+      console.log('✅ נמצאו העדפות למשתמש');
+    }
 
     // המרת התוצאות למבנה הנכון
     const selectedSports = preferencesResult.rows.map(row => ({
