@@ -384,7 +384,6 @@ app.post('/api/register', async (req, res) => {
 app.get('/api/user-preferences/:userId', async (req, res) => {
   try {
     const { userId } = req.params;
-    
     console.log('🔍 מחפש משתמש:', userId);
     
     // שליפת נתוני משתמש
@@ -392,7 +391,6 @@ app.get('/api/user-preferences/:userId', async (req, res) => {
       'SELECT intensitylevel, height, weight, birthdate FROM "User" WHERE iduser = $1',
       [userId]
     );
-    
     console.log('📊 נתוני משתמש:', userResult.rows[0]);
     
     if (userResult.rows.length === 0) {
@@ -403,15 +401,14 @@ app.get('/api/user-preferences/:userId', async (req, res) => {
     }
 
     // שליפת כל סוגי הספורט
-    console.log('🔍 מתחיל שליפת סוגי ספורט...');
+    console.log('🔍 שולף את כל סוגי הספורט מהדאטהבייס...');
     const allSportsResult = await pool.query(
       'SELECT "sportType" as id, "sportName" as name FROM "SportTypes" ORDER BY "sportType"'
     );
-    console.log('📊 כל סוגי הספורט:', allSportsResult.rows);
-    console.log('📊 מספר סוגי ספורט שנמצאו:', allSportsResult.rows.length);
+    console.log('📊 נמצאו', allSportsResult.rows.length, 'סוגי ספורט');
 
     // שליפת העדפות ספורט של המשתמש
-    console.log('🔍 מתחיל שליפת העדפות משתמש:', userId);
+    console.log('🔍 שולף העדפות ספורט למשתמש:', userId);
     const preferencesResult = await pool.query(
       `SELECT 
         up."sportType" as id, 
@@ -423,41 +420,33 @@ app.get('/api/user-preferences/:userId', async (req, res) => {
        ORDER BY up."preferenceRank"`,
       [userId]
     );
-    console.log('📊 העדפות ספורט של המשתמש:', preferencesResult.rows);
-    console.log('📊 מספר העדפות שנמצאו:', preferencesResult.rows.length);
-    
-    if (preferencesResult.rows.length === 0) {
-      console.log('⚠️ לא נמצאו העדפות למשתמש זה');
-    } else {
-      console.log('✅ נמצאו העדפות למשתמש');
-    }
+    console.log('📊 נמצאו', preferencesResult.rows.length, 'העדפות ספורט');
 
     // המרת התוצאות למבנה הנכון
     const selectedSports = preferencesResult.rows.map(row => ({
       id: row.id,
       name: row.name,
-      rank: row.rank
+      rank: row.rank,
+      selected: true
     }));
-    console.log('📊 ספורטים נבחרים מעובדים:', selectedSports);
     
-    // שליפת כל הספורטים עם סימון אם הם נבחרים
+    // יצירת מערך של כל הספורטים עם סימון אם הם נבחרים
     const allSportsWithSelection = allSportsResult.rows.map(sport => {
-      const selected = selectedSports.find(s => s.id === sport.id);
+      const isSelected = selectedSports.some(selected => selected.id === sport.id);
       return {
         ...sport,
-        selected: !!selected,
-        rank: selected ? selected.rank : null
+        selected: isSelected,
+        rank: isSelected ? selectedSports.find(s => s.id === sport.id).rank : null
       };
     });
-
-    console.log('📊 ספורטים עם סימון בחירה:', allSportsWithSelection);
-
-    res.json({
+    
+    // הכנת התשובה
+    const response = {
       success: true,
       data: {
         intensityLevel: parseInt(userResult.rows[0].intensitylevel) || 2,
-        selectedSports: selectedSports,
         sports: allSportsWithSelection,
+        selectedSports: selectedSports,
         preferenceMode: selectedSports.length > 0 ? 'ranked' : 'simple',
         userDetails: {
           height: userResult.rows[0].height,
@@ -465,7 +454,10 @@ app.get('/api/user-preferences/:userId', async (req, res) => {
           birthdate: userResult.rows[0].birthdate
         }
       }
-    });
+    };
+    
+    console.log('📤 שולח תשובה ללקוח:', response);
+    return res.json(response);
 
   } catch (error) {
     console.error('❌ שגיאה בשליפת העדפות:', error);
