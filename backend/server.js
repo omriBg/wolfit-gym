@@ -220,7 +220,7 @@ app.post('/api/google-login', loginLimiter, async (req, res) => {
     
     console.log('🔍 Executing database query...');
     const existingUser = await readyPool.query(
-      'SELECT * FROM "User" WHERE googleid = $1 OR email = $2',
+      'SELECT * FROM User WHERE googleid = $1 OR email = $2',
       [googleData.sub, googleData.email]
     );
     console.log('✅ Database query completed, found users:', existingUser.rows.length);
@@ -340,7 +340,7 @@ app.post('/api/register', async (req, res) => {
 
     // יצירת משתמש חדש
     const newUser = await pool.query(
-      `INSERT INTO "User" (
+      `INSERT INTO User (
         name, email, height, weight, birthdate,
         intensitylevel, googleid
       ) VALUES ($1, $2, $3, $4, $5, $6, $7) RETURNING *`,
@@ -492,7 +492,7 @@ app.get('/api/user-preferences/:userId', authenticateToken, async (req, res) => 
     console.log('🔍 בודק תוכן טבלאות...');
     
     try {
-      const userCount = await pool.query('SELECT COUNT(*) FROM "User"');
+      const userCount = await pool.query('SELECT COUNT(*) FROM User');
       console.log('👥 מספר משתמשים:', userCount.rows[0].count);
     } catch (error) {
       console.error('❌ שגיאה בבדיקת טבלת User:', error.message);
@@ -517,7 +517,7 @@ app.get('/api/user-preferences/:userId', authenticateToken, async (req, res) => 
     let userResult;
     try {
       userResult = await pool.query(
-        'SELECT intensitylevel, height, weight, birthdate FROM "User" WHERE iduser = $1',
+        'SELECT intensitylevel, height, weight, birthdate FROM User WHERE iduser = $1',
         [userId]
       );
       console.log('📊 נתוני משתמש:', userResult.rows[0]);
@@ -602,21 +602,31 @@ app.get('/api/user-preferences/:userId', authenticateToken, async (req, res) => 
     }
 
     // המרת התוצאות למבנה הנכון
-    const selectedSports = preferencesResult.rows.map(row => ({
-      id: row.sporttype,  // שימוש ב-sporttype במקום id
-      name: row.name,
-      rank: row.rank,
-      selected: true
-    }));
+    console.log('📊 תוצאות גולמיות מהדאטהבייס:', preferencesResult.rows);
+    
+    const selectedSports = preferencesResult.rows.map(row => {
+      const sport = {
+        id: row.id || row.sporttype,  // תומך בשני הפורמטים
+        name: row.name,
+        rank: row.rank || row.preferencerank,  // תומך בשני הפורמטים
+        selected: true
+      };
+      console.log('🎯 ממפה ספורט:', row, '➡️', sport);
+      return sport;
+    });
     
     // יצירת מערך של כל הספורטים עם סימון אם הם נבחרים
     const allSportsWithSelection = allSportsResult.rows.map(sport => {
-      const isSelected = selectedSports.some(selected => selected.id === sport.id);
-      return {
-        ...sport,
+      const sportId = sport.id || sport.sporttype;  // תומך בשני הפורמטים
+      const isSelected = selectedSports.some(selected => selected.id === sportId);
+      const mappedSport = {
+        id: sportId,
+        name: sport.name || sport.sportname,  // תומך בשני הפורמטים
         selected: isSelected,
-        rank: isSelected ? selectedSports.find(s => s.id === sport.id).rank : null
+        rank: isSelected ? selectedSports.find(s => s.id === sportId).rank : null
       };
+      console.log('🎯 ממפה ספורט:', sport, '➡️', mappedSport);
+      return mappedSport;
     });
     
     // הכנת התשובה
@@ -687,20 +697,20 @@ app.put('/api/save-user-preferences/:userId', async (req, res) => {
 
     // בדיקה שהמשתמש קיים
     const userCheck = await pool.query(
-      'SELECT intensitylevel FROM "User" WHERE iduser = $1',
+      'SELECT intensitylevel FROM User WHERE iduser = $1',
       [userId]
     );
     console.log('🔍 נתוני משתמש לפני עדכון:', userCheck.rows[0]);
 
     // עדכון רמת עצימות
     await pool.query(
-      'UPDATE "User" SET intensitylevel = $1 WHERE iduser = $2 RETURNING *',
+      'UPDATE User SET intensitylevel = $1 WHERE iduser = $2 RETURNING *',
       [intensityLevel.toString(), userId]
     );
 
     // בדיקה שהעדכון הצליח
     const afterUpdate = await pool.query(
-      'SELECT intensitylevel FROM "User" WHERE iduser = $1',
+      'SELECT intensitylevel FROM User WHERE iduser = $1',
       [userId]
     );
     console.log('✅ נתוני משתמש אחרי עדכון:', afterUpdate.rows[0]);
