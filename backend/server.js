@@ -244,26 +244,159 @@ app.post('/api/google-login', async (req, res) => {  // הסרנו את loginLim
       });
     }
     
-    // בדיקה שהטבלה קיימת
+    // בדיקה ויצירת טבלאות חסרות
     try {
-      const tableCheck = await readyPool.query(`
+      // בדיקה אם טבלת User קיימת
+      const userTableCheck = await readyPool.query(`
         SELECT EXISTS (
           SELECT FROM information_schema.tables 
           WHERE table_name = 'user'
         );
       `);
-      if (!tableCheck.rows[0].exists) {
-        console.error('❌ טבלת User לא קיימת');
-        return res.status(500).json({
-          success: false,
-          message: 'שגיאה במבנה הדאטהבייס'
-        });
+      
+      // אם הטבלה לא קיימת, ניצור אותה
+      if (!userTableCheck.rows[0].exists) {
+        console.log('⚠️ טבלת User חסרה, יוצר אותה...');
+        await readyPool.query(`
+          CREATE TABLE IF NOT EXISTS "User" (
+            iduser SERIAL PRIMARY KEY,
+            name VARCHAR(50),
+            email VARCHAR(100) UNIQUE NOT NULL,
+            height INTEGER,
+            weight INTEGER,
+            birthdate DATE,
+            intensitylevel VARCHAR(20) DEFAULT 'medium',
+            googleid VARCHAR(255) UNIQUE,
+            picture VARCHAR(500)
+          );
+        `);
+        console.log('✅ טבלת User נוצרה בהצלחה');
       }
+
+      // בדיקה אם טבלת SportTypes קיימת
+      const sportTypesCheck = await readyPool.query(`
+        SELECT EXISTS (
+          SELECT FROM information_schema.tables 
+          WHERE table_name = 'sporttypes'
+        );
+      `);
+      
+      // אם הטבלה לא קיימת, ניצור אותה
+      if (!sportTypesCheck.rows[0].exists) {
+        console.log('⚠️ טבלת SportTypes חסרה, יוצר אותה...');
+        await readyPool.query(`
+          CREATE TABLE IF NOT EXISTS sporttypes (
+            sporttype SERIAL PRIMARY KEY,
+            sportname VARCHAR(50) NOT NULL
+          );
+
+          INSERT INTO sporttypes (sportname) VALUES 
+            ('כדורגל'),
+            ('כדורסל'),
+            ('טיפוס'),
+            ('חדר כושר'),
+            ('קורדינציה'),
+            ('טניס'),
+            ('פינגפונג'),
+            ('ריקוד'),
+            ('אופניים')
+          ON CONFLICT DO NOTHING;
+        `);
+        console.log('✅ טבלת SportTypes נוצרה בהצלחה');
+      }
+
+      // בדיקה אם טבלת UserPreferences קיימת
+      const preferencesCheck = await readyPool.query(`
+        SELECT EXISTS (
+          SELECT FROM information_schema.tables 
+          WHERE table_name = 'userpreferences'
+        );
+      `);
+      
+      // אם הטבלה לא קיימת, ניצור אותה
+      if (!preferencesCheck.rows[0].exists) {
+        console.log('⚠️ טבלת UserPreferences חסרה, יוצר אותה...');
+        await readyPool.query(`
+          CREATE TABLE IF NOT EXISTS userpreferences (
+            id SERIAL PRIMARY KEY,
+            iduser INTEGER REFERENCES "User"(iduser) ON DELETE CASCADE,
+            sporttype INTEGER REFERENCES sporttypes(sporttype),
+            preferencerank INTEGER
+          );
+        `);
+        console.log('✅ טבלת UserPreferences נוצרה בהצלחה');
+      }
+
+      // בדיקה והוספת עמודות חסרות
+      try {
+      // בדיקת עמודות חסרות בטבלת User
+      const columnsCheck = await readyPool.query(`
+        SELECT column_name 
+        FROM information_schema.columns 
+        WHERE table_name = 'user';
+      `);
+      
+      const existingColumns = columnsCheck.rows.map(row => row.column_name);
+      console.log('📊 עמודות קיימות בטבלת User:', existingColumns);
+
+      // הוספת עמודת googleid אם חסרה
+      if (!existingColumns.includes('googleid')) {
+        console.log('⚠️ עמודת googleid חסרה, מוסיף אותה...');
+        await readyPool.query(`
+          ALTER TABLE "User"
+          ADD COLUMN googleid VARCHAR(255) UNIQUE;
+        `);
+        console.log('✅ עמודת googleid נוספה בהצלחה');
+      }
+
+      // הוספת עמודת picture אם חסרה
+      if (!existingColumns.includes('picture')) {
+        console.log('⚠️ עמודת picture חסרה, מוסיף אותה...');
+        await readyPool.query(`
+          ALTER TABLE "User"
+          ADD COLUMN picture VARCHAR(500);
+        `);
+        console.log('✅ עמודת picture נוספה בהצלחה');
+      }
+
+      // עדכון המשתמש הקיים עם ה-googleid אם צריך
+      if (googleData && googleData.sub) {
+        console.log('🔄 מעדכן googleid למשתמש קיים...');
+        await readyPool.query(`
+          UPDATE "User"
+          SET googleid = $1, picture = $2
+          WHERE email = $3 AND (googleid IS NULL OR googleid != $1)
+        `, [googleData.sub, googleData.picture, googleData.email]);
+        console.log('✅ פרטי המשתמש עודכנו בהצלחה');
+      }
+      
+      // המשך הקוד...
+
+      // בדיקה אם העמודה picture קיימת
+      const pictureCheck = await readyPool.query(`
+        SELECT EXISTS (
+          SELECT column_name 
+          FROM information_schema.columns 
+          WHERE table_name = 'user' 
+          AND column_name = 'picture'
+        );
+      `);
+      
+      // אם העמודה לא קיימת, נוסיף אותה
+      if (!pictureCheck.rows[0].exists) {
+        console.log('⚠️ עמודת picture חסרה, מוסיף אותה...');
+        await readyPool.query(`
+          ALTER TABLE "User"
+          ADD COLUMN picture VARCHAR(500);
+        `);
+        console.log('✅ עמודת picture נוספה בהצלחה');
+      }
+
     } catch (error) {
-      console.error('❌ שגיאה בבדיקת טבלת User:', error);
+      console.error('❌ שגיאה בבדיקת/הוספת עמודות:', error);
       return res.status(500).json({
         success: false,
-        message: 'שגיאה בבדיקת מבנה הדאטהבייס',
+        message: 'שגיאה בעדכון מבנה הדאטהבייס',
         error: error.message
       });
     }
