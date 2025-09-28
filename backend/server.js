@@ -24,6 +24,7 @@ app.use(express.json({ limit: '10mb' }));
 app.use(express.urlencoded({ extended: true, limit: '10mb' }));
 
 // CORS configuration
+// CORS configuration
 app.use(cors({
   origin: [
     'http://localhost:3000',
@@ -32,8 +33,13 @@ app.use(cors({
   ],
   credentials: true,
   methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
-  allowedHeaders: ['Content-Type', 'Authorization']
+  allowedHeaders: ['Content-Type', 'Authorization'],
+  exposedHeaders: ['Access-Control-Allow-Origin'],
+  maxAge: 600
 }));
+
+// Enable pre-flight requests for all routes
+app.options('*', cors());
 
 // Rate limiting
 const loginLimiter = rateLimit({
@@ -384,6 +390,13 @@ app.post('/api/register', async (req, res) => {
 app.get('/api/user-preferences/:userId', async (req, res) => {
   try {
     const { userId } = req.params;
+    if (!userId) {
+      console.error('❌ לא התקבל מזהה משתמש');
+      return res.status(400).json({
+        success: false,
+        message: 'מזהה משתמש נדרש'
+      });
+    }
     console.log('🔍 מחפש משתמש:', userId);
     
     // שליפת נתוני משתמש
@@ -402,25 +415,45 @@ app.get('/api/user-preferences/:userId', async (req, res) => {
 
     // שליפת כל סוגי הספורט
     console.log('🔍 שולף את כל סוגי הספורט מהדאטהבייס...');
-    const allSportsResult = await pool.query(
-      'SELECT "sportType" as id, "sportName" as name FROM "SportTypes" ORDER BY "sportType"'
-    );
-    console.log('📊 נמצאו', allSportsResult.rows.length, 'סוגי ספורט');
+    let allSportsResult;
+    try {
+      allSportsResult = await pool.query(
+        'SELECT "sportType" as id, "sportName" as name FROM "SportTypes" ORDER BY "sportType"'
+      );
+      console.log('📊 נמצאו', allSportsResult.rows.length, 'סוגי ספורט');
+    } catch (dbError) {
+      console.error('❌ שגיאה בשליפת סוגי ספורט:', dbError);
+      return res.status(500).json({
+        success: false,
+        message: 'שגיאה בשליפת סוגי ספורט',
+        error: dbError.message
+      });
+    }
 
     // שליפת העדפות ספורט של המשתמש
     console.log('🔍 שולף העדפות ספורט למשתמש:', userId);
-    const preferencesResult = await pool.query(
-      `SELECT 
-        up."sportType" as id, 
-        up."preferenceRank" as rank, 
-        st."sportName" as name
-       FROM "UserPreferences" up 
-       JOIN "SportTypes" st ON up."sportType" = st."sportType" 
-       WHERE up."idUser" = $1 
-       ORDER BY up."preferenceRank"`,
-      [userId]
-    );
-    console.log('📊 נמצאו', preferencesResult.rows.length, 'העדפות ספורט');
+    let preferencesResult;
+    try {
+      preferencesResult = await pool.query(
+        `SELECT 
+          up."sportType" as id, 
+          up."preferenceRank" as rank, 
+          st."sportName" as name
+         FROM "UserPreferences" up 
+         JOIN "SportTypes" st ON up."sportType" = st."sportType" 
+         WHERE up."idUser" = $1 
+         ORDER BY up."preferenceRank"`,
+        [userId]
+      );
+      console.log('📊 נמצאו', preferencesResult.rows.length, 'העדפות ספורט');
+    } catch (dbError) {
+      console.error('❌ שגיאה בשליפת העדפות ספורט:', dbError);
+      return res.status(500).json({
+        success: false,
+        message: 'שגיאה בשליפת העדפות ספורט',
+        error: dbError.message
+      });
+    }
 
     // המרת התוצאות למבנה הנכון
     const selectedSports = preferencesResult.rows.map(row => ({
