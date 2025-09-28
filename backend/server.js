@@ -404,20 +404,20 @@ app.get('/api/user-preferences/:userId', async (req, res) => {
 
     // שליפת כל סוגי הספורט
     const allSportsResult = await pool.query(
-      'SELECT sporttype as id, sportname as name FROM sporttypes ORDER BY sporttype'
+      'SELECT "sportType" as id, "sportName" as name FROM "SportTypes" ORDER BY "sportType"'
     );
     console.log('📊 כל סוגי הספורט:', allSportsResult.rows);
 
     // שליפת העדפות ספורט של המשתמש
     const preferencesResult = await pool.query(
       `SELECT 
-        up.sporttype as id, 
-        up.preferencerank as rank, 
-        st.sportname as name
-       FROM userpreferences up 
-       JOIN sporttypes st ON up.sporttype = st.sporttype 
-       WHERE up.iduser = $1 
-       ORDER BY up.preferencerank`,
+        up."sportType" as id, 
+        up."preferenceRank" as rank, 
+        st."sportName" as name
+       FROM "UserPreferences" up 
+       JOIN "SportTypes" st ON up."sportType" = st."sportType" 
+       WHERE up."idUser" = $1 
+       ORDER BY up."preferenceRank"`,
       [userId]
     );
     console.log('📊 העדפות ספורט של המשתמש:', preferencesResult.rows);
@@ -522,7 +522,7 @@ app.put('/api/save-user-preferences/:userId', async (req, res) => {
     // מחיקת העדפות קיימות
     console.log('🗑️ מוחק העדפות קיימות למשתמש:', userId);
     await pool.query(
-      'DELETE FROM userpreferences WHERE iduser = $1',
+      'DELETE FROM "UserPreferences" WHERE "idUser" = $1',
       [userId]
     );
     
@@ -534,7 +534,7 @@ app.put('/api/save-user-preferences/:userId', async (req, res) => {
       if (typeof selectedSports[0] === 'object') {
         for (let i = 0; i < selectedSports.length; i++) {
           await pool.query(
-            'INSERT INTO userpreferences (iduser, sporttype, preferencerank) VALUES ($1, $2, $3)',
+            'INSERT INTO "UserPreferences" ("idUser", "sportType", "preferenceRank") VALUES ($1, $2, $3)',
             [userId, selectedSports[i].id, selectedSports[i].rank || (i + 1)]
           );
         }
@@ -543,7 +543,7 @@ app.put('/api/save-user-preferences/:userId', async (req, res) => {
       else {
         for (let i = 0; i < selectedSports.length; i++) {
           await pool.query(
-            'INSERT INTO userpreferences (iduser, sporttype, preferencerank) VALUES ($1, $2, $3)',
+            'INSERT INTO "UserPreferences" ("idUser", "sportType", "preferenceRank") VALUES ($1, $2, $3)',
             [userId, selectedSports[i], i + 1]
           );
         }
