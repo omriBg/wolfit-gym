@@ -380,6 +380,70 @@ app.post('/api/register', async (req, res) => {
   }
 });
 
+// קבלת העדפות ספורט של משתמש
+app.get('/api/user-preferences/:userId', authenticateToken, async (req, res) => {
+  try {
+    const userId = req.params.userId;
+    
+    // בדיקה שה-userId מהtoken תואם לבקשה
+    if (req.user.userId != userId) {
+      return res.status(403).json({
+        success: false,
+        message: 'אין הרשאה לצפות בהעדפות של משתמש אחר'
+      });
+    }
+
+    // שליפת העדפות הספורט
+    const preferences = await pool.query(
+      `SELECT up.*, st.sportname, st.sporttype
+       FROM userpreferences up
+       JOIN sporttypes st ON up.sporttype = st.sporttype
+       WHERE up.iduser = $1
+       ORDER BY up.preferencerank`,
+      [userId]
+    );
+
+    // שליפת פרטי המשתמש
+    const userDetails = await pool.query(
+      'SELECT height, weight, birthdate, intensitylevel FROM "User" WHERE iduser = $1',
+      [userId]
+    );
+
+    res.json({
+      success: true,
+      preferences: preferences.rows,
+      userDetails: userDetails.rows[0]
+    });
+
+  } catch (error) {
+    console.error('❌ שגיאה בשליפת העדפות:', error);
+    res.status(500).json({
+      success: false,
+      message: 'שגיאה בשליפת העדפות המשתמש'
+    });
+  }
+});
+
+// קבלת כל סוגי הספורט
+app.get('/api/sports', async (req, res) => {
+  try {
+    const sports = await pool.query(
+      'SELECT * FROM sporttypes ORDER BY sporttype'
+    );
+    
+    res.json({
+      success: true,
+      sports: sports.rows
+    });
+  } catch (error) {
+    console.error('❌ שגיאה בשליפת סוגי ספורט:', error);
+    res.status(500).json({
+      success: false,
+      message: 'שגיאה בשליפת סוגי הספורט'
+    });
+  }
+});
+
 // Root route
 app.get('/', (req, res) => {
   res.json({
