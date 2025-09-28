@@ -1,50 +1,42 @@
 // utils/database.js - ניהול חיבורי מסד נתונים מתקדם
 const { Pool } = require('pg');
-const dns = require('dns');
-const { promisify } = require('util');
 const logger = require('./logger');
 
-// פונקציה להמרת host ל-IPv4
-const lookup = promisify(dns.lookup);
-
 // הגדרות connection pooling מתקדמות
-// תמיכה ב-Supabase connection string או משתנים נפרדים
 let dbConfig;
 
 if (process.env.DATABASE_URL) {
-  // אם יש connection string מלא (כמו ב-Supabase)
+  // וודא שאנחנו משתמשים ב-postgresql:// ולא postgres://
   let connectionString = process.env.DATABASE_URL;
-  
-  // כפיית IPv4 עבור Supabase
-  if (connectionString.includes('pooler.supabase.com')) {
-    console.log('🔧 Using Supabase Transaction Pooler (IPv4 compatible)');
-  } else if (connectionString.includes('supabase.co')) {
-    console.log('🔧 Using Supabase Direct Connection');
+  if (connectionString.startsWith('postgres://')) {
+    connectionString = connectionString.replace('postgres://', 'postgresql://');
   }
+
+  // הסר sslmode=verify-full אם קיים
+  connectionString = connectionString.replace('?sslmode=verify-full', '');
+  connectionString = connectionString.replace('?sslmode=prefer', '');
   
+  // הוסף sslmode=require
+  if (!connectionString.includes('sslmode=')) {
+    connectionString += '?sslmode=require';
+  }
+
   dbConfig = {
-    connectionString: connectionString,
+    connectionString,
     ssl: {
       rejectUnauthorized: false
     },
     // הגדרות connection pooling
-    max: 20,
-    min: 2,
+    max: 10,
+    min: 1,
     idleTimeoutMillis: 30000,
-    connectionTimeoutMillis: 10000,
-    acquireTimeoutMillis: 60000,
+    connectionTimeoutMillis: 15000,
     // הגדרות נוספות לחיבור יציב
     keepAlive: true,
-    keepAliveInitialDelayMillis: 0,
-    // כפיית IPv4 נוספת
-    lookup: (hostname, options, callback) => {
-      const dns = require('dns');
-      console.log('🔍 DNS lookup for:', hostname, 'forcing IPv4');
-      dns.lookup(hostname, { family: 4 }, callback);
-    }
+    keepAliveInitialDelayMillis: 0
   };
 } else {
-  // משתנים נפרדים - נוסיף הגדרות DNS ספציפיות
+  // משתנים נפרדים
   dbConfig = {
     user: process.env.DB_USER,
     password: process.env.DB_PASSWORD,
@@ -55,74 +47,30 @@ if (process.env.DATABASE_URL) {
       rejectUnauthorized: false
     },
     // הגדרות connection pooling
-    max: 20,
-    min: 2,
+    max: 10,
+    min: 1,
     idleTimeoutMillis: 30000,
-    connectionTimeoutMillis: 10000,
-    acquireTimeoutMillis: 60000,
-    // כפיית IPv4 עבור Supabase
-    family: 4,
+    connectionTimeoutMillis: 15000,
     // הגדרות נוספות לחיבור יציב
     keepAlive: true,
-    keepAliveInitialDelayMillis: 0,
-    // הגדרות DNS ספציפיות
-    lookup: require('dns').lookup,
+    keepAliveInitialDelayMillis: 0
   };
 }
 
 // Log connection details (without password)
-if (dbConfig.connectionString) {
-  console.log('🔌 Database connection details:', {
-    connectionString: '***HIDDEN***',
-    ssl: dbConfig.ssl
-  });
-} else {
-  console.log('🔌 Database connection details:', {
-    host: dbConfig.host,
-    port: dbConfig.port,
-    database: dbConfig.database,
-    user: dbConfig.user,
-    ssl: dbConfig.ssl
-  });
-}
+console.log('🔌 Database connection details:', {
+  connectionString: dbConfig.connectionString ? '***HIDDEN***' : undefined,
+  host: dbConfig.host,
+  port: dbConfig.port,
+  database: dbConfig.database,
+  user: dbConfig.user,
+  ssl: dbConfig.ssl,
+  maxConnections: dbConfig.max,
+  minConnections: dbConfig.min
+});
 
-// יצירת pool עם retry mechanism
-let pool;
-
-// פונקציה לאתחול ה-pool עם retry mechanism
-async function initializePool() {
-  let attempts = 0;
-  const maxAttempts = 3;
-  
-  while (attempts < maxAttempts) {
-    try {
-      console.log(`🔍 Attempting to initialize pool (attempt ${attempts + 1}/${maxAttempts})`);
-      pool = new Pool(dbConfig);
-      
-      // בדיקת חיבור
-      console.log('🔍 Testing connection...');
-      const client = await pool.connect();
-      await client.query('SELECT 1');
-      client.release();
-      
-      console.log('✅ Database pool initialized and tested successfully');
-      return;
-    } catch (error) {
-      attempts++;
-      console.error(`❌ Failed to initialize database pool (attempt ${attempts}):`, error.message);
-      
-      if (attempts < maxAttempts) {
-        console.log(`⏳ Retrying in 2 seconds...`);
-        await new Promise(resolve => setTimeout(resolve, 2000));
-      } else {
-        console.error('❌ All attempts failed, using last attempt pool');
-        if (!pool) {
-          pool = new Pool(dbConfig);
-        }
-      }
-    }
-  }
-}
+// יצירת pool ישירות ללא בדיקות
+const pool = new Pool(dbConfig);
 
 // פונקציה לחיבור event listeners
 function setupPoolEventListeners(poolInstance) {
@@ -161,37 +109,21 @@ function setupPoolEventListeners(poolInstance) {
   });
 }
 
-// אתחול ה-pool
-initializePool().then(() => {
-  if (pool) {
-    setupPoolEventListeners(pool);
-    console.log('✅ Pool initialization completed and ready for use');
-  }
-}).catch((error) => {
-  console.error('❌ Failed to initialize pool, creating fallback pool:', error);
-  // fallback ל-pool רגיל
-  pool = new Pool(dbConfig);
-  setupPoolEventListeners(pool);
-  console.log('✅ Fallback pool created and ready for use');
-});
+// הגדר event listeners
+setupPoolEventListeners(pool);
 
 // פונקציה להמתנה ל-pool להיות מוכן
 const waitForPoolReady = async () => {
-  let attempts = 0;
-  const maxAttempts = 30; // 30 שניות
-  
-  while (!pool && attempts < maxAttempts) {
-    console.log(`⏳ ממתין ל-pool להיות מוכן... ניסיון ${attempts + 1}/${maxAttempts}`);
-    await new Promise(resolve => setTimeout(resolve, 1000));
-    attempts++;
+  try {
+    const client = await pool.connect();
+    await client.query('SELECT 1');
+    client.release();
+    console.log('✅ Pool מוכן לשימוש');
+    return pool;
+  } catch (error) {
+    console.error('❌ Pool connection test failed:', error.message);
+    throw error;
   }
-  
-  if (!pool) {
-    throw new Error('Pool לא התאתחל אחרי 30 שניות');
-  }
-  
-  console.log('✅ Pool מוכן לשימוש');
-  return pool;
 };
 
 // פונקציה לבדיקת חיבור

@@ -5,19 +5,6 @@ require('dotenv').config();
 const dns = require('dns');
 dns.setDefaultResultOrder('ipv4first');
 
-// בדיקת connection string
-if (process.env.DATABASE_URL) {
-  if (!process.env.DATABASE_URL.includes('sslmode=')) {
-    process.env.DATABASE_URL += '?sslmode=prefer';
-  }
-  
-  if (process.env.DATABASE_URL.includes('pooler.supabase.com')) {
-    console.log('🔧 Using Supabase Transaction Pooler');
-  } else {
-    console.log('⚠️ Using Direct Connection - consider switching to Transaction Pooler');
-  }
-}
-
 const express = require('express');
 const cors = require('cors');
 const jwt = require('jsonwebtoken');
@@ -101,7 +88,7 @@ if (process.env.DATABASE_URL) {
   console.log('✅ DATABASE_URL קיים, משתמש ב-connection string');
 } else if (process.env.DB_HOST && process.env.DB_NAME && process.env.DB_USER && process.env.DB_PASSWORD) {
   console.log('✅ משתני סביבה נפרדים קיימים');
-    } else {
+} else {
   console.error('❌ שגיאה קריטית: משתני סביבה חסרים למסד הנתונים:', [
     'DB_HOST', 'DB_NAME', 'DB_USER', 'DB_PASSWORD'
   ].filter(key => !process.env[key]));
@@ -117,14 +104,14 @@ app.get('/health', async (req, res) => {
   try {
     const dbStatus = await testConnection();
     res.json({
-      status: dbStatus ? 'healthy' : 'unhealthy',
+      status: dbStatus.success ? 'healthy' : 'unhealthy',
       timestamp: new Date().toISOString(),
       uptime: process.uptime(),
       version: '1.0.0',
       environment: process.env.NODE_ENV || 'development',
       database: {
-        status: dbStatus ? 'connected' : 'disconnected',
-        error: dbStatus ? null : 'Connection failed'
+        status: dbStatus.success ? 'connected' : 'disconnected',
+        error: dbStatus.success ? null : dbStatus.error
       }
     });
   } catch (error) {
@@ -151,16 +138,16 @@ app.get('/ready', async (req, res) => {
       waitingCount: pool.waitingCount
     } : null;
   
-  res.json({
-      ready: dbStatus && pool,
+    res.json({
+      ready: dbStatus.success && pool,
       timestamp: new Date().toISOString(),
       checks: {
-        database: dbStatus,
+        database: dbStatus.success,
         pool: !!pool,
         memory: process.memoryUsage().heapUsed < 100 * 1024 * 1024 // 100MB
       },
       details: {
-        database: dbStatus ? 'Connected' : 'Disconnected',
+        database: dbStatus.success ? 'Connected' : 'Disconnected',
         pool: poolStats,
         memory: Math.round(process.memoryUsage().heapUsed / 1024 / 1024) + 'MB'
       }
@@ -281,7 +268,7 @@ console.log('✅ Google Login API ready');
 
 // Root route
 app.get('/', (req, res) => {
-    res.json({
+  res.json({
     message: 'Wolfit Gym Backend API',
     version: '1.0.0',
     status: 'running',
