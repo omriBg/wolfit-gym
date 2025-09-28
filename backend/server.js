@@ -301,6 +301,27 @@ app.post('/api/register', async (req, res) => {
       });
     }
 
+    // המרת תאריך לפורמט הנכון
+    let formattedBirthdate = null;
+    if (birthdate) {
+      const [day, month, year] = birthdate.split('/');
+      formattedBirthdate = `${year}-${month}-${day}`;
+    }
+
+    // המרת ערכים למספרים
+    const heightNum = height ? parseInt(height) : null;
+    const weightNum = weight ? parseInt(weight) : null;
+
+    console.log('📝 נתונים מעובדים:', {
+      userName,
+      email,
+      height: heightNum,
+      weight: weightNum,
+      birthdate: formattedBirthdate,
+      intensityLevel,
+      googleId
+    });
+
     // יצירת משתמש חדש
     const newUser = await pool.query(
       `INSERT INTO "User" (
@@ -310,10 +331,10 @@ app.post('/api/register', async (req, res) => {
       [
         userName,
         email,
-        height || null,
-        weight || null,
-        birthdate || null,
-        intensityLevel || 'medium',
+        heightNum,
+        weightNum,
+        formattedBirthdate,
+        intensityLevel.toString() || 'medium',
         googleId || null
       ]
     );
