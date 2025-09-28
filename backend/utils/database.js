@@ -8,53 +8,65 @@ const logger = require('./logger');
 const lookup = promisify(dns.lookup);
 
 // הגדרות connection pooling מתקדמות
+// תמיכה ב-Supabase connection string או משתנים נפרדים
 let dbConfig;
 
 if (process.env.DATABASE_URL) {
   // אם יש connection string מלא (כמו ב-Supabase)
   let connectionString = process.env.DATABASE_URL;
   
-  // החלף postgres:// ל-postgresql://
-  if (connectionString.startsWith('postgres://')) {
-    connectionString = connectionString.replace('postgres://', 'postgresql://');
+  // כפיית IPv4 עבור Supabase
+  if (connectionString.includes('pooler.supabase.com')) {
+    console.log('🔧 Using Supabase Transaction Pooler (IPv4 compatible)');
+  } else if (connectionString.includes('supabase.co')) {
+    console.log('🔧 Using Supabase Direct Connection');
   }
   
-  // זיהוי סוג החיבור
-  if (connectionString.includes('pooler.supabase.com')) {
-    console.log('🔧 Using Supabase Pooler');
-  } else if (connectionString.includes('supabase.co')) {
-    console.log('⚠️ Using Supabase Direct Connection');
-  }
-
   dbConfig = {
     connectionString: connectionString,
-    ssl: true,
+    ssl: {
+      rejectUnauthorized: false
+    },
     // הגדרות connection pooling
-    max: 10,
-    min: 1,
+    max: 20,
+    min: 2,
     idleTimeoutMillis: 30000,
-    connectionTimeoutMillis: 15000,
+    connectionTimeoutMillis: 10000,
+    acquireTimeoutMillis: 60000,
     // הגדרות נוספות לחיבור יציב
     keepAlive: true,
-    keepAliveInitialDelayMillis: 0
+    keepAliveInitialDelayMillis: 0,
+    // כפיית IPv4 נוספת
+    lookup: (hostname, options, callback) => {
+      const dns = require('dns');
+      console.log('🔍 DNS lookup for:', hostname, 'forcing IPv4');
+      dns.lookup(hostname, { family: 4 }, callback);
+    }
   };
 } else {
-  // משתנים נפרדים
+  // משתנים נפרדים - נוסיף הגדרות DNS ספציפיות
   dbConfig = {
     user: process.env.DB_USER,
     password: process.env.DB_PASSWORD,
     host: process.env.DB_HOST,
     port: process.env.DB_PORT || 5432,
     database: process.env.DB_NAME,
-    ssl: true,
+    ssl: {
+      rejectUnauthorized: false
+    },
     // הגדרות connection pooling
-    max: 10,
-    min: 1,
+    max: 20,
+    min: 2,
     idleTimeoutMillis: 30000,
-    connectionTimeoutMillis: 15000,
+    connectionTimeoutMillis: 10000,
+    acquireTimeoutMillis: 60000,
+    // כפיית IPv4 עבור Supabase
+    family: 4,
     // הגדרות נוספות לחיבור יציב
     keepAlive: true,
-    keepAliveInitialDelayMillis: 0
+    keepAliveInitialDelayMillis: 0,
+    // הגדרות DNS ספציפיות
+    lookup: require('dns').lookup,
   };
 }
 
@@ -62,9 +74,7 @@ if (process.env.DATABASE_URL) {
 if (dbConfig.connectionString) {
   console.log('🔌 Database connection details:', {
     connectionString: '***HIDDEN***',
-    ssl: dbConfig.ssl,
-    maxConnections: dbConfig.max,
-    minConnections: dbConfig.min
+    ssl: dbConfig.ssl
   });
 } else {
   console.log('🔌 Database connection details:', {
@@ -92,12 +102,11 @@ async function initializePool() {
       // בדיקת חיבור
       console.log('🔍 Testing connection...');
       const client = await pool.connect();
-      console.log('✅ Connected to database, testing query...');
       await client.query('SELECT 1');
       client.release();
       
       console.log('✅ Database pool initialized and tested successfully');
-      return pool;
+      return;
     } catch (error) {
       attempts++;
       console.error(`❌ Failed to initialize database pool (attempt ${attempts}):`, error.message);
@@ -105,40 +114,14 @@ async function initializePool() {
       if (attempts < maxAttempts) {
         console.log(`⏳ Retrying in 2 seconds...`);
         await new Promise(resolve => setTimeout(resolve, 2000));
-        
-        // נסיון שני עם SSL מותאם
-        if (attempts === 2) {
-          console.log('🔄 Trying with modified SSL config...');
-          dbConfig.ssl = {
-            rejectUnauthorized: false
-          };
-        }
       } else {
-        console.error('❌ All attempts failed, using fallback configuration');
-        // נסיון אחרון עם תצורה מינימלית
-        const fallbackConfig = {
-          ...dbConfig,
-          ssl: {
-            rejectUnauthorized: false
-          },
-          max: 5,
-          min: 0,
-          idleTimeoutMillis: 10000,
-          connectionTimeoutMillis: 10000
-        };
-        
-        try {
-          console.log('🔄 Attempting connection with fallback configuration...');
-          pool = new Pool(fallbackConfig);
-          return pool;
-        } catch (fallbackError) {
-          console.error('❌ Fallback configuration failed:', fallbackError.message);
-          throw fallbackError;
+        console.error('❌ All attempts failed, using last attempt pool');
+        if (!pool) {
+          pool = new Pool(dbConfig);
         }
       }
     }
   }
-  return pool;
 }
 
 // פונקציה לחיבור event listeners
@@ -179,14 +162,17 @@ function setupPoolEventListeners(poolInstance) {
 }
 
 // אתחול ה-pool
-initializePool().then((initializedPool) => {
-  if (initializedPool) {
-    pool = initializedPool;
+initializePool().then(() => {
+  if (pool) {
     setupPoolEventListeners(pool);
     console.log('✅ Pool initialization completed and ready for use');
   }
 }).catch((error) => {
-  console.error('❌ Failed to initialize pool:', error);
+  console.error('❌ Failed to initialize pool, creating fallback pool:', error);
+  // fallback ל-pool רגיל
+  pool = new Pool(dbConfig);
+  setupPoolEventListeners(pool);
+  console.log('✅ Fallback pool created and ready for use');
 });
 
 // פונקציה להמתנה ל-pool להיות מוכן
@@ -201,32 +187,11 @@ const waitForPoolReady = async () => {
   }
   
   if (!pool) {
-    console.error('❌ Pool initialization timeout after 30 seconds');
     throw new Error('Pool לא התאתחל אחרי 30 שניות');
   }
   
-  // נסה להתחבר לוודא שה-pool עובד
-  try {
-    const client = await pool.connect();
-    await client.query('SELECT 1');
-    client.release();
-    console.log('✅ Pool מוכן לשימוש ונבדק בהצלחה');
-    return pool;
-  } catch (error) {
-    console.error('❌ Pool connection test failed:', error.message);
-    
-    // נסה שוב עם תצורת SSL מינימלית
-    console.log('🔄 Attempting connection with minimal SSL config...');
-    const minimalConfig = {
-      ...dbConfig,
-      ssl: {
-        rejectUnauthorized: false
-      }
-    };
-    
-    pool = new Pool(minimalConfig);
-    return pool;
-  }
+  console.log('✅ Pool מוכן לשימוש');
+  return pool;
 };
 
 // פונקציה לבדיקת חיבור
