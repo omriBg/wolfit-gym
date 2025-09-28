@@ -273,7 +273,7 @@ app.post('/api/google-login', async (req, res) => {  // הסרנו את loginLim
       
       // אם הטבלה לא קיימת, ניצור אותה
       if (!userTableCheck.rows[0].exists) {
-        console.log('⚠️ טבלת User חסרה, יוצר אותה...');
+        console.log('⚠️ טבלת User חסרה, יוצר אותה....');
         await readyPool.query(`
           CREATE TABLE IF NOT EXISTS "User" (
             iduser SERIAL PRIMARY KEY,
