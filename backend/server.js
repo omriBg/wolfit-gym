@@ -491,19 +491,32 @@ app.get('/api/user-preferences/:userId', authenticateToken, async (req, res) => 
     // בדיקת תוכן הטבלאות
     console.log('🔍 בודק תוכן טבלאות...');
     
-    const userCount = await pool.query('SELECT COUNT(*) FROM "User"');
-    console.log('👥 מספר משתמשים:', userCount.rows[0].count);
+    try {
+      const userCount = await pool.query('SELECT COUNT(*) FROM "User"');
+      console.log('👥 מספר משתמשים:', userCount.rows[0].count);
+    } catch (error) {
+      console.error('❌ שגיאה בבדיקת טבלת User:', error.message);
+    }
     
-    const prefsCount = await pool.query('SELECT COUNT(*) FROM userpreferences');
-    console.log('📋 מספר העדפות:', prefsCount.rows[0].count);
+    try {
+      const prefsCount = await pool.query('SELECT COUNT(*) FROM userpreferences');
+      console.log('📋 מספר העדפות:', prefsCount.rows[0].count);
+    } catch (error) {
+      console.error('❌ שגיאה בבדיקת טבלת userpreferences:', error.message);
+    }
     
-    const sportsCount = await pool.query('SELECT COUNT(*) FROM sporttypes');
-    console.log('🎯 מספר סוגי ספורט:', sportsCount.rows[0].count);
+    try {
+      const sportsCount = await pool.query('SELECT COUNT(*) FROM sporttypes');
+      console.log('🎯 מספר סוגי ספורט:', sportsCount.rows[0].count);
+    } catch (error) {
+      console.error('❌ שגיאה בבדיקת טבלת sporttypes:', error.message);
+    }
 
     // שליפת נתוני משתמש
     console.log('🔍 מנסה לשלוף נתוני משתמש עבור ID:', userId);
+    let userResult;
     try {
-      const userResult = await pool.query(
+      userResult = await pool.query(
         'SELECT intensitylevel, height, weight, birthdate FROM "User" WHERE iduser = $1',
         [userId]
       );
