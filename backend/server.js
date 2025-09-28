@@ -389,6 +389,9 @@ app.post('/api/register', async (req, res) => {
 // קבלת העדפות ספורט של משתמש
 app.get('/api/user-preferences/:userId', authenticateToken, async (req, res) => {
   try {
+    console.log('=== התחלת בקשת העדפות משתמש ===');
+    console.log('🔑 פרטי משתמש מהטוקן:', req.user);
+    console.log('📝 פרמטרים מהבקשה:', req.params);
     const { userId } = req.params;
     if (!userId) {
       console.error('❌ לא התקבל מזהה משתמש');
@@ -402,6 +405,17 @@ app.get('/api/user-preferences/:userId', authenticateToken, async (req, res) => 
     console.log('🔍 מתחיל לבדוק את חיבור הדאטהבייס...');
     const dbCheck = await pool.query('SELECT NOW()');
     console.log('✅ חיבור לדאטהבייס תקין');
+    
+    // בדיקת חיבור לדאטהבייס
+    const dbConfig = {
+      host: process.env.DB_HOST || process.env.DATABASE_URL,
+      database: process.env.DB_NAME,
+      user: process.env.DB_USER
+    };
+    console.log('📊 הגדרות דאטהבייס:', {
+      ...dbConfig,
+      password: '***hidden***'
+    });
 
     // בדיקת טבלאות
     console.log('🔍 בודק אילו טבלאות קיימות...');
@@ -411,6 +425,18 @@ app.get('/api/user-preferences/:userId', authenticateToken, async (req, res) => 
       WHERE table_schema = 'public'
     `);
     console.log('📊 טבלאות קיימות:', tablesCheck.rows.map(row => row.table_name));
+
+    // בדיקת תוכן הטבלאות
+    console.log('🔍 בודק תוכן טבלאות...');
+    
+    const userCount = await pool.query('SELECT COUNT(*) FROM "User"');
+    console.log('👥 מספר משתמשים:', userCount.rows[0].count);
+    
+    const prefsCount = await pool.query('SELECT COUNT(*) FROM userpreferences');
+    console.log('📋 מספר העדפות:', prefsCount.rows[0].count);
+    
+    const sportsCount = await pool.query('SELECT COUNT(*) FROM sporttypes');
+    console.log('🎯 מספר סוגי ספורט:', sportsCount.rows[0].count);
 
     // שליפת נתוני משתמש
     console.log('🔍 מנסה לשלוף נתוני משתמש עבור ID:', userId);
