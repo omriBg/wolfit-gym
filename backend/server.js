@@ -194,7 +194,7 @@ app.post('/api/google-login', loginLimiter, async (req, res) => {
     
     // פענוח ה-credential מ-Google
     const googleData = jwt.decode(credential);
-      console.log('📦 Decoded Google data:', googleData);
+    console.log('📦 Decoded Google data:', googleData);
     
     if (!googleData || !googleData.sub || !googleData.email) {
       console.error('❌ נתוני Google לא תקינים:', { googleData });
@@ -211,12 +211,16 @@ app.post('/api/google-login', loginLimiter, async (req, res) => {
     });
 
     // המתנה ל-pool להיות מוכן
+    console.log('⏳ Waiting for pool to be ready...');
     const readyPool = await waitForPoolReady();
+    console.log('✅ Pool is ready, proceeding with database query');
     
+    console.log('🔍 Executing database query...');
     const existingUser = await readyPool.query(
       'SELECT * FROM "User" WHERE googleid = $1 OR email = $2',
       [googleData.sub, googleData.email]
     );
+    console.log('✅ Database query completed, found users:', existingUser.rows.length);
     
     let user;
     if (existingUser.rows.length > 0) {
@@ -234,24 +238,24 @@ app.post('/api/google-login', loginLimiter, async (req, res) => {
       console.log('✅ משתמש חדש נוצר:', user.email);
     }
       
-      // יצירת JWT token
-      const token = jwt.sign(
-        { 
-          userId: user.iduser,
-          email: user.email,
+    // יצירת JWT token
+    const token = jwt.sign(
+      { 
+        userId: user.iduser,
+        email: user.email,
         name: user.name 
-        },
-        JWT_SECRET,
+      },
+      JWT_SECRET,
       { expiresIn: '7d' }
-      );
+    );
       
     console.log('✅ Google login successful for user:', user.email);
       
-      res.json({
-        success: true,
+    res.json({
+      success: true,
       token,
-        user: {
-          id: user.iduser,
+      user: {
+        id: user.iduser,
         email: user.email,
         name: user.name,
         picture: user.picture
@@ -260,6 +264,11 @@ app.post('/api/google-login', loginLimiter, async (req, res) => {
 
   } catch (error) {
     console.error('❌ Google login error:', error);
+    console.error('❌ Error details:', {
+      message: error.message,
+      code: error.code,
+      stack: error.stack
+    });
     res.status(500).json({
       success: false,
       error: 'Google login failed',

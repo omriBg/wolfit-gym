@@ -68,7 +68,9 @@ if (process.env.DATABASE_URL) {
 if (dbConfig.connectionString) {
   console.log('🔌 Database connection details:', {
     connectionString: '***HIDDEN***',
-    ssl: dbConfig.ssl
+    ssl: dbConfig.ssl,
+    maxConnections: dbConfig.max,
+    minConnections: dbConfig.min
   });
 } else {
   console.log('🔌 Database connection details:', {
@@ -94,15 +96,22 @@ async function initializePool() {
       pool = new Pool(dbConfig);
       
       // בדיקת חיבור
+      console.log('🔍 Testing connection...');
       const client = await pool.connect();
+      console.log('✅ Connected to database, testing query...');
       await client.query('SELECT 1');
       client.release();
       
       console.log('✅ Database pool initialized and tested successfully');
-      return;
+      return pool;
     } catch (error) {
       attempts++;
       console.error(`❌ Failed to initialize database pool (attempt ${attempts}):`, error.message);
+      console.error('Error details:', {
+        code: error.code,
+        message: error.message,
+        stack: error.stack
+      });
       
       if (attempts < maxAttempts) {
         console.log(`⏳ Retrying in 2 seconds...`);
@@ -110,11 +119,22 @@ async function initializePool() {
       } else {
         console.error('❌ All attempts failed, using last attempt pool');
         if (!pool) {
-          pool = new Pool(dbConfig);
+          console.log('🔄 Creating final fallback pool...');
+          pool = new Pool({
+            ...dbConfig,
+            ssl: {
+              ...dbConfig.ssl,
+              require: true,
+              rejectUnauthorized: false,
+              checkServerIdentity: () => undefined
+            }
+          });
         }
+        return pool;
       }
     }
   }
+  return pool;
 }
 
 // פונקציה לחיבור event listeners
@@ -155,17 +175,19 @@ function setupPoolEventListeners(poolInstance) {
 }
 
 // אתחול ה-pool
-initializePool().then(() => {
-  if (pool) {
+initializePool().then((initializedPool) => {
+  if (initializedPool) {
+    pool = initializedPool;
     setupPoolEventListeners(pool);
     console.log('✅ Pool initialization completed and ready for use');
   }
 }).catch((error) => {
-  console.error('❌ Failed to initialize pool, creating fallback pool:', error);
-  // fallback ל-pool רגיל
-  pool = new Pool(dbConfig);
-  setupPoolEventListeners(pool);
-  console.log('✅ Fallback pool created and ready for use');
+  console.error('❌ Failed to initialize pool:', error);
+  console.error('Error details:', {
+    code: error.code,
+    message: error.message,
+    stack: error.stack
+  });
 });
 
 // פונקציה להמתנה ל-pool להיות מוכן
@@ -180,10 +202,21 @@ const waitForPoolReady = async () => {
   }
   
   if (!pool) {
+    console.error('❌ Pool initialization timeout after 30 seconds');
     throw new Error('Pool לא התאתחל אחרי 30 שניות');
   }
   
-  console.log('✅ Pool מוכן לשימוש');
+  // נסה להתחבר לוודא שה-pool עובד
+  try {
+    const client = await pool.connect();
+    await client.query('SELECT 1');
+    client.release();
+    console.log('✅ Pool מוכן לשימוש ונבדק בהצלחה');
+  } catch (error) {
+    console.error('❌ Pool connection test failed:', error.message);
+    throw error;
+  }
+  
   return pool;
 };
 
@@ -206,6 +239,11 @@ const testConnection = async () => {
     }
   } catch (err) {
     console.error('❌ שגיאה בחיבור למסד נתונים:', err);
+    console.error('Error details:', {
+      code: err.code,
+      message: err.message,
+      stack: err.stack
+    });
     logger.warn('מסד הנתונים לא זמין:', err.message);
     return { success: false, error: err.message };
   }
@@ -225,6 +263,11 @@ const queryWithTimeout = async (text, params, timeoutMs = 30000) => {
     console.log('✅ Connected to database successfully');
   } catch (err) {
     console.error('❌ Failed to connect to database:', err);
+    console.error('Error details:', {
+      code: err.code,
+      message: err.message,
+      stack: err.stack
+    });
     throw err;
   }
 
