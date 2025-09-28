@@ -15,9 +15,11 @@ if (process.env.DATABASE_URL) {
   // אם יש connection string מלא (כמו ב-Supabase)
   let connectionString = process.env.DATABASE_URL;
   
-  // כפיית IPv4 עבור Supabase
+  // זיהוי סוג החיבור
   if (connectionString.includes('pooler.supabase.com')) {
     console.log('🔧 Using Supabase Transaction Pooler (IPv4 compatible)');
+  } else if (connectionString.includes('supabase.co')) {
+    console.log('⚠️ Using Supabase Direct Connection - consider switching to Transaction Pooler');
   }
   
   dbConfig = {
@@ -26,21 +28,15 @@ if (process.env.DATABASE_URL) {
       rejectUnauthorized: false,
       require: false
     },
-    // הגדרות connection pooling
-    max: 20,
-    min: 2,
+    // הגדרות connection pooling מותאמות ל-Transaction Pooler
+    max: 10, // פחות connections ל-Transaction Pooler
+    min: 1,
     idleTimeoutMillis: 30000,
-    connectionTimeoutMillis: 10000,
+    connectionTimeoutMillis: 15000,
     acquireTimeoutMillis: 60000,
     // הגדרות נוספות לחיבור יציב
     keepAlive: true,
-    keepAliveInitialDelayMillis: 0,
-    // כפיית IPv4 נוספת
-    lookup: (hostname, options, callback) => {
-      const dns = require('dns');
-      console.log('🔍 DNS lookup for:', hostname, 'forcing IPv4');
-      dns.lookup(hostname, { family: 4 }, callback);
-    }
+    keepAliveInitialDelayMillis: 0
   };
 } else {
   // משתנים נפרדים - נוסיף הגדרות DNS ספציפיות
@@ -55,18 +51,14 @@ if (process.env.DATABASE_URL) {
       require: false
     },
     // הגדרות connection pooling
-    max: 20,
-    min: 2,
+    max: 10,
+    min: 1,
     idleTimeoutMillis: 30000,
-    connectionTimeoutMillis: 10000,
+    connectionTimeoutMillis: 15000,
     acquireTimeoutMillis: 60000,
-    // כפיית IPv4 עבור Supabase
-    family: 4,
     // הגדרות נוספות לחיבור יציב
     keepAlive: true,
-    keepAliveInitialDelayMillis: 0,
-    // הגדרות DNS ספציפיות
-    lookup: require('dns').lookup,
+    keepAliveInitialDelayMillis: 0
   };
 }
 
@@ -128,45 +120,40 @@ async function resolveConnectionStringToIPv4(connectionString) {
   }
 }
 
-// המרת host ל-IPv4 אם נדרש
-async function createPoolWithIPv4() {
-  if (dbConfig.connectionString) {
-    // אם יש connection string, ננסה להמיר אותו ל-IPv4
-    if (process.env.DB_FORCE_IPV4 === 'true') {
-      try {
-        dbConfig.connectionString = await resolveConnectionStringToIPv4(dbConfig.connectionString);
-      } catch (error) {
-        console.warn('⚠️ Could not resolve connection string to IPv4, proceeding with original');
-      }
-    }
-  } else if (dbConfig.host) {
-    // אם יש host נפרד, ננסה לפתור אותו ל-IPv4
-    if (process.env.DB_FORCE_IPV4 === 'true') {
-      try {
-        const ipv4Host = await resolveHostToIPv4(dbConfig.host);
-        dbConfig.host = ipv4Host;
-        console.log(`✅ Forced IPv4 resolution: ${dbConfig.host}`);
-      } catch (error) {
-        console.warn('⚠️ Could not resolve host to IPv4, proceeding with original host');
-      }
-    }
-  }
-  
-  return new Pool(dbConfig);
-}
-
-// יצירת pool
+// יצירת pool עם retry mechanism
 let pool;
 
-// פונקציה לאתחול ה-pool
+// פונקציה לאתחול ה-pool עם retry mechanism
 async function initializePool() {
-  try {
-    pool = await createPoolWithIPv4();
-    console.log('✅ Database pool initialized successfully');
-  } catch (error) {
-    console.error('❌ Failed to initialize database pool:', error);
-    // fallback ל-pool רגיל
-    pool = new Pool(dbConfig);
+  let attempts = 0;
+  const maxAttempts = 3;
+  
+  while (attempts < maxAttempts) {
+    try {
+      console.log(`🔍 Attempting to initialize pool (attempt ${attempts + 1}/${maxAttempts})`);
+      pool = new Pool(dbConfig);
+      
+      // בדיקת חיבור
+      const client = await pool.connect();
+      await client.query('SELECT 1');
+      client.release();
+      
+      console.log('✅ Database pool initialized and tested successfully');
+      return;
+    } catch (error) {
+      attempts++;
+      console.error(`❌ Failed to initialize database pool (attempt ${attempts}):`, error.message);
+      
+      if (attempts < maxAttempts) {
+        console.log(`⏳ Retrying in 2 seconds...`);
+        await new Promise(resolve => setTimeout(resolve, 2000));
+      } else {
+        console.error('❌ All attempts failed, using last attempt pool');
+        if (!pool) {
+          pool = new Pool(dbConfig);
+        }
+      }
+    }
   }
 }
 

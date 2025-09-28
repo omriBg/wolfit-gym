@@ -1,49 +1,21 @@
 // Wolfit Gym Backend Server
 require('dotenv').config();
 
-// כפיית IPv4 עבור Supabase
-process.env.NODE_OPTIONS = '--dns-result-order=ipv4first';
-process.env.NODE_DNS_RESOLVER = 'ipv4first';
-
+// הגדרות בסיסיות
 const dns = require('dns');
 dns.setDefaultResultOrder('ipv4first');
 
-// כפיית IPv4 נוספת
-const originalLookup = dns.lookup;
-dns.lookup = function(hostname, options, callback) {
-  if (typeof options === 'function') {
-    callback = options;
-    options = {};
-  }
-  options.family = 4; // כפיית IPv4
-  console.log('🔍 DNS lookup override for:', hostname, 'forcing IPv4');
-  return originalLookup.call(this, hostname, options, callback);
-};
-
-// כפיית IPv4 נוספת
-const originalResolve = dns.resolve;
-dns.resolve = function(hostname, rrtype, callback) {
-  if (typeof rrtype === 'function') {
-    callback = rrtype;
-    rrtype = 'A'; // כפיית IPv4
-  }
-  console.log('🔍 DNS resolve override for:', hostname, 'forcing IPv4');
-  return originalResolve.call(this, hostname, rrtype, callback);
-};
-
-// כפיית IPv4 עבור מסד הנתונים
+// בדיקת connection string
 if (process.env.DATABASE_URL) {
-  // הוספת sslmode=prefer ל-connection string (יותר גמיש)
   if (!process.env.DATABASE_URL.includes('sslmode=')) {
     process.env.DATABASE_URL += '?sslmode=prefer';
   }
-  console.log('🔧 Using Supabase Transaction Pooler (IPv4 compatible)');
-  console.log('🔧 Database URL configured for IPv4');
-}
-
-// כפיית IPv4 עבור מסד הנתונים
-if (process.env.DB_FORCE_IPV4 === 'true') {
-  console.log('🔧 DB_FORCE_IPV4 enabled - forcing IPv4 connection');
+  
+  if (process.env.DATABASE_URL.includes('pooler.supabase.com')) {
+    console.log('🔧 Using Supabase Transaction Pooler');
+  } else {
+    console.log('⚠️ Using Direct Connection - consider switching to Transaction Pooler');
+  }
 }
 
 const express = require('express');
