@@ -502,11 +502,20 @@ app.get('/api/user-preferences/:userId', authenticateToken, async (req, res) => 
 
     // שליפת נתוני משתמש
     console.log('🔍 מנסה לשלוף נתוני משתמש עבור ID:', userId);
-    const userResult = await pool.query(
-      'SELECT intensitylevel, height, weight, birthdate FROM "User" WHERE iduser = $1',
-      [userId]
-    );
-    console.log('📊 נתוני משתמש:', userResult.rows[0]);
+    try {
+      const userResult = await pool.query(
+        'SELECT intensitylevel, height, weight, birthdate FROM "User" WHERE iduser = $1',
+        [userId]
+      );
+      console.log('📊 נתוני משתמש:', userResult.rows[0]);
+    } catch (error) {
+      console.error('❌ שגיאה בשליפת נתוני משתמש:', {
+        message: error.message,
+        code: error.code,
+        detail: error.detail
+      });
+      throw error;
+    }
     
     if (userResult.rows.length === 0) {
       return res.json({
@@ -520,9 +529,10 @@ app.get('/api/user-preferences/:userId', authenticateToken, async (req, res) => 
     let allSportsResult;
     try {
       allSportsResult = await pool.query(
-        'SELECT "sportType" as id, "sportName" as name FROM "SportTypes" ORDER BY "sportType"'
+        'SELECT sporttype as id, sportname as name FROM sporttypes ORDER BY sporttype'
       );
       console.log('📊 נמצאו', allSportsResult.rows.length, 'סוגי ספורט');
+      console.log('📊 סוגי ספורט:', allSportsResult.rows);
     } catch (dbError) {
       console.error('❌ שגיאה בשליפת סוגי ספורט:', dbError);
       return res.status(500).json({
@@ -547,11 +557,11 @@ app.get('/api/user-preferences/:userId', authenticateToken, async (req, res) => 
       if (!tableCheck.rows[0].exists) {
         // אם הטבלה לא קיימת, ניצור אותה
         await pool.query(`
-          CREATE TABLE IF NOT EXISTS UserPreferences (
+          CREATE TABLE IF NOT EXISTS userpreferences (
             id SERIAL PRIMARY KEY,
-            idUser INTEGER REFERENCES "User"(idUser) ON DELETE CASCADE,
-            sportType INTEGER REFERENCES SportTypes(sportType),
-            preferenceRank INTEGER
+            iduser INTEGER REFERENCES "User"(iduser) ON DELETE CASCADE,
+            sporttype INTEGER REFERENCES sporttypes(sporttype),
+            preferencerank INTEGER
           );
         `);
         console.log('✅ טבלת UserPreferences נוצרה');
@@ -580,7 +590,7 @@ app.get('/api/user-preferences/:userId', authenticateToken, async (req, res) => 
 
     // המרת התוצאות למבנה הנכון
     const selectedSports = preferencesResult.rows.map(row => ({
-      id: row.id,
+      id: row.sporttype,  // שימוש ב-sporttype במקום id
       name: row.name,
       rank: row.rank,
       selected: true
@@ -693,11 +703,11 @@ app.put('/api/save-user-preferences/:userId', async (req, res) => {
     if (!tableCheck.rows[0].exists) {
       // אם הטבלה לא קיימת, ניצור אותה
       await pool.query(`
-        CREATE TABLE IF NOT EXISTS UserPreferences (
+        CREATE TABLE IF NOT EXISTS userpreferences (
           id SERIAL PRIMARY KEY,
-          idUser INTEGER REFERENCES "User"(idUser) ON DELETE CASCADE,
-          sportType INTEGER REFERENCES SportTypes(sportType),
-          preferenceRank INTEGER
+          iduser INTEGER REFERENCES "User"(iduser) ON DELETE CASCADE,
+          sporttype INTEGER REFERENCES sporttypes(sporttype),
+          preferencerank INTEGER
         );
       `);
       console.log('✅ טבלת UserPreferences נוצרה');
