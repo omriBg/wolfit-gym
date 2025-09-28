@@ -385,10 +385,14 @@ app.get('/api/user-preferences/:userId', async (req, res) => {
   try {
     const { userId } = req.params;
     
+    console.log('🔍 מחפש משתמש:', userId);
+    
     const userResult = await pool.query(
-      'SELECT intensityLevel FROM "User" WHERE idUser = $1',
+      'SELECT intensitylevel FROM "User" WHERE iduser = $1',
       [userId]
     );
+    
+    console.log('📊 נתוני משתמש:', userResult.rows[0]);
     
     if (userResult.rows.length === 0) {
       return res.json({
@@ -448,10 +452,14 @@ app.put('/api/save-user-preferences/:userId', async (req, res) => {
     const { userId } = req.params;
     const { intensityLevel, selectedSports } = req.body;
     
+    console.log('📝 שומר רמת עצימות:', { intensityLevel, userId });
+    
     await pool.query(
-      'UPDATE "User" SET intensityLevel = $1 WHERE idUser = $2',
+      'UPDATE "User" SET intensitylevel = $1 WHERE iduser = $2',
       [intensityLevel, userId]
     );
+    
+    console.log('✅ רמת עצימות נשמרה בהצלחה');
     
     await pool.query(
       'DELETE FROM UserPreferences WHERE idUser = $1',
