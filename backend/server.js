@@ -230,28 +230,28 @@ app.post('/api/google-login', async (req, res) => {  // הסרנו את loginLim
       email: googleData.email
     });
     
-    // בדיקת מבנה הדאטהבייס
-    const tables = await readyPool.query(`
-      SELECT table_name 
-      FROM information_schema.tables 
-      WHERE table_schema = 'public'
-    `);
-    console.log('📊 טבלאות קיימות:', tables.rows.map(row => row.table_name));
-    
-    // בדיקת מבנה טבלת User
-    const columns = await readyPool.query(`
-      SELECT column_name, data_type 
-      FROM information_schema.columns 
-      WHERE table_name = 'User'
-    `);
-    console.log('📊 עמודות בטבלת User:', columns.rows);
-
     // המתנה ל-pool להיות מוכן
     console.log('⏳ מחכה שהדאטהבייס יהיה מוכן...');
     let readyPool;
     try {
       readyPool = await waitForPoolReady();
       console.log('✅ הדאטהבייס מוכן');
+
+      // בדיקת מבנה הדאטהבייס
+      const tables = await readyPool.query(`
+        SELECT table_name 
+        FROM information_schema.tables 
+        WHERE table_schema = 'public'
+      `);
+      console.log('📊 טבלאות קיימות:', tables.rows.map(row => row.table_name));
+      
+      // בדיקת מבנה טבלת User
+      const columns = await readyPool.query(`
+        SELECT column_name, data_type 
+        FROM information_schema.columns 
+        WHERE table_name = 'User'
+      `);
+      console.log('📊 עמודות בטבלת User:', columns.rows);
     } catch (error) {
       console.error('❌ שגיאה בהתחברות לדאטהבייס:', error);
       return res.status(500).json({
@@ -406,8 +406,8 @@ app.post('/api/google-login', async (req, res) => {  // הסרנו את loginLim
     try {
       existingUser = await readyPool.query(`
         SELECT * FROM "User" 
-        WHERE email = $1
-      `, [googleData.email]);
+        WHERE email = $1 OR googleid = $2
+      `, [googleData.email, googleData.sub]);
       
       console.log('🔍 תוצאות חיפוש משתמש:', {
         found: existingUser.rows.length > 0,
