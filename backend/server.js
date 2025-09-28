@@ -427,8 +427,60 @@ app.get('/api/user-preferences/:userId', authenticateToken, async (req, res) => 
       password: '***hidden***'
     });
 
-    // בדיקת טבלאות
+    // בדיקת טבלאות ויצירתן אם צריך
     console.log('🔍 בודק אילו טבלאות קיימות...');
+    
+    // בדיקת טבלת SportTypes
+    const sportTypesExists = await pool.query(`
+      SELECT EXISTS (
+        SELECT FROM information_schema.tables 
+        WHERE table_name = 'sporttypes'
+      );
+    `);
+    
+    if (!sportTypesExists.rows[0].exists) {
+      console.log('📝 יוצר טבלת SportTypes...');
+      await pool.query(`
+        CREATE TABLE IF NOT EXISTS sporttypes (
+          sporttype SERIAL PRIMARY KEY,
+          sportname VARCHAR(50) NOT NULL
+        );
+        
+        INSERT INTO sporttypes (sportname) VALUES 
+          ('כדורגל'),
+          ('כדורסל'),
+          ('טיפוס'),
+          ('חדר כושר'),
+          ('קורדינציה'),
+          ('טניס'),
+          ('פינגפונג'),
+          ('ריקוד'),
+          ('אופניים')
+        ON CONFLICT DO NOTHING;
+      `);
+    }
+    
+    // בדיקת טבלת UserPreferences
+    const userPrefsExists = await pool.query(`
+      SELECT EXISTS (
+        SELECT FROM information_schema.tables 
+        WHERE table_name = 'userpreferences'
+      );
+    `);
+    
+    if (!userPrefsExists.rows[0].exists) {
+      console.log('📝 יוצר טבלת UserPreferences...');
+      await pool.query(`
+        CREATE TABLE IF NOT EXISTS userpreferences (
+          id SERIAL PRIMARY KEY,
+          iduser INTEGER REFERENCES "User"(iduser) ON DELETE CASCADE,
+          sporttype INTEGER REFERENCES sporttypes(sporttype),
+          preferencerank INTEGER
+        );
+      `);
+    }
+    
+    // בדיקה שהכל נוצר
     const tablesCheck = await pool.query(`
       SELECT table_name 
       FROM information_schema.tables 
