@@ -791,6 +791,35 @@ app.put('/api/save-user-preferences/:userId', async (req, res) => {
   }
 });
 
+// Verify token route
+app.get('/api/verify-token', authenticateToken, async (req, res) => {
+  try {
+    // אם הגענו לכאן, הטוקן תקין (בגלל ה-middleware)
+    const user = await pool.query(
+      'SELECT iduser as id, email, name, picture FROM User WHERE iduser = $1',
+      [req.user.userId]
+    );
+
+    if (user.rows.length === 0) {
+      return res.status(404).json({
+        success: false,
+        message: 'משתמש לא נמצא'
+      });
+    }
+
+    res.json({
+      success: true,
+      user: user.rows[0]
+    });
+  } catch (error) {
+    console.error('❌ שגיאה באימות טוקן:', error);
+    res.status(500).json({
+      success: false,
+      message: 'שגיאה באימות טוקן'
+    });
+  }
+});
+
 // Root route
 app.get('/', (req, res) => {
   res.json({
