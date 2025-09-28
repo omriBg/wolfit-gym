@@ -387,7 +387,7 @@ app.post('/api/register', async (req, res) => {
 });
 
 // קבלת העדפות ספורט של משתמש
-app.get('/api/user-preferences/:userId', async (req, res) => {
+app.get('/api/user-preferences/:userId', authenticateToken, async (req, res) => {
   try {
     const { userId } = req.params;
     if (!userId) {
@@ -399,7 +399,21 @@ app.get('/api/user-preferences/:userId', async (req, res) => {
     }
     console.log('🔍 מחפש משתמש:', userId);
     
+    console.log('🔍 מתחיל לבדוק את חיבור הדאטהבייס...');
+    const dbCheck = await pool.query('SELECT NOW()');
+    console.log('✅ חיבור לדאטהבייס תקין');
+
+    // בדיקת טבלאות
+    console.log('🔍 בודק אילו טבלאות קיימות...');
+    const tablesCheck = await pool.query(`
+      SELECT table_name 
+      FROM information_schema.tables 
+      WHERE table_schema = 'public'
+    `);
+    console.log('📊 טבלאות קיימות:', tablesCheck.rows.map(row => row.table_name));
+
     // שליפת נתוני משתמש
+    console.log('🔍 מנסה לשלוף נתוני משתמש עבור ID:', userId);
     const userResult = await pool.query(
       'SELECT intensitylevel, height, weight, birthdate FROM "User" WHERE iduser = $1',
       [userId]
@@ -514,7 +528,12 @@ app.get('/api/user-preferences/:userId', async (req, res) => {
     return res.json(response);
 
   } catch (error) {
-    console.error('❌ שגיאה בשליפת העדפות:', error);
+    console.error('❌ שגיאה בשליפת העדפות:', {
+      message: error.message,
+      stack: error.stack,
+      code: error.code,
+      detail: error.detail
+    });
     res.status(500).json({
       success: false,
       message: 'שגיאה בשליפת העדפות המשתמש'
