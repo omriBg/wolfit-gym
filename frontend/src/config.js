@@ -7,7 +7,7 @@ export const SERVER_CONFIG = {
   LOCAL: 'http://localhost:3001',
   
   // שרת ייצור - לפרודקשן
-  PRODUCTION: 'https://console.neon.tech/app/projects/misty-fog-56307979'
+  PRODUCTION: 'https://wolfit-gym-backend.onrender.com'
 };
 
 // בחר כאן איזה שרת להשתמש:

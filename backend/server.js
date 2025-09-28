@@ -25,6 +25,7 @@ app.use(express.urlencoded({ extended: true, limit: '10mb' }));
 
 // CORS configuration
 // CORS configuration
+// CORS configuration
 app.use(cors({
   origin: [
     'http://localhost:3000',
@@ -33,13 +34,22 @@ app.use(cors({
   ],
   credentials: true,
   methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
-  allowedHeaders: ['Content-Type', 'Authorization'],
+  allowedHeaders: ['Content-Type', 'Authorization', 'Origin', 'Accept'],
   exposedHeaders: ['Access-Control-Allow-Origin'],
   maxAge: 600
 }));
 
-// Enable pre-flight requests for all routes
+// Pre-flight requests
 app.options('*', cors());
+
+// Security headers
+app.use((req, res, next) => {
+  res.header('Access-Control-Allow-Origin', req.headers.origin);
+  res.header('Access-Control-Allow-Credentials', true);
+  next();
+});
+
+// הערה: כבר הגדרנו את זה למעלה
 
 // Rate limiting
 const loginLimiter = rateLimit({
