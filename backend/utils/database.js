@@ -13,12 +13,19 @@ let dbConfig;
 if (process.env.DATABASE_URL) {
   let connectionString = process.env.DATABASE_URL;
   
+  // וידוא שה-URL כולל sslmode=require עבור Supabase
+  if (!connectionString.includes('sslmode=')) {
+    connectionString += (connectionString.includes('?') ? '&' : '?') + 'sslmode=require';
+  }
+  
   console.log('🔧 Using Supabase connection string');
+  console.log('🔧 Connection string with SSL mode:', connectionString.replace(/:[^:@]+@/, ':****@'));
   
   dbConfig = {
     connectionString: connectionString,
     ssl: {
-      rejectUnauthorized: false
+      rejectUnauthorized: false,
+      require: true
     },
     // הגדרות connection pooling
     max: 20,
