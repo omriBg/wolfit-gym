@@ -209,45 +209,50 @@ app.post('/api/google-login', loginLimiter, async (req, res) => {
     );
     console.log('✅ Database query completed, found users:', existingUser.rows.length);
     
-    let user;
     if (existingUser.rows.length > 0) {
       // משתמש קיים - התחברות ישירה
-      user = existingUser.rows[0];
+      const user = existingUser.rows[0];
       console.log('✅ משתמש קיים:', user.email);
-    } else {
-      // משתמש חדש - יצירת רשומה חדשה
-      console.log('🆕 יוצר משתמש חדש:', googleData.email);
-      const newUser = await readyPool.query(
-        'INSERT INTO "User" (googleid, email, name, picture) VALUES ($1, $2, $3, $4) RETURNING *',
-        [googleData.sub, googleData.email, googleData.name, googleData.picture]
+      
+      // יצירת JWT token
+      const token = jwt.sign(
+        { 
+          userId: user.iduser,
+          email: user.email,
+          name: user.name 
+        },
+        JWT_SECRET,
+        { expiresIn: '7d' }
       );
-      user = newUser.rows[0];
-      console.log('✅ משתמש חדש נוצר:', user.email);
+        
+      console.log('✅ Google login successful for user:', user.email);
+        
+      res.json({
+        success: true,
+        token,
+        user: {
+          id: user.iduser,
+          email: user.email,
+          name: user.name,
+          picture: user.picture
+        }
+      });
+    } else {
+      // משתמש חדש - שליחה למסך הרשמה
+      console.log('🆕 משתמש חדש - שליחה למסך הרשמה:', googleData.email);
+      
+      res.json({
+        success: false,
+        isNewUser: true,
+        message: 'משתמש חדש - אנא הירשם תחילה',
+        googleData: {
+          googleId: googleData.sub,
+          email: googleData.email,
+          name: googleData.name,
+          picture: googleData.picture
+        }
+      });
     }
-      
-    // יצירת JWT token
-    const token = jwt.sign(
-      { 
-        userId: user.iduser,
-        email: user.email,
-        name: user.name 
-      },
-      JWT_SECRET,
-      { expiresIn: '7d' }
-    );
-      
-    console.log('✅ Google login successful for user:', user.email);
-      
-    res.json({
-      success: true,
-      token,
-      user: {
-        id: user.iduser,
-        email: user.email,
-        name: user.name,
-        picture: user.picture
-      }
-    });
 
   } catch (error) {
     console.error('❌ Google login error:', error);
