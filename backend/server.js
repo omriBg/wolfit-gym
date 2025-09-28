@@ -430,12 +430,24 @@ app.get('/api/user-preferences/:userId', async (req, res) => {
     }));
     console.log('📊 ספורטים נבחרים מעובדים:', selectedSports);
     
+    // שליפת כל הספורטים עם סימון אם הם נבחרים
+    const allSportsWithSelection = allSportsResult.rows.map(sport => {
+      const selected = selectedSports.find(s => s.id === sport.id);
+      return {
+        ...sport,
+        selected: !!selected,
+        rank: selected ? selected.rank : null
+      };
+    });
+
+    console.log('📊 ספורטים עם סימון בחירה:', allSportsWithSelection);
+
     res.json({
       success: true,
       data: {
         intensityLevel: parseInt(userResult.rows[0].intensitylevel) || 2,
         selectedSports: selectedSports,
-        allSports: allSportsResult.rows,
+        sports: allSportsWithSelection,
         preferenceMode: selectedSports.length > 0 ? 'ranked' : 'simple',
         userDetails: {
           height: userResult.rows[0].height,
