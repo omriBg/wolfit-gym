@@ -224,10 +224,27 @@ app.post('/api/google-login', async (req, res) => {  // הסרנו את loginLim
     }
     
     // בדיקה אם המשתמש קיים במסד הנתונים
-    console.log('🔍 בודק אם המשתמש קיים:', {
+    console.log('=== התחלת בדיקת משתמש קיים ===');
+    console.log('🔍 מחפש משתמש לפי:', {
       googleId: googleData.sub,
       email: googleData.email
     });
+    
+    // בדיקת מבנה הדאטהבייס
+    const tables = await readyPool.query(`
+      SELECT table_name 
+      FROM information_schema.tables 
+      WHERE table_schema = 'public'
+    `);
+    console.log('📊 טבלאות קיימות:', tables.rows.map(row => row.table_name));
+    
+    // בדיקת מבנה טבלת User
+    const columns = await readyPool.query(`
+      SELECT column_name, data_type 
+      FROM information_schema.columns 
+      WHERE table_name = 'User'
+    `);
+    console.log('📊 עמודות בטבלת User:', columns.rows);
 
     // המתנה ל-pool להיות מוכן
     console.log('⏳ מחכה שהדאטהבייס יהיה מוכן...');
@@ -331,9 +348,9 @@ app.post('/api/google-login', async (req, res) => {  // הסרנו את loginLim
       try {
         // בדיקת עמודות חסרות בטבלת User
         const columnsCheck = await readyPool.query(`
-          SELECT column_name 
-          FROM information_schema.columns 
-          WHERE table_name = 'user';
+        SELECT column_name 
+        FROM information_schema.columns 
+        WHERE table_name = 'User';
         `);
         
         const existingColumns = columnsCheck.rows.map(row => row.column_name);
@@ -387,11 +404,15 @@ app.post('/api/google-login', async (req, res) => {  // הסרנו את loginLim
     console.log('🔍 מחפש את המשתמש בדאטהבייס...');
     let existingUser;
     try {
-      existingUser = await readyPool.query(
-        'SELECT * FROM User WHERE googleid = $1 OR email = $2',
-        [googleData.sub, googleData.email]
-      );
-      console.log('✅ החיפוש הושלם, נמצאו:', existingUser.rows.length, 'משתמשים');
+      existingUser = await readyPool.query(`
+        SELECT * FROM "User" 
+        WHERE email = $1
+      `, [googleData.email]);
+      
+      console.log('🔍 תוצאות חיפוש משתמש:', {
+        found: existingUser.rows.length > 0,
+        rows: existingUser.rows
+      });
     } catch (error) {
       console.error('❌ שגיאה בחיפוש המשתמש:', error);
       return res.status(500).json({
