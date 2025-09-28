@@ -370,27 +370,7 @@ app.post('/api/google-login', async (req, res) => {  // הסרנו את loginLim
         console.log('✅ פרטי המשתמש עודכנו בהצלחה');
       }
       
-      // המשך הקוד...
-
-      // בדיקה אם העמודה picture קיימת
-      const pictureCheck = await readyPool.query(`
-        SELECT EXISTS (
-          SELECT column_name 
-          FROM information_schema.columns 
-          WHERE table_name = 'user' 
-          AND column_name = 'picture'
-        );
-      `);
-      
-      // אם העמודה לא קיימת, נוסיף אותה
-      if (!pictureCheck.rows[0].exists) {
-        console.log('⚠️ עמודת picture חסרה, מוסיף אותה...');
-        await readyPool.query(`
-          ALTER TABLE "User"
-          ADD COLUMN picture VARCHAR(500);
-        `);
-        console.log('✅ עמודת picture נוספה בהצלחה');
-      }
+      // סיום בדיקת והוספת עמודות
 
     } catch (error) {
       console.error('❌ שגיאה בבדיקת/הוספת עמודות:', error);
