@@ -3,6 +3,7 @@ const { Pool } = require('pg');
 const dns = require('dns');
 const { promisify } = require('util');
 const logger = require('./logger');
+const tls = require('tls');
 
 // פונקציה להמרת host ל-IPv4
 const lookup = promisify(dns.lookup);
@@ -22,13 +23,19 @@ if (process.env.DATABASE_URL) {
     console.log('⚠️ Using Supabase Direct Connection - consider switching to Transaction Pooler');
   }
   
+  // הגדרת SSL מותאמת לסאפבייס
+  const sslConfig = {
+    rejectUnauthorized: false,
+    checkServerIdentity: (host, cert) => {
+      return undefined;
+    },
+    minVersion: 'TLSv1.2',
+    maxVersion: 'TLSv1.3'
+  };
+
   dbConfig = {
     connectionString: connectionString,
-    ssl: {
-      rejectUnauthorized: false,
-      require: true,
-      checkServerIdentity: () => undefined
-    },
+    ssl: sslConfig,
     // הגדרות connection pooling מותאמות ל-Transaction Pooler
     max: 10, // פחות connections ל-Transaction Pooler
     min: 1,
@@ -37,7 +44,13 @@ if (process.env.DATABASE_URL) {
     acquireTimeoutMillis: 60000,
     // הגדרות נוספות לחיבור יציב
     keepAlive: true,
-    keepAliveInitialDelayMillis: 0
+    keepAliveInitialDelayMillis: 0,
+    // הגדרות SSL נוספות
+    statement_timeout: 30000,
+    query_timeout: 30000,
+    connectionTimeoutMillis: 30000,
+    // הגדרות נוספות לחיבור יציב
+    application_name: 'wolfit-gym-backend'
   };
 } else {
   // משתנים נפרדים - נוסיף הגדרות DNS ספציפיות
@@ -49,8 +62,11 @@ if (process.env.DATABASE_URL) {
     database: process.env.DB_NAME,
     ssl: {
       rejectUnauthorized: false,
-      require: true,
-      checkServerIdentity: () => undefined
+      checkServerIdentity: (host, cert) => {
+        return undefined;
+      },
+      minVersion: 'TLSv1.2',
+      maxVersion: 'TLSv1.3'
     },
     // הגדרות connection pooling
     max: 10,
@@ -93,6 +109,8 @@ async function initializePool() {
   while (attempts < maxAttempts) {
     try {
       console.log(`🔍 Attempting to initialize pool (attempt ${attempts + 1}/${maxAttempts})`);
+      
+      // נסיון ראשון עם SSL רגיל
       pool = new Pool(dbConfig);
       
       // בדיקת חיבור
@@ -114,23 +132,42 @@ async function initializePool() {
       });
       
       if (attempts < maxAttempts) {
-        console.log(`⏳ Retrying in 2 seconds...`);
+        console.log(`⏳ Retrying in 2 seconds with modified SSL config...`);
         await new Promise(resolve => setTimeout(resolve, 2000));
-      } else {
-        console.error('❌ All attempts failed, using last attempt pool');
-        if (!pool) {
-          console.log('🔄 Creating final fallback pool...');
-          pool = new Pool({
-            ...dbConfig,
-            ssl: {
-              ...dbConfig.ssl,
-              require: true,
-              rejectUnauthorized: false,
-              checkServerIdentity: () => undefined
-            }
-          });
+        
+        // נסיון שני עם SSL מותאם
+        if (attempts === 2) {
+          dbConfig.ssl = {
+            rejectUnauthorized: false,
+            checkServerIdentity: () => undefined,
+            minVersion: 'TLSv1.2',
+            maxVersion: 'TLSv1.3',
+            secureOptions: tls.SSL_OP_NO_TLSv1_3
+          };
         }
-        return pool;
+      } else {
+        console.error('❌ All attempts failed, using fallback configuration');
+        // נסיון אחרון עם תצורה מינימלית
+        const fallbackConfig = {
+          ...dbConfig,
+          ssl: {
+            rejectUnauthorized: false,
+            checkServerIdentity: () => undefined
+          },
+          max: 5,
+          min: 0,
+          idleTimeoutMillis: 10000,
+          connectionTimeoutMillis: 10000
+        };
+        
+        try {
+          console.log('🔄 Attempting connection with fallback configuration...');
+          pool = new Pool(fallbackConfig);
+          return pool;
+        } catch (fallbackError) {
+          console.error('❌ Fallback configuration failed:', fallbackError.message);
+          throw fallbackError;
+        }
       }
     }
   }
@@ -212,12 +249,26 @@ const waitForPoolReady = async () => {
     await client.query('SELECT 1');
     client.release();
     console.log('✅ Pool מוכן לשימוש ונבדק בהצלחה');
+    return pool;
   } catch (error) {
     console.error('❌ Pool connection test failed:', error.message);
-    throw error;
+    
+    // נסה שוב עם תצורת SSL מינימלית
+    console.log('🔄 Attempting connection with minimal SSL config...');
+    const minimalConfig = {
+      ...dbConfig,
+      ssl: {
+        rejectUnauthorized: false
+      }
+    };
+    
+    pool = new Pool(minimalConfig);
+    const client = await pool.connect();
+    await client.query('SELECT 1');
+    client.release();
+    console.log('✅ Pool מוכן לשימוש עם תצורה מינימלית');
+    return pool;
   }
-  
-  return pool;
 };
 
 // פונקציה לבדיקת חיבור
