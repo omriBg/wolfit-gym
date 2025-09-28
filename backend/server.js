@@ -280,7 +280,7 @@ app.post('/api/google-login', async (req, res) => {  // הסרנו את loginLim
       const userTableCheck = await readyPool.query(`
         SELECT EXISTS (
           SELECT FROM information_schema.tables 
-          WHERE table_name = 'user'
+          WHERE table_name = 'User'
         );
       `);
       
@@ -418,7 +418,7 @@ app.post('/api/google-login', async (req, res) => {  // הסרנו את loginLim
     let existingUser;
     try {
       existingUser = await readyPool.query(`
-        SELECT * FROM "user" 
+        SELECT * FROM "User" 
         WHERE email = $1 OR googleid = $2
       `, [googleData.email, googleData.sub]);
       
@@ -516,7 +516,7 @@ app.post('/api/register', async (req, res) => {
 
     // בדיקה אם המשתמש כבר קיים
     const existingUser = await pool.query(
-      'SELECT * FROM "user" WHERE email = $1 OR googleid = $2',
+      'SELECT * FROM "User" WHERE email = $1 OR googleid = $2',
       [email, googleId]
     );
 
@@ -702,7 +702,7 @@ app.get('/api/user-preferences/:userId', authenticateToken, async (req, res) => 
     console.log('🔍 בודק תוכן טבלאות...');
     
     try {
-      const userCount = await pool.query('SELECT COUNT(*) FROM "user"');
+      const userCount = await pool.query('SELECT COUNT(*) FROM "User"');
       console.log('👥 מספר משתמשים:', userCount.rows[0].count);
     } catch (error) {
       console.error('❌ שגיאה בבדיקת טבלת User:', error.message);
