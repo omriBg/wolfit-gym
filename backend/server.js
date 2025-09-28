@@ -387,8 +387,9 @@ app.get('/api/user-preferences/:userId', async (req, res) => {
     
     console.log('🔍 מחפש משתמש:', userId);
     
+    // שליפת נתוני משתמש
     const userResult = await pool.query(
-      'SELECT intensitylevel FROM "User" WHERE iduser = $1',
+      'SELECT intensitylevel, height, weight, birthdate FROM "User" WHERE iduser = $1',
       [userId]
     );
     
@@ -400,20 +401,36 @@ app.get('/api/user-preferences/:userId', async (req, res) => {
         message: 'משתמש לא נמצא'
       });
     }
-    
+
+    // שליפת העדפות ספורט
     const preferencesResult = await pool.query(
-      'SELECT sportType, preferenceRank FROM UserPreferences WHERE idUser = $1 ORDER BY preferenceRank',
+      'SELECT up.sporttype, up.preferencerank, st.sportname FROM UserPreferences up JOIN SportTypes st ON up.sporttype = st.sporttype WHERE up.iduser = $1 ORDER BY up.preferencerank',
       [userId]
     );
     
-    const selectedSports = preferencesResult.rows.map(row => row.sporttype);
+    console.log('📊 העדפות ספורט:', preferencesResult.rows);
+    
+    const selectedSports = preferencesResult.rows.map(row => ({
+      id: row.sporttype,
+      name: row.sportname,
+      rank: row.preferencerank
+    }));
+    
+    // שליפת כל סוגי הספורט
+    const allSportsResult = await pool.query('SELECT sporttype as id, sportname as name FROM SportTypes ORDER BY sporttype');
     
     res.json({
       success: true,
       data: {
-        intensityLevel: userResult.rows[0].intensitylevel,
+        intensityLevel: parseInt(userResult.rows[0].intensitylevel) || 2,
         selectedSports: selectedSports,
-        preferenceMode: selectedSports.length > 0 ? 'ranked' : 'simple'
+        allSports: allSportsResult.rows,
+        preferenceMode: selectedSports.length > 0 ? 'ranked' : 'simple',
+        userDetails: {
+          height: userResult.rows[0].height,
+          weight: userResult.rows[0].weight,
+          birthdate: userResult.rows[0].birthdate
+        }
       }
     });
 
@@ -452,14 +469,32 @@ app.put('/api/save-user-preferences/:userId', async (req, res) => {
     const { userId } = req.params;
     const { intensityLevel, selectedSports } = req.body;
     
-    console.log('📝 שומר רמת עצימות:', { intensityLevel, userId });
-    
-    await pool.query(
-      'UPDATE "User" SET intensitylevel = $1 WHERE iduser = $2',
-      [intensityLevel, userId]
+    console.log('📝 נתונים שהתקבלו:', { 
+      userId,
+      intensityLevel,
+      selectedSports,
+      body: req.body 
+    });
+
+    // בדיקה שהמשתמש קיים
+    const userCheck = await pool.query(
+      'SELECT intensitylevel FROM "User" WHERE iduser = $1',
+      [userId]
     );
-    
-    console.log('✅ רמת עצימות נשמרה בהצלחה');
+    console.log('🔍 נתוני משתמש לפני עדכון:', userCheck.rows[0]);
+
+    // עדכון רמת עצימות
+    await pool.query(
+      'UPDATE "User" SET intensitylevel = $1 WHERE iduser = $2 RETURNING *',
+      [intensityLevel.toString(), userId]
+    );
+
+    // בדיקה שהעדכון הצליח
+    const afterUpdate = await pool.query(
+      'SELECT intensitylevel FROM "User" WHERE iduser = $1',
+      [userId]
+    );
+    console.log('✅ נתוני משתמש אחרי עדכון:', afterUpdate.rows[0]);
     
     await pool.query(
       'DELETE FROM UserPreferences WHERE idUser = $1',
