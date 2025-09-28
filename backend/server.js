@@ -12,6 +12,7 @@ const rateLimit = require('express-rate-limit');
 
 // Database connection
 const { pool, testConnection, waitForPoolReady } = require('./utils/database');
+const { OptimalHungarianAlgorithm, CompleteOptimalWorkoutScheduler, SPORT_MAPPING } = require('./optimalWorkoutAlgorithm');
 
 const app = express();
 const PORT = process.env.PORT || 10000;
@@ -56,6 +57,18 @@ const loginLimiter = rateLimit({
   windowMs: 15 * 60 * 1000, // 15 minutes
   max: 5, // limit each IP to 5 requests per windowMs
   message: 'Too many login attempts, please try again later.',
+  standardHeaders: true,
+  legacyHeaders: false,
+});
+
+// Rate limiting מיוחד ליצירת אימונים
+const workoutLimiter = rateLimit({
+  windowMs: 5 * 60 * 1000, // 5 דקות
+  max: process.env.NODE_ENV === 'development' ? 200 : 50,
+  message: {
+    success: false,
+    message: 'יותר מדי בקשות ליצירת אימון, נסה שוב מאוחר יותר'
+  },
   standardHeaders: true,
   legacyHeaders: false,
 });
@@ -405,7 +418,7 @@ app.post('/api/google-login', async (req, res) => {  // הסרנו את loginLim
     let existingUser;
     try {
       existingUser = await readyPool.query(`
-        SELECT * FROM "User" 
+        SELECT * FROM "user" 
         WHERE email = $1 OR googleid = $2
       `, [googleData.email, googleData.sub]);
       
@@ -503,7 +516,7 @@ app.post('/api/register', async (req, res) => {
 
     // בדיקה אם המשתמש כבר קיים
     const existingUser = await pool.query(
-      'SELECT * FROM "User" WHERE email = $1 OR googleid = $2',
+      'SELECT * FROM "user" WHERE email = $1 OR googleid = $2',
       [email, googleId]
     );
 
@@ -689,7 +702,7 @@ app.get('/api/user-preferences/:userId', authenticateToken, async (req, res) => 
     console.log('🔍 בודק תוכן טבלאות...');
     
     try {
-      const userCount = await pool.query('SELECT COUNT(*) FROM "User"');
+      const userCount = await pool.query('SELECT COUNT(*) FROM "user"');
       console.log('👥 מספר משתמשים:', userCount.rows[0].count);
     } catch (error) {
       console.error('❌ שגיאה בבדיקת טבלת User:', error.message);
@@ -1027,9 +1040,167 @@ app.get('/', (req, res) => {
       'POST /api/google-login': 'Google OAuth login',
       'POST /api/register': 'User registration',
       'GET /health': 'Health check',
-      'GET /ready': 'Readiness check'
+      'GET /ready': 'Readiness check',
+      'POST /api/generate-optimal-workout': 'Generate optimal workout plan'
     }
   });
+});
+
+// API ליצירת תוכנית אימון אופטימלית
+app.post('/api/generate-optimal-workout', workoutLimiter, authenticateToken, async (req, res) => {
+  try {
+    const { userId, date, timeSlots, userPreferences } = req.body;
+    
+    console.log('🎯 מקבל בקשה ליצירת אימון אופטימלי:', { userId, date, timeSlots: timeSlots?.length, userPreferences });
+    
+    if (!userId || !date || !timeSlots || !Array.isArray(timeSlots)) {
+      return res.json({
+        success: false,
+        message: 'נתונים חסרים: userId, date, timeSlots נדרשים'
+      });
+    }
+    
+    // בדיקה שהתאריך לא בעבר
+    const today = new Date().toISOString().split('T')[0];
+    if (date < today) {
+      return res.json({
+        success: false,
+        message: 'לא ניתן ליצור אימון לתאריך בעבר'
+      });
+    }
+    
+    // בדיקה שהמשתמש קיים
+    const userCheck = await pool.query(
+      'SELECT idUser FROM "User" WHERE idUser = $1',
+      [userId]
+    );
+    
+    if (userCheck.rows.length === 0) {
+      return res.json({
+        success: false,
+        message: 'משתמש לא נמצא'
+      });
+    }
+    
+    // קבלת הזמנות קיימות של המשתמש לתאריך זה
+    console.log('🔍 בודק הזמנות קיימות של המשתמש...');
+    const existingBookings = await pool.query(
+      'SELECT startTime FROM BookField WHERE idUser = $1 AND bookingDate = $2',
+      [userId, date]
+    );
+    
+    const userBookedTimes = existingBookings.rows.map(row => row.starttime);
+    console.log(`📅 משתמש הזמין כבר ב-${date}:`, userBookedTimes);
+    
+    // קבלת מגרשים זמינים
+    const fieldsByTime = {};
+    
+    for (const timeSlot of timeSlots) {
+      console.log(`⏰ בודק זמינות ל-${timeSlot}`);
+      
+      // בדיקה אם המשתמש כבר הזמין אימון בזמן זה או בטווח של רבע שעה לפני ואחרי
+      let isUserBooked = false;
+      for (const bookedTime of userBookedTimes) {
+        if (!bookedTime) continue;
+        
+        const [hours, minutes] = bookedTime.split(':');
+        const bookedMinutes = parseInt(hours) * 60 + parseInt(minutes);
+        const beforeMinutes = bookedMinutes - 15;
+        const afterMinutes = bookedMinutes + 15;
+        
+        const beforeHours = Math.floor(beforeMinutes / 60);
+        const beforeMins = beforeMinutes % 60;
+        const beforeTime = `${beforeHours.toString().padStart(2, '0')}:${beforeMins.toString().padStart(2, '0')}`;
+        
+        const afterHours = Math.floor(afterMinutes / 60);
+        const afterMins = afterMinutes % 60;
+        const afterTime = `${afterHours.toString().padStart(2, '0')}:${afterMins.toString().padStart(2, '0')}`;
+        
+        if (timeSlot === bookedTime || timeSlot === beforeTime || timeSlot === afterTime) {
+          isUserBooked = true;
+          console.log(`❌ משתמש כבר הזמין אימון ב-${bookedTime}, לא ניתן להזמין ב-${timeSlot}`);
+          break;
+        }
+      }
+      
+      if (isUserBooked) {
+        fieldsByTime[timeSlot] = [];
+        continue;
+      }
+      
+      const fieldsResult = await pool.query(
+        'SELECT f.idField, f.fieldName, f.sportType, st.sportName FROM Field f JOIN SportTypes st ON f.sportType = st.sportType ORDER BY f.idField'
+      );
+      
+      const availableFields = [];
+      
+      for (const field of fieldsResult.rows) {
+        const bookingCheck = await pool.query(
+          'SELECT * FROM BookField WHERE idField = $1 AND bookingDate = $2 AND startTime = $3',
+          [field.idfield, date, timeSlot]
+        );
+        
+        if (bookingCheck.rows.length === 0) {
+          availableFields.push({
+            id: field.idfield,
+            name: field.fieldname,
+            sportType: field.sportname,
+            sportTypeId: field.sporttype,
+            isAvailable: true
+          });
+        }
+      }
+      
+      fieldsByTime[timeSlot] = availableFields;
+    }
+    
+    // בדיקה שיש מגרשים זמינים
+    const totalFields = Object.values(fieldsByTime).flat().length;
+    if (totalFields === 0) {
+      return res.json({
+        success: false,
+        message: 'אין מגרשים זמינים לתאריך ושעות שנבחרו'
+      });
+    }
+    
+    console.log('🏟️ מגרשים זמינים נטענו:', Object.keys(fieldsByTime).map(time => 
+      `${time}: ${fieldsByTime[time].length} מגרשים`
+    ));
+    
+    // יצירת תוכנית אימון אופטימלית
+    console.log('🚀 מתחיל אלגוריתם הונגרי אופטימלי...');
+    
+    const scheduler = new CompleteOptimalWorkoutScheduler(
+      timeSlots, 
+      fieldsByTime, 
+      userPreferences || []
+    );
+    
+    const workoutPlan = scheduler.solve();
+    
+    console.log('✅ תוכנית אימון אופטימלית נוצרה:', {
+      successfulSlots: workoutPlan.successfulSlots,
+      totalSlots: workoutPlan.totalSlots,
+      totalScore: workoutPlan.totalScore
+    });
+    
+    res.json({
+      success: true,
+      workoutPlan: workoutPlan,
+      message: `נוצרה תוכנית אימון אופטימלית עם ${workoutPlan.successfulSlots}/${workoutPlan.totalSlots} זמנים מוצלחים`
+    });
+    
+  } catch (err) {
+    console.error('❌ שגיאה ביצירת אימון אופטימלי:', err);
+    console.error('❌ Stack trace:', err.stack);
+    console.error('❌ נתוני הבקשה:', { userId: req.body.userId, date: req.body.date, timeSlots: req.body.timeSlots?.length, userPreferences: req.body.userPreferences });
+    res.json({
+      success: false,
+      message: 'שגיאה ביצירת האימון האופטימלי',
+      error: err.message,
+      details: err.stack
+    });
+  }
 });
 
 // Start server
