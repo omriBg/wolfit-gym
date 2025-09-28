@@ -1,6 +1,11 @@
 // utils/database.js - ניהול חיבורי מסד נתונים מתקדם
 const { Pool } = require('pg');
-const logger = require('./logger');
+const logger = {
+  info: console.log,
+  debug: console.log,
+  error: console.error,
+  warn: console.warn
+};
 
 // הגדרות connection pooling מתקדמות
 let dbConfig;
