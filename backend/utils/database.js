@@ -26,7 +26,8 @@ if (process.env.DATABASE_URL) {
     connectionString: connectionString,
     ssl: {
       rejectUnauthorized: false,
-      require: false
+      require: true,
+      checkServerIdentity: () => undefined
     },
     // הגדרות connection pooling מותאמות ל-Transaction Pooler
     max: 10, // פחות connections ל-Transaction Pooler
@@ -48,7 +49,8 @@ if (process.env.DATABASE_URL) {
     database: process.env.DB_NAME,
     ssl: {
       rejectUnauthorized: false,
-      require: false
+      require: true,
+      checkServerIdentity: () => undefined
     },
     // הגדרות connection pooling
     max: 10,
@@ -76,48 +78,6 @@ if (dbConfig.connectionString) {
     user: dbConfig.user,
     ssl: dbConfig.ssl
   });
-}
-
-// פונקציה להמרת host ל-IPv4
-async function resolveHostToIPv4(host) {
-  try {
-    const dns = require('dns');
-    const result = await new Promise((resolve, reject) => {
-      dns.lookup(host, { family: 4 }, (err, address) => {
-        if (err) {
-          reject(err);
-        } else {
-          resolve({ address });
-        }
-      });
-    });
-    console.log(`🔍 Resolved ${host} to IPv4: ${result.address}`);
-    return result.address;
-  } catch (error) {
-    console.warn(`⚠️ Failed to resolve ${host} to IPv4, using original:`, error.message);
-    return host;
-  }
-}
-
-// פונקציה להמרת connection string ל-IPv4
-async function resolveConnectionStringToIPv4(connectionString) {
-  try {
-    // חילוץ host מה-connection string
-    const url = new URL(connectionString);
-    const host = url.hostname;
-    
-    // פתרון ל-IPv4
-    const ipv4Host = await resolveHostToIPv4(host);
-    
-    // החלפת ה-host ב-connection string
-    const newConnectionString = connectionString.replace(host, ipv4Host);
-    console.log(`✅ Converted connection string to IPv4: ${newConnectionString.replace(/:[^:]*@/, ':***@')}`);
-    
-    return newConnectionString;
-  } catch (error) {
-    console.warn('⚠️ Could not resolve connection string to IPv4, using original:', error.message);
-    return connectionString;
-  }
 }
 
 // יצירת pool עם retry mechanism
