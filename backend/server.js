@@ -550,7 +550,7 @@ app.post('/api/register', async (req, res) => {
 
     // יצירת משתמש חדש
     const newUser = await pool.query(
-      `INSERT INTO User (
+      `INSERT INTO "User" (
         name, email, height, weight, birthdate,
         intensitylevel, googleid
       ) VALUES ($1, $2, $3, $4, $5, $6, $7) RETURNING *`,
@@ -727,7 +727,7 @@ app.get('/api/user-preferences/:userId', authenticateToken, async (req, res) => 
     let userResult;
     try {
       userResult = await pool.query(
-        'SELECT intensityLevel, height, weight, birthdate FROM "User" WHERE idUser = $1',
+        'SELECT intensitylevel, height, weight, birthdate FROM "User" WHERE iduser = $1',
       [userId]
     );
     console.log('📊 נתוני משתמש:', userResult.rows[0]);
@@ -907,20 +907,20 @@ app.put('/api/save-user-preferences/:userId', async (req, res) => {
 
     // בדיקה שהמשתמש קיים
     const userCheck = await pool.query(
-      'SELECT intensityLevel FROM "User" WHERE idUser = $1',
+      'SELECT intensitylevel FROM "User" WHERE iduser = $1',
       [userId]
     );
     console.log('🔍 נתוני משתמש לפני עדכון:', userCheck.rows[0]);
 
     // עדכון רמת עצימות
     await pool.query(
-      'UPDATE "User" SET intensityLevel = $1 WHERE idUser = $2 RETURNING *',
+      'UPDATE "User" SET intensitylevel = $1 WHERE iduser = $2 RETURNING *',
       [intensityLevel.toString(), userId]
     );
 
     // בדיקה שהעדכון הצליח
     const afterUpdate = await pool.query(
-      'SELECT intensityLevel FROM "User" WHERE idUser = $1',
+      'SELECT intensitylevel FROM "User" WHERE iduser = $1',
       [userId]
     );
     console.log('✅ נתוני משתמש אחרי עדכון:', afterUpdate.rows[0]);
@@ -1006,7 +1006,7 @@ app.get('/api/verify-token', authenticateToken, async (req, res) => {
   try {
     // אם הגענו לכאן, הטוקן תקין (בגלל ה-middleware)
     const user = await pool.query(
-      'SELECT idUser as id, email, name, picture FROM "User" WHERE idUser = $1',
+      'SELECT iduser as id, email, name, picture FROM "User" WHERE iduser = $1',
       [req.user.userId]
     );
 
@@ -1071,7 +1071,7 @@ app.post('/api/generate-optimal-workout', workoutLimiter, authenticateToken, asy
     
     // בדיקה שהמשתמש קיים
     const userCheck = await pool.query(
-      'SELECT idUser FROM "User" WHERE idUser = $1',
+      'SELECT iduser FROM "User" WHERE iduser = $1',
       [userId]
     );
     
@@ -1085,7 +1085,7 @@ app.post('/api/generate-optimal-workout', workoutLimiter, authenticateToken, asy
     // קבלת הזמנות קיימות של המשתמש לתאריך זה
     console.log('🔍 בודק הזמנות קיימות של המשתמש...');
     const existingBookings = await pool.query(
-      'SELECT startTime FROM BookField WHERE idUser = $1 AND bookingDate = $2',
+      'SELECT starttime FROM bookfield WHERE iduser = $1 AND bookingdate = $2',
       [userId, date]
     );
     
@@ -1129,14 +1129,14 @@ app.post('/api/generate-optimal-workout', workoutLimiter, authenticateToken, asy
       }
       
       const fieldsResult = await pool.query(
-        'SELECT f.idField, f.fieldName, f.sportType, st.sportName FROM Field f JOIN SportTypes st ON f.sportType = st.sportType ORDER BY f.idField'
+        'SELECT f.idfield, f.fieldname, f.sporttype, st.sportname FROM field f JOIN sporttypes st ON f.sporttype = st.sporttype ORDER BY f.idfield'
       );
       
       const availableFields = [];
       
       for (const field of fieldsResult.rows) {
         const bookingCheck = await pool.query(
-          'SELECT * FROM BookField WHERE idField = $1 AND bookingDate = $2 AND startTime = $3',
+          'SELECT * FROM bookfield WHERE idfield = $1 AND bookingdate = $2 AND starttime = $3',
           [field.idfield, date, timeSlot]
         );
         
