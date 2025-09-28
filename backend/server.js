@@ -381,38 +381,36 @@ app.post('/api/register', async (req, res) => {
 });
 
 // קבלת העדפות ספורט של משתמש
-app.get('/api/user-preferences/:userId', authenticateToken, async (req, res) => {
+app.get('/api/user-preferences/:userId', async (req, res) => {
   try {
-    const userId = req.params.userId;
+    const { userId } = req.params;
     
-    // בדיקה שה-userId מהtoken תואם לבקשה
-    if (req.user.userId != userId) {
-      return res.status(403).json({
+    const userResult = await pool.query(
+      'SELECT intensityLevel FROM "User" WHERE idUser = $1',
+      [userId]
+    );
+    
+    if (userResult.rows.length === 0) {
+      return res.json({
         success: false,
-        message: 'אין הרשאה לצפות בהעדפות של משתמש אחר'
+        message: 'משתמש לא נמצא'
       });
     }
-
-    // שליפת העדפות הספורט
-    const preferences = await pool.query(
-      `SELECT up.*, st.sportname, st.sporttype
-       FROM userpreferences up
-       JOIN sporttypes st ON up.sporttype = st.sporttype
-       WHERE up.iduser = $1
-       ORDER BY up.preferencerank`,
+    
+    const preferencesResult = await pool.query(
+      'SELECT sportType, preferenceRank FROM UserPreferences WHERE idUser = $1 ORDER BY preferenceRank',
       [userId]
     );
-
-    // שליפת פרטי המשתמש
-    const userDetails = await pool.query(
-      'SELECT height, weight, birthdate, intensitylevel FROM "User" WHERE iduser = $1',
-      [userId]
-    );
-
+    
+    const selectedSports = preferencesResult.rows.map(row => row.sporttype);
+    
     res.json({
       success: true,
-      preferences: preferences.rows,
-      userDetails: userDetails.rows[0]
+      data: {
+        intensityLevel: userResult.rows[0].intensitylevel,
+        selectedSports: selectedSports,
+        preferenceMode: selectedSports.length > 0 ? 'ranked' : 'simple'
+      }
     });
 
   } catch (error) {
@@ -440,6 +438,46 @@ app.get('/api/sports', async (req, res) => {
     res.status(500).json({
       success: false,
       message: 'שגיאה בשליפת סוגי הספורט'
+    });
+  }
+});
+
+// שמירת העדפות משתמש
+app.put('/api/save-user-preferences/:userId', async (req, res) => {
+  try {
+    const { userId } = req.params;
+    const { intensityLevel, selectedSports } = req.body;
+    
+    await pool.query(
+      'UPDATE "User" SET intensityLevel = $1 WHERE idUser = $2',
+      [intensityLevel, userId]
+    );
+    
+    await pool.query(
+      'DELETE FROM UserPreferences WHERE idUser = $1',
+      [userId]
+    );
+    
+    if (selectedSports && selectedSports.length > 0) {
+      for (let i = 0; i < selectedSports.length; i++) {
+        await pool.query(
+          'INSERT INTO UserPreferences (idUser, sportType, preferenceRank) VALUES ($1, $2, $3)',
+          [userId, selectedSports[i], i + 1]
+        );
+      }
+    }
+    
+    res.json({
+      success: true,
+      message: 'העדפות נשמרו בהצלחה!'
+    });
+    
+  } catch (err) {
+    console.error('שגיאה בשמירת העדפות:', err);
+    res.json({
+      success: false,
+      message: 'שגיאה בשמירת העדפות',
+      error: err.message
     });
   }
 });
