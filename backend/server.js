@@ -271,6 +271,94 @@ app.post('/api/google-login', loginLimiter, async (req, res) => {
 
 console.log('✅ Google Login API ready');
 
+// הוספת משתמש חדש
+app.post('/api/register', async (req, res) => {
+  try {
+    console.log('📝 מקבל בקשה לרישום:', req.body);
+    
+    const {
+      userName,
+      email,
+      height,
+      weight,
+      birthdate,
+      intensityLevel,
+      googleId,
+      selectedSports,
+      preferenceMode
+    } = req.body;
+
+    // בדיקה אם המשתמש כבר קיים
+    const existingUser = await pool.query(
+      'SELECT * FROM "User" WHERE email = $1 OR googleid = $2',
+      [email, googleId]
+    );
+
+    if (existingUser.rows.length > 0) {
+      return res.status(400).json({
+        success: false,
+        message: 'משתמש עם אימייל או Google ID זה כבר קיים'
+      });
+    }
+
+    // יצירת משתמש חדש
+    const newUser = await pool.query(
+      `INSERT INTO "User" (
+        name, email, height, weight, birthdate,
+        intensitylevel, googleid
+      ) VALUES ($1, $2, $3, $4, $5, $6, $7) RETURNING *`,
+      [
+        userName,
+        email,
+        height || null,
+        weight || null,
+        birthdate || null,
+        intensityLevel || 'medium',
+        googleId || null
+      ]
+    );
+
+    // הוספת העדפות ספורט
+    if (selectedSports && selectedSports.length > 0) {
+      for (let i = 0; i < selectedSports.length; i++) {
+        await pool.query(
+          'INSERT INTO userpreferences (iduser, sporttype, preferencerank) VALUES ($1, $2, $3)',
+          [newUser.rows[0].iduser, selectedSports[i], i + 1]
+        );
+      }
+    }
+
+    // יצירת JWT token
+    const token = jwt.sign(
+      {
+        userId: newUser.rows[0].iduser,
+        email: newUser.rows[0].email,
+        name: newUser.rows[0].name
+      },
+      JWT_SECRET,
+      { expiresIn: '7d' }
+    );
+
+    res.json({
+      success: true,
+      token,
+      user: {
+        id: newUser.rows[0].iduser,
+        email: newUser.rows[0].email,
+        name: newUser.rows[0].name,
+        picture: newUser.rows[0].picture
+      }
+    });
+
+  } catch (error) {
+    console.error('❌ שגיאה ברישום:', error);
+    res.status(500).json({
+      success: false,
+      message: 'שגיאה ברישום המשתמש'
+    });
+  }
+});
+
 // Root route
 app.get('/', (req, res) => {
   res.json({
@@ -279,6 +367,7 @@ app.get('/', (req, res) => {
     status: 'running',
     endpoints: {
       'POST /api/google-login': 'Google OAuth login',
+      'POST /api/register': 'User registration',
       'GET /health': 'Health check',
       'GET /ready': 'Readiness check'
     }
