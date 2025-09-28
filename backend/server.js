@@ -329,48 +329,50 @@ app.post('/api/google-login', async (req, res) => {  // הסרנו את loginLim
 
       // בדיקה והוספת עמודות חסרות
       try {
-      // בדיקת עמודות חסרות בטבלת User
-      const columnsCheck = await readyPool.query(`
-        SELECT column_name 
-        FROM information_schema.columns 
-        WHERE table_name = 'user';
-      `);
-      
-      const existingColumns = columnsCheck.rows.map(row => row.column_name);
-      console.log('📊 עמודות קיימות בטבלת User:', existingColumns);
-
-      // הוספת עמודת googleid אם חסרה
-      if (!existingColumns.includes('googleid')) {
-        console.log('⚠️ עמודת googleid חסרה, מוסיף אותה...');
-        await readyPool.query(`
-          ALTER TABLE "User"
-          ADD COLUMN googleid VARCHAR(255) UNIQUE;
+        // בדיקת עמודות חסרות בטבלת User
+        const columnsCheck = await readyPool.query(`
+          SELECT column_name 
+          FROM information_schema.columns 
+          WHERE table_name = 'user';
         `);
-        console.log('✅ עמודת googleid נוספה בהצלחה');
-      }
+        
+        const existingColumns = columnsCheck.rows.map(row => row.column_name);
+        console.log('📊 עמודות קיימות בטבלת User:', existingColumns);
 
-      // הוספת עמודת picture אם חסרה
-      if (!existingColumns.includes('picture')) {
-        console.log('⚠️ עמודת picture חסרה, מוסיף אותה...');
-        await readyPool.query(`
-          ALTER TABLE "User"
-          ADD COLUMN picture VARCHAR(500);
-        `);
-        console.log('✅ עמודת picture נוספה בהצלחה');
-      }
+        // הוספת עמודת googleid אם חסרה
+        if (!existingColumns.includes('googleid')) {
+          console.log('⚠️ עמודת googleid חסרה, מוסיף אותה...');
+          await readyPool.query(`
+            ALTER TABLE "User"
+            ADD COLUMN googleid VARCHAR(255) UNIQUE;
+          `);
+          console.log('✅ עמודת googleid נוספה בהצלחה');
+        }
 
-      // עדכון המשתמש הקיים עם ה-googleid אם צריך
-      if (googleData && googleData.sub) {
-        console.log('🔄 מעדכן googleid למשתמש קיים...');
-        await readyPool.query(`
-          UPDATE "User"
-          SET googleid = $1, picture = $2
-          WHERE email = $3 AND (googleid IS NULL OR googleid != $1)
-        `, [googleData.sub, googleData.picture, googleData.email]);
-        console.log('✅ פרטי המשתמש עודכנו בהצלחה');
+        // הוספת עמודת picture אם חסרה
+        if (!existingColumns.includes('picture')) {
+          console.log('⚠️ עמודת picture חסרה, מוסיף אותה...');
+          await readyPool.query(`
+            ALTER TABLE "User"
+            ADD COLUMN picture VARCHAR(500);
+          `);
+          console.log('✅ עמודת picture נוספה בהצלחה');
+        }
+
+        // עדכון המשתמש הקיים עם ה-googleid אם צריך
+        if (googleData && googleData.sub) {
+          console.log('🔄 מעדכן googleid למשתמש קיים...');
+          await readyPool.query(`
+            UPDATE "User"
+            SET googleid = $1, picture = $2
+            WHERE email = $3 AND (googleid IS NULL OR googleid != $1)
+          `, [googleData.sub, googleData.picture, googleData.email]);
+          console.log('✅ פרטי המשתמש עודכנו בהצלחה');
+        }
+      } catch (error) {
+        console.error('❌ שגיאה בבדיקת/הוספת עמודות:', error);
+        throw error;  // נזרוק את השגיאה למעלה לטיפול הכללי
       }
-      
-      // סיום בדיקת והוספת עמודות
 
     } catch (error) {
       console.error('❌ שגיאה בבדיקת/הוספת עמודות:', error);
