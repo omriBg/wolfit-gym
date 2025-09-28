@@ -229,7 +229,7 @@ app.post('/api/google-login', async (req, res) => {  // הסרנו את loginLim
       googleId: googleData.sub,
       email: googleData.email
     });
-    
+
     // המתנה ל-pool להיות מוכן
     console.log('⏳ מחכה שהדאטהבייס יהיה מוכן...');
     let readyPool;
@@ -689,7 +689,7 @@ app.get('/api/user-preferences/:userId', authenticateToken, async (req, res) => 
     console.log('🔍 בודק תוכן טבלאות...');
     
     try {
-      const userCount = await pool.query('SELECT COUNT(*) FROM User');
+      const userCount = await pool.query('SELECT COUNT(*) FROM "User"');
       console.log('👥 מספר משתמשים:', userCount.rows[0].count);
     } catch (error) {
       console.error('❌ שגיאה בבדיקת טבלת User:', error.message);
@@ -708,16 +708,16 @@ app.get('/api/user-preferences/:userId', authenticateToken, async (req, res) => 
     } catch (error) {
       console.error('❌ שגיאה בבדיקת טבלת sporttypes:', error.message);
     }
-
+    
     // שליפת נתוני משתמש
     console.log('🔍 מנסה לשלוף נתוני משתמש עבור ID:', userId);
     let userResult;
     try {
       userResult = await pool.query(
-        'SELECT intensitylevel, height, weight, birthdate FROM User WHERE iduser = $1',
-        [userId]
-      );
-      console.log('📊 נתוני משתמש:', userResult.rows[0]);
+        'SELECT intensityLevel, height, weight, birthdate FROM "User" WHERE idUser = $1',
+      [userId]
+    );
+    console.log('📊 נתוני משתמש:', userResult.rows[0]);
     } catch (error) {
       console.error('❌ שגיאה בשליפת נתוני משתמש:', {
         message: error.message,
@@ -778,7 +778,7 @@ app.get('/api/user-preferences/:userId', authenticateToken, async (req, res) => 
       }
 
       preferencesResult = await pool.query(
-        `SELECT 
+      `SELECT 
           up.sporttype as id, 
           up.preferencerank as rank, 
           st.sportname as name
@@ -786,8 +786,8 @@ app.get('/api/user-preferences/:userId', authenticateToken, async (req, res) => 
          JOIN sporttypes st ON up.sporttype = st.sporttype 
          WHERE up.iduser = $1 
          ORDER BY up.preferencerank`,
-        [userId]
-      );
+      [userId]
+    );
       console.log('📊 נמצאו', preferencesResult.rows.length, 'העדפות ספורט');
     } catch (dbError) {
       console.error('❌ שגיאה בשליפת העדפות ספורט:', dbError);
@@ -804,7 +804,7 @@ app.get('/api/user-preferences/:userId', authenticateToken, async (req, res) => 
     const selectedSports = preferencesResult.rows.map(row => {
       const sport = {
         id: row.id || row.sporttype,  // תומך בשני הפורמטים
-        name: row.name,
+      name: row.name,
         rank: row.rank || row.preferencerank,  // תומך בשני הפורמטים
         selected: true
       };
@@ -894,20 +894,20 @@ app.put('/api/save-user-preferences/:userId', async (req, res) => {
 
     // בדיקה שהמשתמש קיים
     const userCheck = await pool.query(
-      'SELECT intensitylevel FROM User WHERE iduser = $1',
+      'SELECT intensityLevel FROM "User" WHERE idUser = $1',
       [userId]
     );
     console.log('🔍 נתוני משתמש לפני עדכון:', userCheck.rows[0]);
 
     // עדכון רמת עצימות
     await pool.query(
-      'UPDATE User SET intensitylevel = $1 WHERE iduser = $2 RETURNING *',
+      'UPDATE "User" SET intensityLevel = $1 WHERE idUser = $2 RETURNING *',
       [intensityLevel.toString(), userId]
     );
 
     // בדיקה שהעדכון הצליח
     const afterUpdate = await pool.query(
-      'SELECT intensitylevel FROM User WHERE iduser = $1',
+      'SELECT intensityLevel FROM "User" WHERE idUser = $1',
       [userId]
     );
     console.log('✅ נתוני משתמש אחרי עדכון:', afterUpdate.rows[0]);
@@ -932,7 +932,7 @@ app.put('/api/save-user-preferences/:userId', async (req, res) => {
       `);
       console.log('✅ טבלת UserPreferences נוצרה');
     }
-
+    
     // מחיקת העדפות קיימות
     console.log('🗑️ מוחק העדפות קיימות למשתמש:', userId);
     await pool.query(
@@ -993,7 +993,7 @@ app.get('/api/verify-token', authenticateToken, async (req, res) => {
   try {
     // אם הגענו לכאן, הטוקן תקין (בגלל ה-middleware)
     const user = await pool.query(
-      'SELECT iduser as id, email, name, picture FROM User WHERE iduser = $1',
+      'SELECT idUser as id, email, name, picture FROM "User" WHERE idUser = $1',
       [req.user.userId]
     );
 
