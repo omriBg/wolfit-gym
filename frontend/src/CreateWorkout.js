@@ -99,10 +99,15 @@ function CreateWorkout({ selectedDate, startTime, endTime }) {
       console.log('📡 תגובת השרת להעדפות:', response.status, response.statusText);
       const data = await response.json();
       
-      if (data.success) {
-        const preferences = data.data.selectedSports || [];
-        setUserPreferences(preferences);
-        console.log('❤️ העדפות נטענו:', preferences.map(id => SPORT_MAPPING[id]).join(', '));
+      if (data.success && data.data && data.data.sports) {
+        // מיצוי רק הספורטים שנבחרו ומיון לפי הדירוג שלהם
+        const selectedSports = data.data.sports
+          .filter(sport => sport.selected)
+          .sort((a, b) => a.rank - b.rank)
+          .map(sport => sport.id);
+        
+        setUserPreferences(selectedSports);
+        console.log('❤️ העדפות נטענו:', selectedSports.map(id => SPORT_MAPPING[id]).join(', '));
       } else {
         console.log('⚠️ אין העדפות שמורות');
         setUserPreferences([]);
