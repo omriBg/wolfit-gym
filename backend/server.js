@@ -1488,6 +1488,90 @@ app.get('/api/future-workouts/:userId', authenticateToken, async (req, res) => {
   }
 });
 
+// API לביטול אימון
+app.delete('/api/cancel-workout/:userId/:date/:fieldId/:startTime', authenticateToken, async (req, res) => {
+  try {
+    const { userId, date, fieldId, startTime } = req.params;
+    
+    console.log('🗑️ מקבל בקשה לביטול אימון:', { userId, date, fieldId, startTime });
+    
+    if (!userId || !date || !fieldId || !startTime) {
+      return res.json({
+        success: false,
+        message: 'חסרים פרטים לביטול האימון'
+      });
+    }
+    
+    // בדיקה שהמשתמש קיים
+    const userCheck = await pool.query(
+      'SELECT iduser FROM "User" WHERE iduser = $1',
+      [userId]
+    );
+    
+    if (userCheck.rows.length === 0) {
+      return res.json({
+        success: false,
+        message: 'משתמש לא נמצא'
+      });
+    }
+    
+    // בדיקה שהאימון קיים ושייך למשתמש
+    const bookingCheck = await pool.query(
+      'SELECT * FROM bookfield WHERE iduser = $1 AND bookingdate = $2 AND idfield = $3 AND starttime = $4',
+      [userId, date, fieldId, startTime]
+    );
+    
+    if (bookingCheck.rows.length === 0) {
+      return res.json({
+        success: false,
+        message: 'לא נמצא אימון מתאים לביטול'
+      });
+    }
+    
+    // בדיקה שהתאריך לא בעבר
+    const today = new Date().toISOString().split('T')[0];
+    if (date < today) {
+      return res.json({
+        success: false,
+        message: 'לא ניתן לבטל אימון מהעבר'
+      });
+    }
+    
+    // אם זה היום, נבדוק שהשעה לא עברה
+    if (date === today) {
+      const now = new Date();
+      const currentTime = now.toTimeString().split(' ')[0];
+      if (startTime < currentTime) {
+        return res.json({
+          success: false,
+          message: 'לא ניתן לבטל אימון שכבר התחיל'
+        });
+      }
+    }
+    
+    // מחיקת האימון
+    await pool.query(
+      'DELETE FROM bookfield WHERE iduser = $1 AND bookingdate = $2 AND idfield = $3 AND starttime = $4',
+      [userId, date, fieldId, startTime]
+    );
+    
+    console.log('✅ האימון בוטל בהצלחה');
+    
+    res.json({
+      success: true,
+      message: 'האימון בוטל בהצלחה'
+    });
+    
+  } catch (err) {
+    console.error('❌ שגיאה בביטול האימון:', err);
+    res.status(500).json({
+      success: false,
+      message: 'שגיאה בביטול האימון',
+      error: err.message
+    });
+  }
+});
+
 // API לקבלת שעות תפוסות של משתמש לתאריך מסוים
 app.get('/api/user-booked-times/:userId/:date', authenticateToken, async (req, res) => {
   try {

@@ -402,22 +402,28 @@ function StartWorkout() {
       console.log('מחיקת הזמנות:', bookingsToDelete);
 
       const token = localStorage.getItem('authToken');
-      const response = await fetch(`${API_BASE_URL}/api/cancel-workout`, {
-        method: 'DELETE',
-        headers: {
-          'Authorization': `Bearer ${token}`,
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          userId: user.id,
-          bookings: bookingsToDelete
-        })
+      
+      // מחיקת כל ההזמנות בנפרד
+      for (const booking of bookingsToDelete) {
+        const response = await fetch(
+          `${API_BASE_URL}/api/cancel-workout/${user.id}/${booking.bookingDate}/${booking.idField}/${booking.startTime}`,
+          {
+            method: 'DELETE',
+            headers: {
+              'Authorization': `Bearer ${token}`,
+              'Content-Type': 'application/json',
+            }
+          }
       });
 
-      const data = await response.json();
-
-      if (data.success) {
-        console.log('אימון בוטל בהצלחה');
+        const data = await response.json();
+        
+        if (!data.success) {
+          throw new Error(data.message || 'שגיאה בביטול אימון');
+        }
+      }
+      
+      console.log('כל האימונים בוטלו בהצלחה');
         // סגירת דיאלוג האישור
         setShowCancelConfirm(false);
         setWorkoutToCancel(null);
