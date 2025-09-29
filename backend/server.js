@@ -1493,6 +1493,9 @@ app.delete('/api/cancel-workout/:userId/:date/:fieldId/:startTime', authenticate
   try {
     const { userId, date, fieldId, startTime } = req.params;
     
+    // המרת השעה חזרה לפורמט המקורי (הוספת נקודותיים)
+    const formattedTime = startTime.replace(/(\d{2})(\d{2})(\d{2})/, '$1:$2:$3');
+    
     console.log('🗑️ מקבל בקשה לביטול אימון:', { userId, date, fieldId, startTime });
     
     if (!userId || !date || !fieldId || !startTime) {
@@ -1518,7 +1521,7 @@ app.delete('/api/cancel-workout/:userId/:date/:fieldId/:startTime', authenticate
     // בדיקה שהאימון קיים ושייך למשתמש
     const bookingCheck = await pool.query(
       'SELECT * FROM bookfield WHERE iduser = $1 AND bookingdate = $2 AND idfield = $3 AND starttime = $4',
-      [userId, date, fieldId, startTime]
+      [userId, date, fieldId, formattedTime]
     );
     
     if (bookingCheck.rows.length === 0) {
@@ -1552,7 +1555,7 @@ app.delete('/api/cancel-workout/:userId/:date/:fieldId/:startTime', authenticate
     // מחיקת האימון
     await pool.query(
       'DELETE FROM bookfield WHERE iduser = $1 AND bookingdate = $2 AND idfield = $3 AND starttime = $4',
-      [userId, date, fieldId, startTime]
+      [userId, date, fieldId, formattedTime]
     );
     
     console.log('✅ האימון בוטל בהצלחה');

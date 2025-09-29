@@ -410,47 +410,52 @@ function StartWorkout() {
       console.log('מחיקת הזמנות:', bookingsToDelete);
 
       const token = localStorage.getItem('authToken');
+      let hasError = false;
       
-      // מחיקת כל ההזמנות בנפרד
-      for (const booking of bookingsToDelete) {
-        // עיבוד התאריך והשעה לפורמט נכון ל-URL
-        const encodedDate = encodeURIComponent(booking.bookingDate);
-        const encodedTime = encodeURIComponent(booking.startTime);
-        
-        console.log('מנסה לבטל הזמנה:', {
-          userId: user.id,
-          date: encodedDate,
-          fieldId: booking.idField,
-          time: encodedTime
-        });
-        
-        const response = await fetch(
-          `${API_BASE_URL}/api/cancel-workout/${user.id}/${encodedDate}/${booking.idField}/${encodedTime}`,
-          {
-            method: 'DELETE',
-            headers: {
-              'Authorization': `Bearer ${token}`,
-              'Content-Type': 'application/json',
-            }
-          }
-      });
+      try {
+        // מחיקת כל ההזמנות בנפרד
+        for (const booking of bookingsToDelete) {
+          // עיבוד התאריך והשעה לפורמט נכון ל-URL
+          const encodedDate = booking.bookingDate;
+          // המרת השעה לפורמט שהשרת מצפה לו (ללא נקודותיים)
+          const encodedTime = booking.startTime.replace(/:/g, '');
+          
+          console.log('מנסה לבטל הזמנה:', {
+            userId: user.id,
+            date: encodedDate,
+            fieldId: booking.idField,
+            time: encodedTime
+          });
+          
+          const response = await fetch(
+            `${API_BASE_URL}/api/cancel-workout/${user.id}/${encodedDate}/${booking.idField}/${encodedTime}`,
+            {
+              method: 'DELETE',
+              headers: {
+                'Authorization': `Bearer ${token}`,
+                'Content-Type': 'application/json',
+              }
+            });
 
-        const data = await response.json();
-        
-        if (!data.success) {
-          throw new Error(data.message || 'שגיאה בביטול אימון');
+          const data = await response.json();
+          
+          if (!data.success) {
+            hasError = true;
+            throw new Error(data.message || 'שגיאה בביטול אימון');
+          }
         }
-      }
-      
-      console.log('כל האימונים בוטלו בהצלחה');
-        // סגירת דיאלוג האישור
-        setShowCancelConfirm(false);
-        setWorkoutToCancel(null);
-        // רענון רשימת האימונים
-        window.location.reload();
-      } else {
-        console.error('שגיאה בביטול האימון:', data.message);
-        setError(data.message || 'שגיאה בביטול האימון');
+        
+        if (!hasError) {
+          console.log('כל האימונים בוטלו בהצלחה');
+          // סגירת דיאלוג האישור
+          setShowCancelConfirm(false);
+          setWorkoutToCancel(null);
+          // רענון רשימת האימונים
+          window.location.reload();
+        }
+      } catch (error) {
+        console.error('שגיאה בביטול האימון:', error);
+        setError(error.message || 'שגיאה בביטול האימון');
         setShowCancelConfirm(false);
         setWorkoutToCancel(null);
       }
