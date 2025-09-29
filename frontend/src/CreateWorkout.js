@@ -109,7 +109,7 @@ function CreateWorkout({ selectedDate, startTime, endTime }) {
         setUserPreferences(selectedSports);
         console.log('❤️ העדפות נטענו:', selectedSports.map(id => SPORT_MAPPING[id]).join(', '));
       } else {
-        console.log('⚠️ אין העדפות שמורות');
+        console.log('⚠️ איין העדפות שמורות');
         setUserPreferences([]);
       }
     } catch (error) {
