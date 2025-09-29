@@ -100,7 +100,7 @@ function CreateWorkout({ selectedDate, startTime, endTime }) {
       const data = await response.json();
       
       if (data.success && data.data && data.data.sports) {
-        // מיצוי רק הספורטים שנבחרו ומיון לפי הדירוג שלהם
+        // מיצוי רק הספורטים שנבחרו ומיון לפי הדירוג שלהםכ
         const selectedSports = data.data.sports
           .filter(sport => sport.selected)
           .sort((a, b) => a.rank - b.rank)
