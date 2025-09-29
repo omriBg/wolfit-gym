@@ -47,6 +47,10 @@
   transform: translateX(-50%);
   z-index: 99999;
   text-align: center;
+  width: 100%;
+  display: flex;
+  justify-content: center;
+  align-items: center;
 }
 
 .create-workout-button {

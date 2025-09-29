@@ -195,6 +195,16 @@
     transition: all 1.5s cubic-bezier(0.4, 0, 0.2, 1);
   }
   
+  /* התאמת גודל כפתור התנתקות למובייל */
+  .back-button {
+    padding: 6px 12px !important;
+    font-size: 14px !important;
+    height: auto !important;
+    width: auto !important;
+    min-width: unset !important;
+    min-height: unset !important;
+  }
+  
   .main-logo2.scrolled {
     width: 50px !important;
     top: 10px !important;

@@ -529,13 +529,22 @@
   }
   
   .ranking-display {
-    flex-direction: column;
-    gap: 6px;
+    flex-direction: row !important;
+    gap: 10px;
+    justify-content: center;
+    align-items: center;
   }
   
   .sport-name {
     text-align: center;
     font-size: 0.9rem;
+    display: inline-block !important;
+    margin-right: 8px;
+  }
+  
+  .sport-icon {
+    font-size: 1.2rem;
+    margin: 0 4px;
   }
   
   .ranking-controls {
