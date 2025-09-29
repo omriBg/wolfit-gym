@@ -17,6 +17,6 @@ const USE_LOCAL_SERVER = false;
 // כתובת השרת הנוכחית
 export const API_BASE_URL = USE_LOCAL_SERVER ? SERVER_CONFIG.LOCAL : SERVER_CONFIG.PRODUCTION;
 
-// הודעת דיבוג
+// הודעת דיבוגג
 console.log(`🌐 משתמש בשרת: ${API_BASE_URL}`);
 
