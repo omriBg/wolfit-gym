@@ -99,214 +99,255 @@ class OptimalHungarianAlgorithm {
         }
       }
     }
+    
+    console.log('✅ הפחתת מטריצה הושלמה');
   }
 
   findInitialZeros() {
     console.log('🔍 מחפש אפסים ראשוניים...');
     
     this.starredZeros.clear();
-    this.primedZeros.clear();
+    const usedRows = new Set();
+    const usedCols = new Set();
     
+    // Find independent zeros (star them)
     for (let i = 0; i < this.n; i++) {
       for (let j = 0; j < this.n; j++) {
-        if (this.matrix[i][j] === 0 && !this.rowCovered[i] && !this.colCovered[j]) {
+        if (this.matrix[i][j] === 0 && !usedRows.has(i) && !usedCols.has(j)) {
           this.starredZeros.add(`${i},${j}`);
-          this.rowCovered[i] = true;
-          this.colCovered[j] = true;
+          usedRows.add(i);
+          usedCols.add(j);
+          console.log(`⭐ סימן אפס ב-(${i},${j})`);
         }
       }
     }
     
-    this.clearCovers();
+    console.log(`✅ נמצאו ${this.starredZeros.size} אפסים מסומנים`);
     return 3;
   }
 
   coverStarredColumns() {
-    console.log('⭐ מכסה עמודות עם אפסים מסומנים...');
+    console.log('📋 מכסה עמודות עם אפסים מסומנים...');
     
-    let coveredColumns = 0;
-    for (let j = 0; j < this.n; j++) {
-      for (let i = 0; i < this.n; i++) {
-        if (this.starredZeros.has(`${i},${j}`)) {
-          this.colCovered[j] = true;
-          coveredColumns++;
-          break;
-        }
+    this.colCovered.fill(false);
+    let coveredCount = 0;
+    
+    // Cover columns that contain starred zeros
+    for (const zero of this.starredZeros) {
+      const [row, col] = zero.split(',').map(Number);
+      if (!this.colCovered[col]) {
+        this.colCovered[col] = true;
+        coveredCount++;
       }
     }
     
-    if (coveredColumns >= this.n) {
-      return 6; // סיום
+    console.log(`📊 כוסו ${coveredCount} עמודות`);
+    
+    if (coveredCount >= this.n) {
+      console.log('🎯 נמצא פתרון אופטימלי!');
+      return 6; // Solution found
     }
     
-    return 4;
+    return 4; // Need to continue
   }
 
   findUncoveredZero() {
     console.log('🔍 מחפש אפס לא מכוסה...');
     
+    while (true) {
+      const uncoveredZero = this.getUncoveredZero();
+      
+      if (!uncoveredZero) {
+        console.log('📉 לא נמצא אפס לא מכוסה - מקטין מטריצה');
+        this.reduceUncoveredElements();
+        continue;
+      }
+      
+      const { row, col } = uncoveredZero;
+      console.log(`🎯 נמצא אפס לא מכוסה ב-(${row},${col})`);
+      
+      this.primedZeros.add(`${row},${col}`);
+      
+      // Check if there's a starred zero in the same row
+      const starredInRow = this.findStarredZeroInRow(row);
+      
+      if (starredInRow !== -1) {
+        console.log(`🔄 נמצא אפס מסומן בשורה ${row}, עמודה ${starredInRow}`);
+        this.rowCovered[row] = true;
+        this.colCovered[starredInRow] = false;
+      } else {
+        console.log('🚀 עובר לבניית נתיב מגדיל');
+        this.path = [{ row, col, type: 'primed' }];
+        return 5;
+      }
+    }
+  }
+
+  getUncoveredZero() {
     for (let i = 0; i < this.n; i++) {
       for (let j = 0; j < this.n; j++) {
         if (this.matrix[i][j] === 0 && !this.rowCovered[i] && !this.colCovered[j]) {
-          this.primedZeros.add(`${i},${j}`);
-          
-          // בדיקה אם יש אפס מסומן בשורה
-          let starredInRow = false;
-          for (let k = 0; k < this.n; k++) {
-            if (this.starredZeros.has(`${i},${k}`)) {
-              this.rowCovered[i] = true;
-              this.colCovered[k] = false;
-              starredInRow = true;
-              break;
-            }
-          }
-          
-          if (!starredInRow) {
-            return 5; // בניית נתיב
-          }
+          return { row: i, col: j };
         }
       }
     }
-    
-    // לא נמצא אפס לא מכוסה - צריך לחסר מינימום
-    this.addMinimumValue();
-    return 4;
+    return null;
+  }
+
+  findStarredZeroInRow(row) {
+    for (const zero of this.starredZeros) {
+      const [r, c] = zero.split(',').map(Number);
+      if (r === row) return c;
+    }
+    return -1;
   }
 
   constructAugmentingPath() {
-    console.log('🛤️ בונה נתיב הרחבה...');
+    console.log('🛤️ בונה נתיב מגדיל...');
     
-    // מציאת האפס הפריים האחרון
-    let primeZero = null;
-    for (const zero of this.primedZeros) {
-      primeZero = zero;
-    }
+    let currentStep = this.path[this.path.length - 1];
     
-    if (!primeZero) {
-      return 4;
-    }
-    
-    const [row, col] = primeZero.split(',').map(Number);
-    this.path = [[row, col]];
-    
-    // בניית הנתיב
-    let currentRow = row;
-    let currentCol = col;
-    
+    // Build alternating path
     while (true) {
-      // חיפוש אפס מסומן בעמודה
-      let starredInCol = null;
-      for (let i = 0; i < this.n; i++) {
-        if (this.starredZeros.has(`${i},${currentCol}`)) {
-          starredInCol = [i, currentCol];
-          break;
-        }
-      }
+      // Find starred zero in same column
+      const starredInCol = this.findStarredZeroInColumn(currentStep.col);
       
-      if (!starredInCol) {
+      if (starredInCol === -1) {
+        console.log('✅ נתיב מגדיל הושלם');
         break;
       }
       
-      this.path.push(starredInCol);
+      this.path.push({ row: starredInCol, col: currentStep.col, type: 'starred' });
       
-      // חיפוש אפס פריים בשורה
-      let primedInRow = null;
-      for (let j = 0; j < this.n; j++) {
-        if (this.primedZeros.has(`${starredInCol[0]},${j}`)) {
-          primedInRow = [starredInCol[0], j];
-          break;
-        }
-      }
+      // Find primed zero in same row
+      const primedInRow = this.findPrimedZeroInRow(starredInCol);
       
-      if (!primedInRow) {
+      if (primedInRow === -1) {
+        console.log('❌ שגיאה בבניית נתיב');
         break;
       }
       
-      this.path.push(primedInRow);
-      currentCol = primedInRow[1];
+      this.path.push({ row: starredInCol, col: primedInRow, type: 'primed' });
+      currentStep = this.path[this.path.length - 1];
     }
     
-    // עדכון האפסים
-    this.updateZeros();
-    this.clearCovers();
-    this.clearPrimes();
+    // Update starred zeros based on path
+    this.updateStarredZeros();
+    
+    // Clear covers and primed zeros
+    this.rowCovered.fill(false);
+    this.colCovered.fill(false);
+    this.primedZeros.clear();
+    this.path = [];
     
     return 3;
   }
 
-  updateZeros() {
-    console.log('🔄 מעדכן אפסים...');
-    
-    for (let i = 0; i < this.path.length; i += 2) {
-      const [row, col] = this.path[i];
-      this.starredZeros.add(`${row},${col}`);
+  findStarredZeroInColumn(col) {
+    for (const zero of this.starredZeros) {
+      const [r, c] = zero.split(',').map(Number);
+      if (c === col) return r;
     }
+    return -1;
+  }
+
+  findPrimedZeroInRow(row) {
+    for (const zero of this.primedZeros) {
+      const [r, c] = zero.split(',').map(Number);
+      if (r === row) return c;
+    }
+    return -1;
+  }
+
+  updateStarredZeros() {
+    console.log('⭐ מעדכן אפסים מסומנים...');
     
+    // Unstar all starred zeros in the path
     for (let i = 1; i < this.path.length; i += 2) {
-      const [row, col] = this.path[i];
-      this.starredZeros.delete(`${row},${col}`);
+      const step = this.path[i];
+      this.starredZeros.delete(`${step.row},${step.col}`);
     }
-  }
-
-  clearCovers() {
-    this.rowCovered.fill(false);
-    this.colCovered.fill(false);
-  }
-
-  clearPrimes() {
-    this.primedZeros.clear();
-  }
-
-  addMinimumValue() {
-    console.log('➕ מוסיף ערך מינימלי...');
     
+    // Star all primed zeros in the path
+    for (let i = 0; i < this.path.length; i += 2) {
+      const step = this.path[i];
+      this.starredZeros.add(`${step.row},${step.col}`);
+    }
+    
+    console.log(`⭐ עודכנו ${this.starredZeros.size} אפסים מסומנים`);
+  }
+
+  reduceUncoveredElements() {
+    console.log('🔧 מקטין אלמנטים לא מכוסים...');
+    
+    // Find minimum uncovered value
     let minVal = Infinity;
     for (let i = 0; i < this.n; i++) {
       for (let j = 0; j < this.n; j++) {
-        if (!this.rowCovered[i] && !this.colCovered[j] && this.matrix[i][j] < minVal) {
-          minVal = this.matrix[i][j];
+        if (!this.rowCovered[i] && !this.colCovered[j] && this.matrix[i][j] < Infinity) {
+          minVal = Math.min(minVal, this.matrix[i][j]);
         }
       }
     }
     
+    if (minVal === Infinity || minVal <= 0) {
+      console.log('⚠️ לא נמצא ערך מינימלי תקין');
+      return;
+    }
+    
+    console.log(`🔢 ערך מינימלי: ${minVal}`);
+    
+    // Subtract from uncovered, add to double-covered
     for (let i = 0; i < this.n; i++) {
       for (let j = 0; j < this.n; j++) {
-        if (this.rowCovered[i]) {
+        if (this.rowCovered[i] && this.colCovered[j]) {
+          // Double covered - add
           this.matrix[i][j] += minVal;
-        }
-        if (!this.colCovered[j]) {
-          this.matrix[i][j] -= minVal;
+        } else if (!this.rowCovered[i] && !this.colCovered[j]) {
+          // Uncovered - subtract
+          if (this.matrix[i][j] < Infinity) {
+            this.matrix[i][j] -= minVal;
+          }
         }
       }
     }
   }
 
   extractAssignment() {
-    console.log('📋 מחלץ השמה...');
+    console.log('📊 מחלץ השמה סופית...');
     
-    for (let i = 0; i < this.n; i++) {
-      for (let j = 0; j < this.n; j++) {
-        if (this.starredZeros.has(`${i},${j}`)) {
-          this.assignment[i] = j;
-          break;
-        }
-      }
+    this.assignment.fill(-1);
+    
+    for (const zero of this.starredZeros) {
+      const [row, col] = zero.split(',').map(Number);
+      this.assignment[row] = col;
     }
+    
+    const assignedCount = this.assignment.filter(val => val !== -1).length;
+    console.log(`✅ השמה סופית: ${assignedCount}/${this.n} מוקצים`);
   }
 
   createFallbackAssignment() {
-    console.log('🆘 יוצר השמה חלופית...');
+    console.log('🔄 יוצר השמה חלופית...');
     
     const assignment = new Array(this.n).fill(-1);
-    const used = new Array(this.n).fill(false);
+    const usedCols = new Set();
     
+    // Simple greedy assignment on original matrix
     for (let i = 0; i < this.n; i++) {
+      let bestCol = -1;
+      let bestValue = Infinity;
+      
       for (let j = 0; j < this.n; j++) {
-        if (!used[j] && this.originalMatrix[i][j] < Infinity) {
-          assignment[i] = j;
-          used[j] = true;
-          break;
+        if (!usedCols.has(j) && this.originalMatrix[i][j] < bestValue) {
+          bestValue = this.originalMatrix[i][j];
+          bestCol = j;
         }
+      }
+      
+      if (bestCol !== -1 && bestValue < Infinity) {
+        assignment[i] = bestCol;
+        usedCols.add(bestCol);
       }
     }
     
@@ -342,7 +383,7 @@ class CompleteOptimalWorkoutScheduler {
   }
 
   // חישוב ניקוד מדויק לכל שילוב זמן-ספורט
-  calculatePreciseScore(timeSlot, sportId, currentUsage = 0) {
+  calculatePreciseScore(timeSlot, sportId, currentUsage = 0, priority = 1) {
     const availableFields = this.fieldsByTime[timeSlot] || [];
     const hasAvailableField = availableFields.some(field => 
       field.sportTypeId === sportId && field.isAvailable !== false
@@ -360,65 +401,114 @@ class CompleteOptimalWorkoutScheduler {
       score += (this.userPreferences.length - preferenceIndex) * 500;
     }
     
-    // עונש על שימוש יתר בספורט
-    const usagePenalty = currentUsage * 100;
-    score -= usagePenalty;
+    // עונש חזק על עדיפות נמוכה (גיוון חשוב!)
+    const priorityPenalty = (priority - 1) * 2000;
+    score -= priorityPenalty;
     
-    // בונוס על זמינות מגרשים
-    const fieldCount = availableFields.filter(field => field.sportTypeId === sportId).length;
-    score += fieldCount * 50;
+    // עונש על שימוש חוזר (רק אם זה לא עדיפות ראשונה)
+    if (priority > 1) {
+      const usagePenalty = currentUsage * currentUsage * 100;
+      score -= usagePenalty;
+    }
+    
+    // בונוס לאיכות המגרש
+    const bestField = availableFields
+      .filter(field => field.sportTypeId === sportId)
+      .sort((a, b) => (b.name || '').length - (a.name || '').length)[0];
+    
+    if (bestField && bestField.name && bestField.name.length > 10) {
+      score += 50; // מגרש איכותי
+    }
+    
+    // עונש קל על זמנים מאוחרים (העדפה לזמנים מוקדמים)
+    const timeIndex = this.timeSlots.indexOf(timeSlot);
+    score -= timeIndex * 2;
     
     return Math.max(0, score);
   }
 
-  // יצירת מטריצת עלות אופטימלית
+  // יצירת מטריצת עלויות מושלמת לאלגוריתם ההונגרי
   createOptimalCostMatrix() {
-    console.log('📊 יוצר מטריצת עלות אופטימלית...');
+    console.log('🏗️ יוצר מטריצת עלויות אופטימלית...');
     
-    const n = this.timeSlots.length;
-    const costMatrix = [];
+    const numTimeSlots = this.timeSlots.length;
     
-    for (let i = 0; i < n; i++) {
-      const row = [];
-      for (let j = 0; j < n; j++) {
-        row.push(Infinity);
-      }
-      costMatrix.push(row);
-    }
-    
-    // יצירת אפשרויות ספורט לכל זמן
+    // יוצר "אפשרויות ספורט" - עם עדיפות לגיוון
     const sportOptions = [];
-    for (let i = 0; i < n; i++) {
-      const timeSlot = this.timeSlots[i];
-      const options = [];
-      
-      for (const sportId of this.availableSports) {
-        const score = this.calculatePreciseScore(timeSlot, sportId);
-        if (score > 0) {
-          options.push({ sportId, score, timeSlot });
-        }
-      }
-      
-      // מיון לפי ניקוד (גבוה יותר = טוב יותר)
-      options.sort((a, b) => b.score - a.score);
-      sportOptions.push(options);
+    
+    // קודם כל - כל ספורט פעם ראשונה (גיוון מקסימלי)
+    for (const sportId of this.availableSports) {
+      sportOptions.push({
+        sportId,
+        usage: 0,
+        id: `${sportId}_1`,
+        name: `${SPORT_MAPPING[sportId]} (ראשון)`,
+        priority: 1 // עדיפות גבוהה
+      });
     }
     
-    // מילוי מטריצת העלות
-    for (let i = 0; i < n; i++) {
-      for (let j = 0; j < n; j++) {
-        if (j < sportOptions[i].length) {
-          const option = sportOptions[i][j];
-          // המרת ניקוד לעלות (נמוך יותר = טוב יותר)
-          costMatrix[i][j] = 10000 - option.score;
-        }
+    // אחר כך - ספורטים לא אהובים (אם אין ברירה)
+    for (const sportId of this.availableSports) {
+      if (!this.userPreferences.includes(sportId)) {
+        sportOptions.push({
+          sportId,
+          usage: 1,
+          id: `${sportId}_2`,
+          name: `${SPORT_MAPPING[sportId]} (לא אהוב)`,
+          priority: 2 // עדיפות נמוכה
+        });
       }
     }
     
-    console.log('📊 מטריצת עלות נוצרה:', costMatrix.map(row => 
-      row.map(val => val === Infinity ? '∞' : val)
-    ));
+    // לבסוף - חזרה על ספורטים אהובים (רק אם אין ברירה)
+    for (const sportId of this.userPreferences) {
+      sportOptions.push({
+        sportId,
+        usage: 1,
+        id: `${sportId}_3`,
+        name: `${SPORT_MAPPING[sportId]} (חוזר)`,
+        priority: 3 // עדיפות נמוכה ביותר
+      });
+    }
     
+    const matrixSize = Math.max(numTimeSlots, sportOptions.length);
+    console.log(`📐 גודל מטריצה: ${matrixSize}x${matrixSize}`);
+    console.log(`🏃 אפשרויות ספורט: ${sportOptions.length}`);
+    
+    const costMatrix = Array(matrixSize).fill().map(() => Array(matrixSize).fill(0));
+    
+    // מילוי המטריצה
+    for (let i = 0; i < matrixSize; i++) {
+      for (let j = 0; j < matrixSize; j++) {
+        if (i < numTimeSlots && j < sportOptions.length) {
+          // זמן אמיתי ← אפשרות ספורט אמיתית
+          const timeSlot = this.timeSlots[i];
+          const sportOption = sportOptions[j];
+          const score = this.calculatePreciseScore(timeSlot, sportOption.sportId, sportOption.usage, sportOption.priority);
+          
+          // המרה לעלות: ניקוד גבוה = עלות נמוכה
+          costMatrix[i][j] = score === -1 ? 999999 : (10000 - score);
+          
+        } else if (i < numTimeSlots) {
+          // זמן אמיתי ← ספורט דמה (עלות גבוהה מאוד)
+          costMatrix[i][j] = 999999;
+          
+        } else if (j < sportOptions.length) {
+          // זמן דמה ← ספורט אמיתי (עלות נמוכה)
+          costMatrix[i][j] = 1;
+          
+        } else {
+          // זמן דמה ← ספורט דמה (עלות 0)
+          costMatrix[i][j] = 0;
+        }
+      }
+    }
+    
+    // שמירת מידע על האפשרויות למטרות דיבוג
+    this.sportOptions = sportOptions;
+    this.matrixSize = matrixSize;
+    
+    console.log('✅ מטריצת עלויות נוצרה בהצלחה');
     return costMatrix;
   }
 
@@ -439,56 +529,53 @@ class CompleteOptimalWorkoutScheduler {
   parseOptimalAssignment(assignment) {
     console.log('🔍 מנתח תוצאת השמה אופטימלית...');
     
-    const result = {
-      slots: [],
-      successfulSlots: 0,
-      totalScore: 0,
-      sportsUsage: {}
-    };
+    const result = [];
+    const sportsUsageCount = {};
+    const usedSportOptions = new Set(); // מניעת כפילות
+    let totalScore = 0;
     
     for (let i = 0; i < this.timeSlots.length; i++) {
       const timeSlot = this.timeSlots[i];
       const assignedOptionIndex = assignment[i];
       
-      if (assignedOptionIndex >= 0 && assignedOptionIndex < this.availableSports.length) {
-        const sportId = this.availableSports[assignedOptionIndex];
-        const currentUsage = result.sportsUsage[sportId] || 0;
+      if (assignedOptionIndex !== -1 && 
+          assignedOptionIndex < this.sportOptions.length) {
         
-        if (!result.sportsUsage[sportId]) {
-          result.sportsUsage[sportId] = 0;
-        }
+        const sportOption = this.sportOptions[assignedOptionIndex];
+        const currentUsage = sportsUsageCount[sportOption.sportId] || 0;
         
-        if (currentUsage < this.maxUsagePerSport) {
-          const selectedField = this.findOptimalField(timeSlot, sportId);
-          const score = this.calculatePreciseScore(timeSlot, sportId, currentUsage);
+        // בדיקה אם השמה תקינה (לא כפילות באותה אופציה)
+        if (!usedSportOptions.has(assignedOptionIndex)) {
+          const selectedField = this.findOptimalField(timeSlot, sportOption.sportId);
+          const score = this.calculatePreciseScore(timeSlot, sportOption.sportId, currentUsage);
           
           if (selectedField && score > 0) {
-            result.sportsUsage[sportId] = currentUsage + 1;
-            result.totalScore += score;
-            result.successfulSlots++;
+            sportsUsageCount[sportOption.sportId] = currentUsage + 1;
+            usedSportOptions.add(assignedOptionIndex); // סימון כשימוש
+            totalScore += score;
             
-            result.slots.push({
+            result.push({
               time: timeSlot,
               field: selectedField,
-              sportType: SPORT_MAPPING[sportId],
-              sportId: sportId,
+              sportType: SPORT_MAPPING[sportOption.sportId],
+              sportId: sportOption.sportId,
               usage: currentUsage + 1,
               score: score,
               isOptimal: true
             });
             
-            console.log(`✅ ${timeSlot}: ${SPORT_MAPPING[sportId]} (${score} נק') במגרש ${selectedField.name}`);
+            console.log(`✅ ${timeSlot}: ${SPORT_MAPPING[sportOption.sportId]} (${score} נק') במגרש ${selectedField.name}`);
           } else {
-            result.slots.push({
+            result.push({
               time: timeSlot,
               field: null,
               reason: 'לא נמצא מגרש מתאים',
               isOptimal: false
             });
-            console.log(`❌ ${timeSlot}: לא נמצא מגרש ל-${SPORT_MAPPING[sportId]}`);
+            console.log(`❌ ${timeSlot}: לא נמצא מגרש ל-${SPORT_MAPPING[sportOption.sportId]}`);
           }
         } else {
-          result.slots.push({
+          result.push({
             time: timeSlot,
             field: null,
             reason: 'ספורט זה כבר שומש',
@@ -497,7 +584,7 @@ class CompleteOptimalWorkoutScheduler {
           console.log(`⚠️ ${timeSlot}: ספורט כבר שומש`);
         }
       } else {
-        result.slots.push({
+        result.push({
           time: timeSlot,
           field: null,
           reason: 'לא נמצא שיבוץ אופטימלי',
@@ -507,28 +594,97 @@ class CompleteOptimalWorkoutScheduler {
       }
     }
     
-    console.log(`🏆 פתרון אופטימלי: ${result.successfulSlots}/${this.timeSlots.length} זמנים`);
-    console.log(`📊 ניקוד כולל: ${result.totalScore}`);
+    const successfulSlots = result.filter(slot => slot.field !== null).length;
     
-    return result;
+    console.log(`🏆 פתרון אופטימלי: ${successfulSlots}/${this.timeSlots.length} זמנים`);
+    console.log(`🎯 ניקוד כולל: ${totalScore}`);
+    console.log(`📊 שימוש בספורטים:`, sportsUsageCount);
+    
+    return {
+      slots: result,
+      totalSlots: this.timeSlots.length,
+      successfulSlots: successfulSlots,
+      totalScore: totalScore,
+      sportsUsage: sportsUsageCount,
+      isOptimal: true,
+      algorithm: 'Hungarian Algorithm (Optimal)'
+    };
   }
 
+  // מציאת המגרש האופטימלי לספורט בזמן נתון
   findOptimalField(timeSlot, sportId) {
     const availableFields = this.fieldsByTime[timeSlot] || [];
-    const matchingFields = availableFields.filter(field => 
+    const suitableFields = availableFields.filter(field => 
       field.sportTypeId === sportId && field.isAvailable !== false
     );
     
-    if (matchingFields.length === 0) {
+    if (suitableFields.length === 0) {
       return null;
     }
     
-    // החזרת המגרש הראשון (אפשר לשפר עם לוגיקה נוספת)
-    return matchingFields[0];
+    // מיון לפי איכות המגרש
+    return suitableFields.sort((a, b) => {
+      // העדף מגרשים עם שמות מפורטים יותר
+      const scoreA = (a.name || '').length + (a.description || '').length;
+      const scoreB = (b.name || '').length + (b.description || '').length;
+      return scoreB - scoreA;
+    })[0];
   }
 
+  // בדיקת תקינות הנתונים לפני הפתרון
+  validateInputData() {
+    console.log('🔍 בודק תקינות נתונים...');
+    
+    const issues = [];
+    
+    if (!this.timeSlots || this.timeSlots.length === 0) {
+      issues.push('אין זמנים מוגדרים');
+    }
+    
+    if (!this.fieldsByTime || Object.keys(this.fieldsByTime).length === 0) {
+      issues.push('אין מגרשים זמינים');
+    }
+    
+    if (this.availableSports.length === 0) {
+      issues.push('אין ספורטים זמינים');
+    }
+    
+    // בדיקה שיש לפחות מגרש אחד זמין
+    const totalFields = Object.values(this.fieldsByTime).flat().length;
+    if (totalFields === 0) {
+      issues.push('אין מגרשים זמינים בכלל');
+    }
+    
+    if (issues.length > 0) {
+      console.log('❌ בעיות בנתונים:', issues);
+      return { valid: false, issues };
+    }
+    
+    console.log('✅ נתונים תקינים');
+    return { valid: true, issues: [] };
+  }
+
+  // פונקציה ראשית לפתרון
   solve() {
-    return this.solveOptimal();
+    console.log('🚀 מתחיל פתרון בעיית שיבוץ אופטימלי מלא...');
+    
+    // בדיקת תקינות
+    const validation = this.validateInputData();
+    if (!validation.valid) {
+      throw new Error(`נתונים לא תקינים: ${validation.issues.join(', ')}`);
+    }
+    
+    try {
+      // פתרון אופטימלי
+      const result = this.solveOptimal();
+      
+      console.log('🏆 פתרון אופטימלי הושלם בהצלחה!');
+      return result;
+      
+    } catch (error) {
+      console.error('❌ שגיאה בפתרון אופטימלי:', error);
+      throw new Error(`שגיאה בפתרון אופטימלי: ${error.message}`);
+    }
   }
 }
 
@@ -537,3 +693,8 @@ module.exports = {
   CompleteOptimalWorkoutScheduler,
   SPORT_MAPPING
 };
+
+
+
+
+
