@@ -26,7 +26,7 @@ class OptimalHungarianAlgorithm {
     this.primedZeros = new Set();
     this.path = [];
     
-    console.log('🔥 מתחיל אלגוריתם הונגרי אופטימלי מלא');
+    console.log('🔥 אמתחיל אלגוריתם הונגרי אופטימלי מלא');
     console.log('גודל מטריצה:', this.n + 'x' + this.n);
   }
 
