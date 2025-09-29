@@ -302,9 +302,10 @@
       min-height: 30px !important;
     }
 
-    .content {
-      padding: 60px 20px 40px 20px !important;
-    }
+.content {
+    padding: 60px 20px 90px 20px !important;
+    padding-bottom: calc(90px + env(safe-area-inset-bottom)) !important;
+  }
 
     .content h1 {
       font-size: 1.6rem !important;
