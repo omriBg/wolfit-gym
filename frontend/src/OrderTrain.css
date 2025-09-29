@@ -146,31 +146,78 @@ select {
 /* התאמה למובייל */
 @media (max-width: 768px) {
   .order-train-container {
-    background-size: 70%;
+    background-size: 40%;
     overflow-y: auto;
-    -webkit-overflow-scrolling: touch; /* גלילה חלקה באייפון */
+    -webkit-overflow-scrolling: touch;
   }
   
   .order-content {
-    padding: 60px 20px 100px 20px; /* יותר מקום למטה */
+    padding: 40px 20px 120px 20px !important;
     min-height: 100vh;
   }
   
   .create-workout-button-container {
-    bottom: 30px;
+    position: fixed !important;
+    bottom: 0 !important;
+    left: 0 !important;
+    right: 0 !important;
+    background: rgba(0, 0, 0, 0.9) !important;
+    padding: 15px 20px !important;
+    border-top: 1px solid rgba(255, 255, 255, 0.2) !important;
+    backdrop-filter: blur(10px) !important;
+    z-index: 999 !important;
+    width: 100%;
+    display: flex;
+    justify-content: center;
+    align-items: center;
   }
   
   .create-workout-button {
-    width: 200px;
-    height: 50px;
-    font-size: 18px;
+    width: 100% !important;
+    max-width: 350px !important;
+    margin: 0 auto !important;
+    display: block !important;
+    height: 50px !important;
+    font-size: 16px !important;
   }
   
   .order-train-container .back-button {
-    top: 15px !important;
-    right: 15px !important;
-    padding: 6px 12px !important;
+    top: 10px !important;
+    right: 10px !important;
+    padding: 6px 10px !important;
     font-size: 12px !important;
+    width: auto !important;
+    height: auto !important;
+    min-width: 50px !important;
+    min-height: 30px !important;
+  }
+
+  /* התאמת שדות השעה */
+  .order-content > div:nth-child(3),
+  .order-content > div:nth-child(4) {
+    margin-top: 20px !important;
+    margin-bottom: 25px !important;
+  }
+
+  .order-content select {
+    width: 100% !important;
+    max-width: 250px !important;
+    padding: 15px !important;
+    font-size: 18px !important;
+    margin: 0 auto 30px auto !important;
+    display: block !important;
+    background: rgba(255, 255, 255, 0.95) !important;
+    color: #000000 !important;
+    border: 2px solid rgba(179, 142, 216, 0.5) !important;
+    border-radius: 10px !important;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3) !important;
+  }
+
+  .order-content h3 {
+    font-size: 1.3rem !important;
+    margin-bottom: 20px !important;
+    color: #ffffff !important;
+    text-shadow: 1px 1px 3px rgba(0, 0, 0, 0.7) !important;
   }
   
   .react-datepicker {
