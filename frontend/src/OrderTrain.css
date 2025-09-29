@@ -158,7 +158,7 @@ select {
   
 .create-workout-button-container {
   position: fixed !important;
-  bottom: 20px !important;
+  bottom: 80px !important;
   left: 50% !important;
   transform: translateX(-50%) !important;
   z-index: 999 !important;
@@ -167,6 +167,7 @@ select {
   display: flex !important;
   justify-content: center !important;
   align-items: center !important;
+  margin-bottom: env(safe-area-inset-bottom) !important; /* תמיכה באייפון עם notch */
 }
 
 .create-workout-button {
