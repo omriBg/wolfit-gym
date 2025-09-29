@@ -392,12 +392,20 @@ function StartWorkout() {
       }
 
       // יצירת רשימת הזמנות למחיקה
-      const bookingsToDelete = workoutToCancel.map(workout => ({
-        idField: workout.fieldId,
-        bookingDate: workout.date,
-        startTime: workout.startTime,
-        idUser: user.id
-      }));
+      const bookingsToDelete = workoutToCancel.map(workout => {
+        // וידוא שהשעה בפורמט הנכון (HH:MM:SS)
+        let startTime = workout.startTime;
+        if (startTime && !startTime.includes(':')) {
+          startTime = startTime + ':00';
+        }
+        
+        return {
+          idField: workout.fieldId,
+          bookingDate: workout.date,
+          startTime: startTime,
+          idUser: user.id
+        };
+      });
 
       console.log('מחיקת הזמנות:', bookingsToDelete);
 
@@ -405,8 +413,19 @@ function StartWorkout() {
       
       // מחיקת כל ההזמנות בנפרד
       for (const booking of bookingsToDelete) {
+        // עיבוד התאריך והשעה לפורמט נכון ל-URL
+        const encodedDate = encodeURIComponent(booking.bookingDate);
+        const encodedTime = encodeURIComponent(booking.startTime);
+        
+        console.log('מנסה לבטל הזמנה:', {
+          userId: user.id,
+          date: encodedDate,
+          fieldId: booking.idField,
+          time: encodedTime
+        });
+        
         const response = await fetch(
-          `${API_BASE_URL}/api/cancel-workout/${user.id}/${booking.bookingDate}/${booking.idField}/${booking.startTime}`,
+          `${API_BASE_URL}/api/cancel-workout/${user.id}/${encodedDate}/${booking.idField}/${encodedTime}`,
           {
             method: 'DELETE',
             headers: {
