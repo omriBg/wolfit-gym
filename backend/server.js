@@ -14,6 +14,10 @@ const rateLimit = require('express-rate-limit');
 const { pool, testConnection, waitForPoolReady } = require('./utils/database');
 const { OptimalHungarianAlgorithm, CompleteOptimalWorkoutScheduler, SPORT_MAPPING } = require('./optimalWorkoutAlgorithm');
 
+// Redis services
+const redisService = require('./utils/redis');
+const fieldCacheService = require('./utils/fieldCache');
+
 const app = express();
 const PORT = process.env.PORT || 10000;
 
@@ -1128,29 +1132,8 @@ app.post('/api/generate-optimal-workout', workoutLimiter, authenticateToken, asy
         continue;
       }
       
-      const fieldsResult = await pool.query(
-        'SELECT f.idfield, f.fieldname, f.sporttype, st.sportname FROM field f JOIN sporttypes st ON f.sporttype = st.sporttype ORDER BY f.idfield'
-      );
-      
-      const availableFields = [];
-      
-      for (const field of fieldsResult.rows) {
-        const bookingCheck = await pool.query(
-          'SELECT * FROM bookfield WHERE idfield = $1 AND bookingdate = $2 AND starttime = $3',
-          [field.idfield, date, timeSlot]
-        );
-        
-        if (bookingCheck.rows.length === 0) {
-          availableFields.push({
-            id: field.idfield,
-            name: field.fieldname,
-            sportType: field.sportname,
-            sportTypeId: field.sporttype,
-            isAvailable: true
-          });
-        }
-      }
-      
+      // שימוש ב-cache service לקבלת מגרשים זמינים
+      const availableFields = await fieldCacheService.getAvailableFields(date, timeSlot);
       fieldsByTime[timeSlot] = availableFields;
     }
     
@@ -1339,6 +1322,9 @@ app.post('/api/save-workout', authenticateToken, async (req, res) => {
         'INSERT INTO bookfield (idfield, bookingdate, starttime, iduser) VALUES ($1, $2, $3, $4)',
         [idField, date, startTime, userId]
       );
+      
+      // ביטול ה-cache אחרי הזמנה חדשה
+      await fieldCacheService.invalidateCache(date, startTime);
       
       console.log(`✅ נשמרה הזמנה: מגרש ${idField}, תאריך ${date}, שעה ${startTime}`);
     }
@@ -1659,9 +1645,21 @@ app.get('/api/user-booked-times/:userId/:date', authenticateToken, async (req, r
   }
 });
 
+// התחברות ל-Redis
+async function initRedis() {
+  try {
+    await redisService.connect();
+    console.log('✅ Redis connected successfully');
+  } catch (error) {
+    console.error('❌ Redis connection failed:', error);
+    console.log('⚠️ Server will continue without Redis caching');
+  }
+}
+
 // Start server
-app.listen(PORT, '0.0.0.0', () => {
+app.listen(PORT, '0.0.0.0', async () => {
   console.log('🚀 Server running on http://0.0.0.0:' + PORT);
+  await initRedis();
 });
 
 console.log('✅ Health check ready');
