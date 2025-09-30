@@ -1710,7 +1710,7 @@ app.get('/api/user-hours/:userId', authenticateToken, async (req, res) => {
     
     // בדיקה שהמשתמש קיים
     const userCheck = await pool.query(
-      'SELECT iduser, username FROM "User" WHERE iduser = $1',
+      'SELECT idUser, userName FROM "User" WHERE idUser = $1',
       [userId]
     );
     
@@ -1723,7 +1723,7 @@ app.get('/api/user-hours/:userId', authenticateToken, async (req, res) => {
     
     // קבלת שעות זמינות
     const hoursResult = await pool.query(
-      'SELECT availableHours, lastUpdated, notes FROM UserHours WHERE userId = $1',
+      'SELECT availablehours, lastupdated, notes FROM userhours WHERE userid = $1',
       [userId]
     );
     
@@ -1736,7 +1736,7 @@ app.get('/api/user-hours/:userId', authenticateToken, async (req, res) => {
     res.json({
       success: true,
       userId: parseInt(userId),
-      username: userCheck.rows[0].username,
+      username: userCheck.rows[0].userName,
       availableHours: availableHours,
       lastUpdated: lastUpdated,
       notes: notes
@@ -1769,7 +1769,7 @@ app.post('/api/admin/add-hours/:userId', authenticateToken, async (req, res) => 
     
     // בדיקה שהמשתמש קיים
     const userCheck = await pool.query(
-      'SELECT iduser, username FROM "User" WHERE iduser = $1',
+      'SELECT idUser, userName FROM "User" WHERE idUser = $1',
       [userId]
     );
     
@@ -1845,7 +1845,7 @@ app.post('/api/admin/subtract-hours/:userId', authenticateToken, async (req, res
     
     // בדיקה שהמשתמש קיים
     const userCheck = await pool.query(
-      'SELECT iduser, username FROM "User" WHERE iduser = $1',
+      'SELECT idUser, userName FROM "User" WHERE idUser = $1',
       [userId]
     );
     
@@ -1928,7 +1928,7 @@ app.post('/api/use-hours/:userId', authenticateToken, async (req, res) => {
     
     // בדיקה שהמשתמש קיים
     const userCheck = await pool.query(
-      'SELECT iduser, username FROM "User" WHERE iduser = $1',
+      'SELECT idUser, userName FROM "User" WHERE idUser = $1',
       [userId]
     );
     
@@ -2011,7 +2011,7 @@ app.post('/api/refund-hours/:userId', authenticateToken, async (req, res) => {
     
     // בדיקה שהמשתמש קיים
     const userCheck = await pool.query(
-      'SELECT iduser, username FROM "User" WHERE iduser = $1',
+      'SELECT idUser, userName FROM "User" WHERE idUser = $1',
       [userId]
     );
     
@@ -2076,14 +2076,14 @@ app.get('/api/admin/all-users-hours', authenticateToken, async (req, res) => {
     
     const result = await pool.query(`
       SELECT 
-        u.iduser,
-        u.username,
+        u.idUser,
+        u.userName as username,
         u.email,
         COALESCE(uh.availablehours, 0) as availablehours,
         uh.lastupdated,
         uh.notes
       FROM "User" u
-      LEFT JOIN userhours uh ON u.iduser = uh.userid
+      LEFT JOIN userhours uh ON u.idUser = uh.userid
       ORDER BY u.username
     `);
     
