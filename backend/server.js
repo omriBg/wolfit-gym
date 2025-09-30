@@ -512,8 +512,8 @@ app.post('/api/register', async (req, res) => {
       height,
       weight,
       birthdate,
-      intensityLevel,
-      googleId,
+      intensitylevel,
+      googleid,
       selectedSports,
       preferenceMode
     } = req.body;
@@ -521,7 +521,7 @@ app.post('/api/register', async (req, res) => {
     // בדיקה אם המשתמש כבר קיים
     const existingUser = await pool.query(
       'SELECT * FROM "User" WHERE email = $1 OR googleid = $2',
-      [email, googleId]
+      [email, googleid]
     );
 
     if (existingUser.rows.length > 0) {
@@ -548,7 +548,7 @@ app.post('/api/register', async (req, res) => {
       height: heightNum,
       weight: weightNum,
       birthdate: formattedBirthdate,
-      intensityLevel,
+      intensitylevel,
       googleId
     });
 
@@ -564,8 +564,8 @@ app.post('/api/register', async (req, res) => {
         heightNum,
         weightNum,
         formattedBirthdate,
-        intensityLevel.toString() || 'medium',
-        googleId || null
+        intensitylevel.toString() || 'medium',
+        googleid || null
       ]
     );
 
@@ -900,11 +900,11 @@ app.get('/api/sports', async (req, res) => {
 app.put('/api/save-user-preferences/:userId', async (req, res) => {
   try {
     const { userId } = req.params;
-    const { intensityLevel, selectedSports } = req.body;
+    const { intensitylevel, selectedSports } = req.body;
     
     console.log('📝 נתונים שהתקבלו:', { 
       userId,
-      intensityLevel,
+      intensitylevel,
       selectedSports,
       body: req.body 
     });
@@ -919,7 +919,7 @@ app.put('/api/save-user-preferences/:userId', async (req, res) => {
     // עדכון רמת עצימות
     await pool.query(
       'UPDATE "User" SET intensitylevel = $1 WHERE iduser = $2 RETURNING *',
-      [intensityLevel.toString(), userId]
+      [intensitylevel.toString(), userId]
     );
 
     // בדיקה שהעדכון הצליח
@@ -1260,7 +1260,7 @@ app.post('/api/save-workout', authenticateToken, async (req, res) => {
       const { starttime } = booking;
       
       // חישוב רבע שעה לפני ואחרי
-      const [hours, minutes] = startTime.split(':');
+      const [hours, minutes] = starttime.split(':');
       const startMinutes = parseInt(hours) * 60 + parseInt(minutes);
       const beforeMinutes = startMinutes - 15; // רבע שעה לפני
       const afterMinutes = startMinutes + 15;  // רבע שעה אחרי
@@ -1274,7 +1274,7 @@ app.post('/api/save-workout', authenticateToken, async (req, res) => {
       const afterMins = afterMinutes % 60;
       const afterTime = `${afterHours.toString().padStart(2, '0')}:${afterMins.toString().padStart(2, '0')}`;
       
-      console.log(`⏰ בודק התנגשות עבור ${startTime} (טווח: ${beforeTime} - ${afterTime})`);
+      console.log(`⏰ בודק התנגשות עבור ${starttime} (טווח: ${beforeTime} - ${afterTime})`);
       
       // בדיקה אם יש הזמנה קיימת של אותו משתמש באותו תאריך בטווח הזמן
       const conflictCheck = await pool.query(
@@ -1286,7 +1286,7 @@ app.post('/api/save-workout', authenticateToken, async (req, res) => {
            starttime = $4 OR 
            starttime = $5
          )`,
-        [userId, date, beforeTime, startTime, afterTime]
+        [userId, date, beforeTime, starttime, afterTime]
       );
       
       if (conflictCheck.rows.length > 0) {
@@ -1327,17 +1327,17 @@ app.post('/api/save-workout', authenticateToken, async (req, res) => {
       }
       
       // הכנסת ההזמנה
-      console.log('💾 מנסה לשמור הזמנה:', { idfield, bookingdate, starttime, iduser });
+      console.log('💾 מנסה לשמור הזמנה:', { idfield, bookingdate, starttime, userId });
       await pool.query(
         'INSERT INTO bookfield (idfield, bookingdate, starttime, iduser) VALUES ($1, $2, $3, $4)',
-        [idfield, bookingdate, starttime, iduser]
+        [idfield, bookingdate, starttime, userId]
       );
       console.log('✅ הזמנה נשמרה בהצלחה');
       
       // ביטול ה-cache אחרי הזמנה חדשה
-      await fieldCacheService.invalidateCache(date, startTime);
+      await fieldCacheService.invalidateCache(date, starttime);
       
-      console.log(`✅ נשמרה הזמנה: מגרש ${idField}, תאריך ${date}, שעה ${startTime}`);
+      console.log(`✅ נשמרה הזמנה: מגרש ${idfield}, תאריך ${date}, שעה ${starttime}`);
     }
     
     res.json({
