@@ -10,7 +10,7 @@ class RedisService {
   async connect() {
     try {
       if (!this.baseUrl || !this.token) {
-        logger.warn('Redis: Missing configuration');
+        logger.warn('Redis: Missing configuration - UPSTASH_REDIS_REST_URL or UPSTASH_REDIS_REST_TOKEN not set');
         return false;
       }
 
@@ -20,7 +20,8 @@ class RedisService {
       logger.info('Redis: Connected successfully');
       return true;
     } catch (error) {
-      logger.error('Redis connection failed:', error);
+      // שימוש ב-error.message במקום error ישירות
+      logger.error('Redis connection failed:', error.message || error);
       this.isConnected = false;
       return false;
     }
@@ -43,7 +44,7 @@ class RedisService {
       const data = await response.json();
       return data.result;
     } catch (error) {
-      logger.error(`Redis ${command} error:`, error);
+      logger.error(`Redis ${command} error:`, error.message || error);
       return null;
     }
   }
@@ -54,7 +55,7 @@ class RedisService {
       const result = await this.makeRequest('get', [key]);
       return result ? JSON.parse(result) : null;
     } catch (error) {
-      logger.error('Redis get error:', error);
+      logger.error('Redis get error:', error.message || error);
       return null;
     }
   }
@@ -66,7 +67,7 @@ class RedisService {
       await this.makeRequest('set', [key, stringValue, 'EX', ttlSeconds.toString()]);
       return true;
     } catch (error) {
-      logger.error('Redis set error:', error);
+      logger.error('Redis set error:', error.message || error);
       return false;
     }
   }
@@ -77,7 +78,7 @@ class RedisService {
       await this.makeRequest('del', [key]);
       return true;
     } catch (error) {
-      logger.error('Redis delete error:', error);
+      logger.error('Redis delete error:', error.message || error);
       return false;
     }
   }
@@ -87,7 +88,7 @@ class RedisService {
       const result = await this.makeRequest('ping');
       return result === 'PONG';
     } catch (error) {
-      logger.error('Redis ping error:', error);
+      logger.error('Redis ping error:', error.message || error);
       return false;
     }
   }
@@ -107,7 +108,9 @@ class RedisService {
 
   getConnectionStatus() {
     return {
-      connected: this.isConnected
+      connected: this.isConnected,
+      url: this.baseUrl ? '✓' : '✗',
+      token: this.token ? '✓' : '✗'
     };
   }
 }
