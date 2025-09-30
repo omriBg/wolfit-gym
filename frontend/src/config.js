@@ -4,10 +4,10 @@
 // הגדרות שרת
 export const SERVER_CONFIG = {
   // שרת מקומי - לפתחות
-  LOCAL: 'http://localhost:3001',
+  LOCAL: 'http://localhost:3000',
   
   // שרת ייצור - לפרודקשן
-  PRODUCTION: 'https://wolfit.onrender.com'
+  PRODUCTION: 'https://wolfit-gym-backend.onrender.com'
 };
 
 // בחר כאן איזה שרת להשתמש:
