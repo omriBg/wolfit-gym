@@ -245,7 +245,7 @@ function CreateWorkout({ selectedDate, startTime, endTime }) {
         .filter(slot => slot.field !== null)
         .map(slot => ({
           idField: slot.field.id,
-          bookingDate: selectedDate,
+          bookingdate: selectedDate, // שינוי השם של השדה להתאים לשרת
           startTime: slot.time,
           idUser: user.id
         }));

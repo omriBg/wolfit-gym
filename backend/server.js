@@ -1195,7 +1195,12 @@ app.post('/api/save-workout', authenticateToken, async (req, res) => {
   try {
     const { bookings, userId, date } = req.body;
     
-    console.log('📋 מקבל בקשה לשמירת אימון:', { bookings, userId, date });
+    console.log('📋 מקבל בקשה לשמירת אימון:', {
+      bookings: JSON.stringify(bookings),
+      userId,
+      date,
+      firstBooking: bookings?.[0]
+    });
     
     if (!bookings || !Array.isArray(bookings) || bookings.length === 0) {
       return res.json({
