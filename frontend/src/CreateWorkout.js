@@ -244,10 +244,10 @@ function CreateWorkout({ selectedDate, startTime, endTime }) {
       const bookings = workoutPlan.slots
         .filter(slot => slot.field !== null)
         .map(slot => ({
-          idField: slot.field.id,
-          bookingdate: selectedDate, // שינוי השם של השדה להתאים לשרת
-          startTime: slot.time,
-          idUser: user.id
+          idfield: slot.field.id,
+          bookingdate: selectedDate,
+          starttime: slot.time,
+          iduser: user.id
         }));
 
       if (bookings.length === 0) {

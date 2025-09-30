@@ -1231,11 +1231,11 @@ app.post('/api/save-workout', authenticateToken, async (req, res) => {
       const currentTime = now.toTimeString().split(' ')[0]; // HH:MM:SS
       
       // נבדוק רק הזמנות שעברו
-      const pastBookings = bookings.filter(booking => booking.startTime < currentTime);
+      const pastBookings = bookings.filter(booking => booking.starttime < currentTime);
       if (pastBookings.length > 0) {
         return res.json({
           success: false,
-          message: `לא ניתן להזמין מגרשים לשעות שעברו: ${pastBookings.map(b => b.startTime).join(', ')}`
+          message: `לא ניתן להזמין מגרשים לשעות שעברו: ${pastBookings.map(b => b.starttime).join(', ')}`
         });
       }
     }
@@ -1327,10 +1327,12 @@ app.post('/api/save-workout', authenticateToken, async (req, res) => {
       }
       
       // הכנסת ההזמנה
+      console.log('💾 מנסה לשמור הזמנה:', { idfield, bookingdate, starttime, iduser });
       await pool.query(
         'INSERT INTO bookfield (idfield, bookingdate, starttime, iduser) VALUES ($1, $2, $3, $4)',
-        [idField, date, startTime, userId]
+        [idfield, bookingdate, starttime, iduser]
       );
+      console.log('✅ הזמנה נשמרה בהצלחה');
       
       // ביטול ה-cache אחרי הזמנה חדשה
       await fieldCacheService.invalidateCache(date, startTime);

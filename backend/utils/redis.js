@@ -15,23 +15,35 @@ class RedisService {
       }
 
       // בדיקת חיבור פשוטה
-      await this.ping();
+      const pingResult = await this.ping();
+      if (!pingResult) {
+        logger.warn('Redis: Ping failed');
+        return false;
+      }
+
       this.isConnected = true;
       logger.info('Redis: Connected successfully');
       return true;
-    } catch (error) {
-      // שימוש ב-error.message במקום error ישירות
-      logger.error('Redis connection failed:', error.message || error);
+    } catch (err) {
+      // טיפול בשגיאה בצורה בטוחה יותר
+      const errorMessage = err instanceof Error ? err.message : 'Unknown error';
+      logger.error('Redis connection failed:', errorMessage);
       this.isConnected = false;
       return false;
     }
   }
 
   async makeRequest(command, args = []) {
-    if (!this.isConnected) return null;
+    if (!this.isConnected) {
+      logger.debug(`Redis: Skipping ${command} - not connected`);
+      return null;
+    }
 
     try {
-      const response = await fetch(`${this.baseUrl}/${command}/${args.join('/')}`, {
+      const url = `${this.baseUrl}/${command}/${args.join('/')}`;
+      logger.debug(`Redis: Making request to ${url}`);
+      
+      const response = await fetch(url, {
         headers: {
           Authorization: `Bearer ${this.token}`
         }
@@ -43,8 +55,9 @@ class RedisService {
 
       const data = await response.json();
       return data.result;
-    } catch (error) {
-      logger.error(`Redis ${command} error:`, error.message || error);
+    } catch (err) {
+      const errorMessage = err instanceof Error ? err.message : 'Unknown error';
+      logger.error(`Redis ${command} error:`, errorMessage);
       return null;
     }
   }
@@ -54,8 +67,9 @@ class RedisService {
     try {
       const result = await this.makeRequest('get', [key]);
       return result ? JSON.parse(result) : null;
-    } catch (error) {
-      logger.error('Redis get error:', error.message || error);
+    } catch (err) {
+      const errorMessage = err instanceof Error ? err.message : 'Unknown error';
+      logger.error('Redis get error:', errorMessage);
       return null;
     }
   }
@@ -66,8 +80,9 @@ class RedisService {
       const stringValue = JSON.stringify(value);
       await this.makeRequest('set', [key, stringValue, 'EX', ttlSeconds.toString()]);
       return true;
-    } catch (error) {
-      logger.error('Redis set error:', error.message || error);
+    } catch (err) {
+      const errorMessage = err instanceof Error ? err.message : 'Unknown error';
+      logger.error('Redis set error:', errorMessage);
       return false;
     }
   }
@@ -77,8 +92,9 @@ class RedisService {
     try {
       await this.makeRequest('del', [key]);
       return true;
-    } catch (error) {
-      logger.error('Redis delete error:', error.message || error);
+    } catch (err) {
+      const errorMessage = err instanceof Error ? err.message : 'Unknown error';
+      logger.error('Redis delete error:', errorMessage);
       return false;
     }
   }
@@ -87,8 +103,9 @@ class RedisService {
     try {
       const result = await this.makeRequest('ping');
       return result === 'PONG';
-    } catch (error) {
-      logger.error('Redis ping error:', error.message || error);
+    } catch (err) {
+      const errorMessage = err instanceof Error ? err.message : 'Unknown error';
+      logger.error('Redis ping error:', errorMessage);
       return false;
     }
   }
