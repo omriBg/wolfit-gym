@@ -15,7 +15,7 @@ const { pool, testConnection, waitForPoolReady } = require('./utils/database');
 const { OptimalHungarianAlgorithm, CompleteOptimalWorkoutScheduler, SPORT_MAPPING } = require('./optimalWorkoutAlgorithm');
 
 const app = express();
-const PORT = process.env.PORT || 10000;
+const PORT = process.env.PORT || 3001;
 
 // Trust proxy for rate limiting (fixes X-Forwarded-For error)
 app.set('trust proxy', 1);
@@ -28,12 +28,23 @@ app.use(express.urlencoded({ extended: true, limit: '10mb' }));
 // CORS configuration
 // CORS configuration
 app.use(cors({
-  origin: [
-    'http://localhost:3000',
-    'https://wolfit-gym.vercel.app',
-    'https://wolfit-gym-frontend.vercel.app',
-    'https://wolfit.onrender.com'
-  ],
+  origin: function(origin, callback) {
+    // Allow requests with no origin (like mobile apps or curl requests)
+    if(!origin) return callback(null, true);
+    
+    const allowedOrigins = [
+      'http://localhost:3000',
+      'https://wolfit-gym.vercel.app',
+      'https://wolfit-gym-frontend.vercel.app',
+      'https://wolfit.onrender.com'
+    ];
+    
+    if(allowedOrigins.indexOf(origin) === -1){
+      console.log('🔒 Blocked origin:', origin);
+    }
+    
+    callback(null, allowedOrigins.indexOf(origin) !== -1);
+  },
   credentials: true,
   methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
   allowedHeaders: ['Content-Type', 'Authorization', 'Origin', 'Accept', 'X-Requested-With'],
