@@ -13,7 +13,11 @@ class RedisService {
       const token = process.env.UPSTASH_REDIS_REST_TOKEN;
       
       if (!url || !token) {
-        logger.warn('Redis: Missing configuration - UPSTASH_REDIS_REST_URL or UPSTASH_REDIS_REST_TOKEN not set');
+        try {
+          logger.warn('Redis: Missing configuration - UPSTASH_REDIS_REST_URL or UPSTASH_REDIS_REST_TOKEN not set');
+        } catch (logErr) {
+          console.warn('Redis: Missing configuration - UPSTASH_REDIS_REST_URL or UPSTASH_REDIS_REST_TOKEN not set');
+        }
         return false;
       }
 
@@ -26,17 +30,30 @@ class RedisService {
       // בדיקת חיבור פשוטה
       const pingResult = await this.ping();
       if (!pingResult) {
-        logger.warn('Redis: Ping failed');
+        try {
+          logger.warn('Redis: Ping failed');
+        } catch (logErr) {
+          console.warn('Redis: Ping failed');
+        }
         return false;
       }
 
       this.isConnected = true;
-      logger.info('Redis: Connected successfully');
+      try {
+        logger.info('Redis: Connected successfully');
+      } catch (logErr) {
+        console.log('Redis: Connected successfully');
+      }
       return true;
     } catch (err) {
       // טיפול בשגיאה בצורה בטוחה יותר
       const errorMessage = err instanceof Error ? err.message : 'Unknown error';
-      logger.error('Redis connection failed:', errorMessage);
+      try {
+        logger.error('Redis connection failed:', errorMessage);
+      } catch (logErr) {
+        console.error('Redis connection failed:', errorMessage);
+        console.error('Logger error:', logErr.message);
+      }
       this.isConnected = false;
       return false;
     }
@@ -44,7 +61,11 @@ class RedisService {
 
   // פונקציה זו כבר לא נדרשת עם SDK החדש
   async makeRequest(command, args = []) {
-    logger.debug(`Redis: makeRequest is deprecated with new SDK`);
+    try {
+      logger.debug(`Redis: makeRequest is deprecated with new SDK`);
+    } catch (logErr) {
+      console.debug(`Redis: makeRequest is deprecated with new SDK`);
+    }
     return null;
   }
 
@@ -55,7 +76,11 @@ class RedisService {
       return result;
     } catch (err) {
       const errorMessage = err instanceof Error ? err.message : 'Unknown error';
-      logger.error('Redis get error:', errorMessage);
+      try {
+        logger.error('Redis get error:', errorMessage);
+      } catch (logErr) {
+        console.error('Redis get error:', errorMessage);
+      }
       return null;
     }
   }
@@ -67,7 +92,11 @@ class RedisService {
       return true;
     } catch (err) {
       const errorMessage = err instanceof Error ? err.message : 'Unknown error';
-      logger.error('Redis set error:', errorMessage);
+      try {
+        logger.error('Redis set error:', errorMessage);
+      } catch (logErr) {
+        console.error('Redis set error:', errorMessage);
+      }
       return false;
     }
   }
@@ -79,7 +108,11 @@ class RedisService {
       return true;
     } catch (err) {
       const errorMessage = err instanceof Error ? err.message : 'Unknown error';
-      logger.error('Redis delete error:', errorMessage);
+      try {
+        logger.error('Redis delete error:', errorMessage);
+      } catch (logErr) {
+        console.error('Redis delete error:', errorMessage);
+      }
       return false;
     }
   }
@@ -91,7 +124,11 @@ class RedisService {
       return result === 'PONG';
     } catch (err) {
       const errorMessage = err instanceof Error ? err.message : 'Unknown error';
-      logger.error('Redis ping error:', errorMessage);
+      try {
+        logger.error('Redis ping error:', errorMessage);
+      } catch (logErr) {
+        console.error('Redis ping error:', errorMessage);
+      }
       return false;
     }
   }
