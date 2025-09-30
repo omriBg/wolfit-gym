@@ -36,7 +36,13 @@ function LoginPage() {
       if (result.success) {
         console.log('התחברות הצליחה:', result.user);
         login(result.token, result.user);
-        navigate('/dashboard');
+        
+        // בדיקה אם זה האדמין
+        if (result.user.email === 'omri952682@gmail.com') { // אימייל האדמין
+          navigate('/admin-choice');
+        } else {
+          navigate('/dashboard');
+        }
       } else {
         if (result.isNewUser) {
           // משתמש חדש - שמירת נתוני Google ומעבר למסך הרשמה

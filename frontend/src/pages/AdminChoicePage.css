@@ -1,0 +1,61 @@
+.admin-choice-page {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  min-height: 100vh;
+  background: linear-gradient(135deg, #f6f8fb 0%, #e9ecef 100%);
+}
+
+.choice-container {
+  background: white;
+  padding: 2rem;
+  border-radius: 16px;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
+  text-align: center;
+  max-width: 400px;
+  width: 90%;
+}
+
+.choice-container h2 {
+  color: #2d3748;
+  margin-bottom: 1rem;
+}
+
+.choice-container p {
+  color: #4a5568;
+  margin-bottom: 2rem;
+}
+
+.choice-buttons {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+.choice-button {
+  padding: 1rem;
+  border: none;
+  border-radius: 8px;
+  font-size: 1.1rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.3s ease;
+}
+
+.choice-button.admin {
+  background: #8b5cf6;
+  color: white;
+}
+
+.choice-button.admin:hover {
+  background: #7c3aed;
+}
+
+.choice-button.user {
+  background: #e2e8f0;
+  color: #2d3748;
+}
+
+.choice-button.user:hover {
+  background: #cbd5e0;
+}

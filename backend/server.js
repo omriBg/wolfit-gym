@@ -1696,3 +1696,447 @@ app.listen(PORT, '0.0.0.0', async () => {
 });
 
 console.log('✅ Health check ready');
+
+// ========================================
+// 🎯 API ENDPOINTS לניהול שעות משתמשים
+// ========================================
+
+// קבלת שעות זמינות של משתמש
+app.get('/api/user-hours/:userId', authenticateToken, async (req, res) => {
+  try {
+    const { userId } = req.params;
+    
+    console.log(`🔍 מקבל שעות זמינות עבור משתמש: ${userId}`);
+    
+    // בדיקה שהמשתמש קיים
+    const userCheck = await pool.query(
+      'SELECT iduser, username FROM "User" WHERE iduser = $1',
+      [userId]
+    );
+    
+    if (userCheck.rows.length === 0) {
+      return res.json({
+        success: false,
+        message: 'משתמש לא נמצא'
+      });
+    }
+    
+    // קבלת שעות זמינות
+    const hoursResult = await pool.query(
+      'SELECT availablehours, lastupdated, notes FROM userhours WHERE userid = $1',
+      [userId]
+    );
+    
+    const availableHours = hoursResult.rows.length > 0 ? hoursResult.rows[0].availablehours : 0;
+    const lastUpdated = hoursResult.rows.length > 0 ? hoursResult.rows[0].lastupdated : null;
+    const notes = hoursResult.rows.length > 0 ? hoursResult.rows[0].notes : null;
+    
+    console.log(`✅ משתמש ${userId} יש לו ${availableHours} שעות זמינות`);
+    
+    res.json({
+      success: true,
+      userId: parseInt(userId),
+      username: userCheck.rows[0].username,
+      availableHours: availableHours,
+      lastUpdated: lastUpdated,
+      notes: notes
+    });
+    
+  } catch (err) {
+    console.error('❌ שגיאה בקבלת שעות משתמש:', err);
+    res.status(500).json({
+      success: false,
+      message: 'שגיאה בשרת',
+      error: err.message
+    });
+  }
+});
+
+// הוספת שעות למשתמש (למנהל בלבד)
+app.post('/api/admin/add-hours/:userId', authenticateToken, async (req, res) => {
+  try {
+    const { userId } = req.params;
+    const { hours, reason, notes } = req.body;
+    
+    if (!hours || hours <= 0) {
+      return res.json({
+        success: false,
+        message: 'מספר שעות חייב להיות חיובי'
+      });
+    }
+    
+    console.log(`➕ מוסיף ${hours} שעות למשתמש ${userId}`);
+    
+    // בדיקה שהמשתמש קיים
+    const userCheck = await pool.query(
+      'SELECT iduser, username FROM "User" WHERE iduser = $1',
+      [userId]
+    );
+    
+    if (userCheck.rows.length === 0) {
+      return res.json({
+        success: false,
+        message: 'משתמש לא נמצא'
+      });
+    }
+    
+    // בדיקה אם יש כבר רשומה למשתמש
+    const existingHours = await pool.query(
+      'SELECT availablehours FROM userhours WHERE userid = $1',
+      [userId]
+    );
+    
+    let newAvailableHours;
+    
+    if (existingHours.rows.length > 0) {
+      // עדכון שעות קיימות
+      newAvailableHours = existingHours.rows[0].availablehours + hours;
+      await pool.query(
+        'UPDATE userhours SET availablehours = $1, lastupdated = NOW(), notes = $2 WHERE userid = $3',
+        [newAvailableHours, notes || existingHours.rows[0].notes, userId]
+      );
+    } else {
+      // יצירת רשומה חדשה
+      newAvailableHours = hours;
+      await pool.query(
+        'INSERT INTO userhours (userid, availablehours, notes, createdby) VALUES ($1, $2, $3, $4)',
+        [userId, hours, notes, 'admin']
+      );
+    }
+    
+    // הוספה להיסטוריה
+    await pool.query(
+      'INSERT INTO userhourshistory (userid, action, hours, reason, createdby) VALUES ($1, $2, $3, $4, $5)',
+      [userId, 'ADD', hours, reason || 'הוספת שעות על ידי מנהל', 'admin']
+    );
+    
+    console.log(`✅ נוספו ${hours} שעות למשתמש ${userId}. סה"כ: ${newAvailableHours}`);
+    
+    res.json({
+      success: true,
+      message: `נוספו ${hours} שעות למשתמש ${userCheck.rows[0].username}`,
+      newTotalHours: newAvailableHours
+    });
+    
+  } catch (err) {
+    console.error('❌ שגיאה בהוספת שעות:', err);
+    res.status(500).json({
+      success: false,
+      message: 'שגיאה בשרת',
+      error: err.message
+    });
+  }
+});
+
+// הפחתת שעות ממשתמש (למנהל בלבד)
+app.post('/api/admin/subtract-hours/:userId', authenticateToken, async (req, res) => {
+  try {
+    const { userId } = req.params;
+    const { hours, reason, notes } = req.body;
+    
+    if (!hours || hours <= 0) {
+      return res.json({
+        success: false,
+        message: 'מספר שעות חייב להיות חיובי'
+      });
+    }
+    
+    console.log(`➖ מפחית ${hours} שעות ממשתמש ${userId}`);
+    
+    // בדיקה שהמשתמש קיים
+    const userCheck = await pool.query(
+      'SELECT iduser, username FROM "User" WHERE iduser = $1',
+      [userId]
+    );
+    
+    if (userCheck.rows.length === 0) {
+      return res.json({
+        success: false,
+        message: 'משתמש לא נמצא'
+      });
+    }
+    
+    // קבלת שעות נוכחיות
+    const currentHours = await pool.query(
+      'SELECT availablehours FROM userhours WHERE userid = $1',
+      [userId]
+    );
+    
+    const currentAvailable = currentHours.rows.length > 0 ? currentHours.rows[0].availablehours : 0;
+    
+    if (currentAvailable < hours) {
+      return res.json({
+        success: false,
+        message: `אין מספיק שעות. יש ${currentAvailable} שעות זמינות`
+      });
+    }
+    
+    const newAvailableHours = currentAvailable - hours;
+    
+    // עדכון השעות
+    if (currentHours.rows.length > 0) {
+      await pool.query(
+        'UPDATE userhours SET availablehours = $1, lastupdated = NOW(), notes = $2 WHERE userid = $3',
+        [newAvailableHours, notes || currentHours.rows[0].notes, userId]
+      );
+    } else {
+      // יצירת רשומה חדשה (לא אמור לקרות)
+      await pool.query(
+        'INSERT INTO userhours (userid, availablehours, notes, createdby) VALUES ($1, $2, $3, $4)',
+        [userId, 0, notes, 'admin']
+      );
+    }
+    
+    // הוספה להיסטוריה
+    await pool.query(
+      'INSERT INTO userhourshistory (userid, action, hours, reason, createdby) VALUES ($1, $2, $3, $4, $5)',
+      [userId, 'SUBTRACT', hours, reason || 'הפחתת שעות על ידי מנהל', 'admin']
+    );
+    
+    console.log(`✅ הופחתו ${hours} שעות ממשתמש ${userId}. נותרו: ${newAvailableHours}`);
+    
+    res.json({
+      success: true,
+      message: `הופחתו ${hours} שעות ממשתמש ${userCheck.rows[0].username}`,
+      newTotalHours: newAvailableHours
+    });
+    
+  } catch (err) {
+    console.error('❌ שגיאה בהפחתת שעות:', err);
+    res.status(500).json({
+      success: false,
+      message: 'שגיאה בשרת',
+      error: err.message
+    });
+  }
+});
+
+// שימוש בשעות (בהזמנת אימון)
+app.post('/api/use-hours/:userId', authenticateToken, async (req, res) => {
+  try {
+    const { userId } = req.params;
+    const { hours, bookingId, reason } = req.body;
+    
+    if (!hours || hours <= 0) {
+      return res.json({
+        success: false,
+        message: 'מספר שעות חייב להיות חיובי'
+      });
+    }
+    
+    console.log(`⏰ משתמש ${userId} משתמש ב-${hours} שעות`);
+    
+    // בדיקה שהמשתמש קיים
+    const userCheck = await pool.query(
+      'SELECT iduser, username FROM "User" WHERE iduser = $1',
+      [userId]
+    );
+    
+    if (userCheck.rows.length === 0) {
+      return res.json({
+        success: false,
+        message: 'משתמש לא נמצא'
+      });
+    }
+    
+    // קבלת שעות נוכחיות
+    const currentHours = await pool.query(
+      'SELECT availablehours FROM userhours WHERE userid = $1',
+      [userId]
+    );
+    
+    const currentAvailable = currentHours.rows.length > 0 ? currentHours.rows[0].availablehours : 0;
+    
+    if (currentAvailable < hours) {
+      return res.json({
+        success: false,
+        message: `אין מספיק שעות זמינות. יש ${currentAvailable} שעות, נדרשות ${hours} שעות`
+      });
+    }
+    
+    const newAvailableHours = currentAvailable - hours;
+    
+    // עדכון השעות
+    if (currentHours.rows.length > 0) {
+      await pool.query(
+        'UPDATE userhours SET availablehours = $1, lastupdated = NOW() WHERE userid = $2',
+        [newAvailableHours, userId]
+      );
+    } else {
+      // יצירת רשומה חדשה (לא אמור לקרות)
+      await pool.query(
+        'INSERT INTO userhours (userid, availablehours, createdby) VALUES ($1, $2, $3)',
+        [userId, 0, 'system']
+      );
+    }
+    
+    // הוספה להיסטוריה
+    await pool.query(
+      'INSERT INTO userhourshistory (userid, action, hours, reason, createdby) VALUES ($1, $2, $3, $4, $5)',
+      [userId, 'USE', hours, reason || `הזמנת אימון ${bookingId || ''}`, 'system']
+    );
+    
+    console.log(`✅ משתמש ${userId} השתמש ב-${hours} שעות. נותרו: ${newAvailableHours}`);
+    
+    res.json({
+      success: true,
+      message: `השתמשת ב-${hours} שעות`,
+      newTotalHours: newAvailableHours
+    });
+    
+  } catch (err) {
+    console.error('❌ שגיאה בשימוש בשעות:', err);
+    res.status(500).json({
+      success: false,
+      message: 'שגיאה בשרת',
+      error: err.message
+    });
+  }
+});
+
+// החזרת שעות (בביטול הזמנה)
+app.post('/api/refund-hours/:userId', authenticateToken, async (req, res) => {
+  try {
+    const { userId } = req.params;
+    const { hours, bookingId, reason } = req.body;
+    
+    if (!hours || hours <= 0) {
+      return res.json({
+        success: false,
+        message: 'מספר שעות חייב להיות חיובי'
+      });
+    }
+    
+    console.log(`🔄 מחזיר ${hours} שעות למשתמש ${userId}`);
+    
+    // בדיקה שהמשתמש קיים
+    const userCheck = await pool.query(
+      'SELECT iduser, username FROM "User" WHERE iduser = $1',
+      [userId]
+    );
+    
+    if (userCheck.rows.length === 0) {
+      return res.json({
+        success: false,
+        message: 'משתמש לא נמצא'
+      });
+    }
+    
+    // קבלת שעות נוכחיות
+    const currentHours = await pool.query(
+      'SELECT availablehours FROM userhours WHERE userid = $1',
+      [userId]
+    );
+    
+    const currentAvailable = currentHours.rows.length > 0 ? currentHours.rows[0].availablehours : 0;
+    const newAvailableHours = currentAvailable + hours;
+    
+    // עדכון השעות
+    if (currentHours.rows.length > 0) {
+      await pool.query(
+        'UPDATE userhours SET availablehours = $1, lastupdated = NOW() WHERE userid = $2',
+        [newAvailableHours, userId]
+      );
+    } else {
+      // יצירת רשומה חדשה
+      await pool.query(
+        'INSERT INTO userhours (userid, availablehours, createdby) VALUES ($1, $2, $3)',
+        [userId, hours, 'system']
+      );
+    }
+    
+    // הוספה להיסטוריה
+    await pool.query(
+      'INSERT INTO userhourshistory (userid, action, hours, reason, createdby) VALUES ($1, $2, $3, $4, $5)',
+      [userId, 'REFUND', hours, reason || `ביטול הזמנה ${bookingId || ''}`, 'system']
+    );
+    
+    console.log(`✅ הוחזרו ${hours} שעות למשתמש ${userId}. סה"כ: ${newAvailableHours}`);
+    
+    res.json({
+      success: true,
+      message: `הוחזרו ${hours} שעות לחשבון`,
+      newTotalHours: newAvailableHours
+    });
+    
+  } catch (err) {
+    console.error('❌ שגיאה בהחזרת שעות:', err);
+    res.status(500).json({
+      success: false,
+      message: 'שגיאה בשרת',
+      error: err.message
+    });
+  }
+});
+
+// קבלת רשימת כל המשתמשים עם השעות שלהם (למנהל)
+app.get('/api/admin/all-users-hours', authenticateToken, async (req, res) => {
+  try {
+    console.log('📊 מקבל רשימת כל המשתמשים עם השעות שלהם');
+    
+    const result = await pool.query(`
+      SELECT 
+        u.iduser,
+        u.username,
+        u.email,
+        COALESCE(uh.availablehours, 0) as availablehours,
+        uh.lastupdated,
+        uh.notes
+      FROM "User" u
+      LEFT JOIN userhours uh ON u.iduser = uh.userid
+      ORDER BY u.username
+    `);
+    
+    console.log(`✅ נמצאו ${result.rows.length} משתמשים`);
+    
+    res.json({
+      success: true,
+      users: result.rows
+    });
+    
+  } catch (err) {
+    console.error('❌ שגיאה בקבלת רשימת משתמשים:', err);
+    res.status(500).json({
+      success: false,
+      message: 'שגיאה בשרת',
+      error: err.message
+    });
+  }
+});
+
+// קבלת היסטוריית שעות של משתמש
+app.get('/api/user-hours-history/:userId', authenticateToken, async (req, res) => {
+  try {
+    const { userId } = req.params;
+    
+    console.log(`📜 מקבל היסטוריית שעות עבור משתמש: ${userId}`);
+    
+    const result = await pool.query(`
+      SELECT 
+        action,
+        hours,
+        reason,
+        createdby,
+        createdat
+      FROM userhourshistory 
+      WHERE userid = $1 
+      ORDER BY createdat DESC
+      LIMIT 50
+    `, [userId]);
+    
+    console.log(`✅ נמצאו ${result.rows.length} רשומות היסטוריה`);
+    
+    res.json({
+      success: true,
+      history: result.rows
+    });
+    
+  } catch (err) {
+    console.error('❌ שגיאה בקבלת היסטוריית שעות:', err);
+    res.status(500).json({
+      success: false,
+      message: 'שגיאה בשרת',
+      error: err.message
+    });
+  }
+});

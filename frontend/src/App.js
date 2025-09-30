@@ -10,6 +10,8 @@ import EditUser from './EditUser';
 import OrderTrain from './OrderTrain';
 import StartWorkout from './StartWorkout';
 import MainMenu from './MainMenu';
+import AdminChoicePage from './pages/AdminChoicePage';
+import AdminDashboard from './pages/AdminDashboard';
 import './App.css';
 import './mobile-fix.css';
 function App() {
@@ -22,6 +24,16 @@ function App() {
             <Route path="/login" element={<LoginPage />} />
             <Route path="/signup" element={<SignUpScreen />} />
             <Route path="/signup-preferences" element={<SignUpPreferences />} />
+            <Route path="/admin-choice" element={
+              <ProtectedRoute>
+                <AdminChoicePage />
+              </ProtectedRoute>
+            } />
+            <Route path="/admin-dashboard" element={
+              <ProtectedRoute>
+                <AdminDashboard />
+              </ProtectedRoute>
+            } />
             
             {/* מסכים מוגנים */}
             <Route path="/dashboard" element={
