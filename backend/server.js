@@ -900,11 +900,16 @@ app.get('/api/sports', async (req, res) => {
 app.put('/api/save-user-preferences/:userId', async (req, res) => {
   try {
     const { userId } = req.params;
-    const { intensitylevel, selectedSports } = req.body;
+    const { intensitylevel, intensityLevel, selectedSports } = req.body;
+    
+    // Handle both camelCase and lowercase field names
+    const intensity = intensitylevel || intensityLevel;
     
     console.log('📝 נתונים שהתקבלו:', { 
       userId,
       intensitylevel,
+      intensityLevel,
+      intensity,
       selectedSports,
       body: req.body 
     });
@@ -919,7 +924,7 @@ app.put('/api/save-user-preferences/:userId', async (req, res) => {
     // עדכון רמת עצימות
     await pool.query(
       'UPDATE "User" SET intensitylevel = $1 WHERE iduser = $2 RETURNING *',
-      [intensitylevel.toString(), userId]
+      [intensity.toString(), userId]
     );
 
     // בדיקה שהעדכון הצליח
