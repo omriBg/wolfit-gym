@@ -1353,6 +1353,13 @@ app.post('/api/save-workout', authenticateToken, async (req, res) => {
     
   } catch (err) {
     console.error('❌ שגיאה בשמירת האימון:', err);
+    console.error('❌ Stack trace:', err.stack);
+    console.error('❌ נתוני הבקשה:', { 
+      bookings: req.body.bookings?.length, 
+      userId: req.body.userId, 
+      date: req.body.date,
+      firstBooking: req.body.bookings?.[0]
+    });
     res.status(500).json({
       success: false,
       message: 'שגיאה בשמירת האימון',

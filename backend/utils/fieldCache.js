@@ -18,7 +18,11 @@ class FieldCacheService {
       }
     } catch (error) {
       // נתעלם משגיאות Redis - נמשיך עם התוצאה ממסד הנתונים
-      logger.warn('Redis cache failed, continuing without caching:', error.message);
+      try {
+        logger.warn('Redis cache failed, continuing without caching:', error.message);
+      } catch (logErr) {
+        console.warn('Redis cache failed, continuing without caching:', error.message);
+      }
     }
     
     return fields;
@@ -51,7 +55,11 @@ class FieldCacheService {
       
       return availableFields;
     } catch (error) {
-      logger.error('Error fetching from database:', error.message);
+      try {
+        logger.error('Error fetching from database:', error.message);
+      } catch (logErr) {
+        console.error('Error fetching from database:', error.message);
+      }
       throw error;
     }
   }
@@ -60,11 +68,19 @@ class FieldCacheService {
     try {
       if (redisService.isConnected) {
         await redisService.invalidateFieldAvailability(date, timeSlot);
-        logger.info(`Invalidated cache for ${date} at ${timeSlot}`);
+        try {
+          logger.info(`Invalidated cache for ${date} at ${timeSlot}`);
+        } catch (logErr) {
+          console.log(`Invalidated cache for ${date} at ${timeSlot}`);
+        }
       }
     } catch (error) {
       // נתעלם משגיאות Redis
-      logger.warn('Redis cache invalidation failed:', error.message);
+      try {
+        logger.warn('Redis cache invalidation failed:', error.message);
+      } catch (logErr) {
+        console.warn('Redis cache invalidation failed:', error.message);
+      }
     }
   }
 }
