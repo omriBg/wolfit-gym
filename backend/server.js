@@ -13,6 +13,7 @@ const rateLimit = require('express-rate-limit');
 // Database connection
 const { pool, testConnection, waitForPoolReady } = require('./utils/database');
 const { OptimalHungarianAlgorithm, CompleteOptimalWorkoutScheduler, SPORT_MAPPING } = require('./optimalWorkoutAlgorithm');
+const redisHelper = require('./utils/redis');
 
 const app = express();
 const PORT = process.env.PORT || 10000;
@@ -1128,9 +1129,22 @@ app.post('/api/generate-optimal-workout', workoutLimiter, authenticateToken, asy
         continue;
       }
       
-      const fieldsResult = await pool.query(
-        'SELECT f.idfield, f.fieldname, f.sporttype, st.sportname FROM field f JOIN sporttypes st ON f.sporttype = st.sporttype ORDER BY f.idfield'
-      );
+      // בדיקה אם יש מגרשים ב-cache
+      const cacheKey = `fields_${date}_${timeSlot}`;
+      let fieldsResult = await redisHelper.get(cacheKey);
+      
+      if (!fieldsResult) {
+        // אם אין ב-cache, מביא ממסד הנתונים
+        console.log('🔍 מביא מגרשים ממסד הנתונים');
+        fieldsResult = await pool.query(
+          'SELECT f.idfield, f.fieldname, f.sporttype, st.sportname FROM field f JOIN sporttypes st ON f.sporttype = st.sporttype ORDER BY f.idfield'
+        );
+        
+        // שומר ב-cache ל-60 שניות
+        await redisHelper.set(cacheKey, fieldsResult, 60);
+      } else {
+        console.log('✨ מגרשים נמצאו ב-cache');
+      }
       
       const availableFields = [];
       
@@ -1339,6 +1353,11 @@ app.post('/api/save-workout', authenticateToken, async (req, res) => {
         'INSERT INTO bookfield (idfield, bookingdate, starttime, iduser) VALUES ($1, $2, $3, $4)',
         [idField, date, startTime, userId]
       );
+
+      // מחיקת ה-cache של המגרשים לזמן זה
+      const cacheKey = `fields_${date}_${startTime}`;
+      await redisHelper.delete(cacheKey);
+      console.log('🗑️ מחיקת cache למגרשים:', cacheKey);
       
       console.log(`✅ נשמרה הזמנה: מגרש ${idField}, תאריך ${date}, שעה ${startTime}`);
     }
