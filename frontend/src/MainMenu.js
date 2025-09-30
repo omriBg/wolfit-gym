@@ -1,18 +1,44 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from './contexts/AuthContext';
+import { API_BASE_URL } from './config';
 import './MainMenu.css';
 
 function MainMenu() {
   const { user, logout } = useAuth();
   const [isLoaded, setIsLoaded] = useState(false);
   const [hoveredButton, setHoveredButton] = useState(null);
+  const [availableHours, setAvailableHours] = useState(0);
+  const [loading, setLoading] = useState(true);
   const navigate = useNavigate();
 
   useEffect(() => {
     const timer = setTimeout(() => setIsLoaded(true), 100);
+    loadUserHours();
     return () => clearTimeout(timer);
   }, []);
+
+  const loadUserHours = async () => {
+    try {
+      setLoading(true);
+      const token = localStorage.getItem('authToken');
+      const response = await fetch(`${API_BASE_URL}/api/user-hours/${user.id}`, {
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json',
+        },
+      });
+      
+      const data = await response.json();
+      if (data.success) {
+        setAvailableHours(data.availableHours);
+      }
+    } catch (err) {
+      console.error('שגיאה בטעינת שעות:', err);
+    } finally {
+      setLoading(false);
+    }
+  };
 
   const handleButtonClick = (action) => {
     console.log(`Clicked: ${action}`);
