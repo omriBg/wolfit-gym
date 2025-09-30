@@ -1782,7 +1782,7 @@ app.post('/api/admin/add-hours/:userId', authenticateToken, async (req, res) => 
     
     // בדיקה אם יש כבר רשומה למשתמש
     const existingHours = await pool.query(
-      'SELECT availableHours FROM UserHours WHERE userId = $1',
+      'SELECT availablehours FROM userhours WHERE userid = $1',
       [userId]
     );
     
@@ -1792,21 +1792,21 @@ app.post('/api/admin/add-hours/:userId', authenticateToken, async (req, res) => 
       // עדכון שעות קיימות
       newAvailableHours = existingHours.rows[0].availablehours + hours;
       await pool.query(
-        'UPDATE UserHours SET availableHours = $1, lastUpdated = NOW(), notes = $2 WHERE userId = $3',
+        'UPDATE userhours SET availablehours = $1, lastupdated = NOW(), notes = $2 WHERE userid = $3',
         [newAvailableHours, notes || existingHours.rows[0].notes, userId]
       );
     } else {
       // יצירת רשומה חדשה
       newAvailableHours = hours;
       await pool.query(
-        'INSERT INTO UserHours (userId, availableHours, notes, createdBy) VALUES ($1, $2, $3, $4)',
+        'INSERT INTO userhours (userid, availablehours, notes, createdby) VALUES ($1, $2, $3, $4)',
         [userId, hours, notes, 'admin']
       );
     }
     
     // הוספה להיסטוריה
     await pool.query(
-      'INSERT INTO UserHoursHistory (userId, action, hours, reason, createdBy) VALUES ($1, $2, $3, $4, $5)',
+      'INSERT INTO userhourshistory (userid, action, hours, reason, createdby) VALUES ($1, $2, $3, $4, $5)',
       [userId, 'ADD', hours, reason || 'הוספת שעות על ידי מנהל', 'admin']
     );
     
@@ -1858,7 +1858,7 @@ app.post('/api/admin/subtract-hours/:userId', authenticateToken, async (req, res
     
     // קבלת שעות נוכחיות
     const currentHours = await pool.query(
-      'SELECT availableHours FROM UserHours WHERE userId = $1',
+      'SELECT availablehours FROM userhours WHERE userid = $1',
       [userId]
     );
     
@@ -1876,20 +1876,20 @@ app.post('/api/admin/subtract-hours/:userId', authenticateToken, async (req, res
     // עדכון השעות
     if (currentHours.rows.length > 0) {
       await pool.query(
-        'UPDATE UserHours SET availableHours = $1, lastUpdated = NOW(), notes = $2 WHERE userId = $3',
+        'UPDATE userhours SET availablehours = $1, lastupdated = NOW(), notes = $2 WHERE userid = $3',
         [newAvailableHours, notes || currentHours.rows[0].notes, userId]
       );
     } else {
       // יצירת רשומה חדשה (לא אמור לקרות)
       await pool.query(
-        'INSERT INTO UserHours (userId, availableHours, notes, createdBy) VALUES ($1, $2, $3, $4)',
+        'INSERT INTO userhours (userid, availablehours, notes, createdby) VALUES ($1, $2, $3, $4)',
         [userId, 0, notes, 'admin']
       );
     }
     
     // הוספה להיסטוריה
     await pool.query(
-      'INSERT INTO UserHoursHistory (userId, action, hours, reason, createdBy) VALUES ($1, $2, $3, $4, $5)',
+      'INSERT INTO userhourshistory (userid, action, hours, reason, createdby) VALUES ($1, $2, $3, $4, $5)',
       [userId, 'SUBTRACT', hours, reason || 'הפחתת שעות על ידי מנהל', 'admin']
     );
     
@@ -1941,7 +1941,7 @@ app.post('/api/use-hours/:userId', authenticateToken, async (req, res) => {
     
     // קבלת שעות נוכחיות
     const currentHours = await pool.query(
-      'SELECT availableHours FROM UserHours WHERE userId = $1',
+      'SELECT availablehours FROM userhours WHERE userid = $1',
       [userId]
     );
     
@@ -1972,7 +1972,7 @@ app.post('/api/use-hours/:userId', authenticateToken, async (req, res) => {
     
     // הוספה להיסטוריה
     await pool.query(
-      'INSERT INTO UserHoursHistory (userId, action, hours, reason, createdBy) VALUES ($1, $2, $3, $4, $5)',
+      'INSERT INTO userhourshistory (userid, action, hours, reason, createdby) VALUES ($1, $2, $3, $4, $5)',
       [userId, 'USE', hours, reason || `הזמנת אימון ${bookingId || ''}`, 'system']
     );
     
@@ -2024,7 +2024,7 @@ app.post('/api/refund-hours/:userId', authenticateToken, async (req, res) => {
     
     // קבלת שעות נוכחיות
     const currentHours = await pool.query(
-      'SELECT availableHours FROM UserHours WHERE userId = $1',
+      'SELECT availablehours FROM userhours WHERE userid = $1',
       [userId]
     );
     
@@ -2047,7 +2047,7 @@ app.post('/api/refund-hours/:userId', authenticateToken, async (req, res) => {
     
     // הוספה להיסטוריה
     await pool.query(
-      'INSERT INTO UserHoursHistory (userId, action, hours, reason, createdBy) VALUES ($1, $2, $3, $4, $5)',
+      'INSERT INTO userhourshistory (userid, action, hours, reason, createdby) VALUES ($1, $2, $3, $4, $5)',
       [userId, 'REFUND', hours, reason || `ביטול הזמנה ${bookingId || ''}`, 'system']
     );
     
@@ -2076,14 +2076,14 @@ app.get('/api/admin/all-users-hours', authenticateToken, async (req, res) => {
     
     const result = await pool.query(`
       SELECT 
-        u.idUser,
-        u.userName as username,
+        u.iduser,
+        u.username,
         u.email,
-        COALESCE(uh.availableHours, 0) as availableHours,
-        uh.lastUpdated,
+        COALESCE(uh.availablehours, 0) as availablehours,
+        uh.lastupdated,
         uh.notes
       FROM "User" u
-      LEFT JOIN UserHours uh ON u.idUser = uh.userId
+      LEFT JOIN userhours uh ON u.iduser = uh.userid
       ORDER BY u.username
     `);
     
@@ -2118,7 +2118,7 @@ app.get('/api/user-hours-history/:userId', authenticateToken, async (req, res) =
         reason,
         createdby,
         createdat
-      FROM UserHoursHistory 
+      FROM userhourshistory 
       WHERE userId = $1 
       ORDER BY createdat DESC
       LIMIT 50
