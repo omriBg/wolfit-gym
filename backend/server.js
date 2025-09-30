@@ -9,6 +9,7 @@ const express = require('express');
 const cors = require('cors');
 const jwt = require('jsonwebtoken');
 const rateLimit = require('express-rate-limit');
+const compression = require('compression');
 
 // Database connection
 const { pool, testConnection, waitForPoolReady } = require('./utils/database');
@@ -25,6 +26,7 @@ const PORT = process.env.PORT || 10000;
 app.set('trust proxy', 1);
 
 // Middleware
+app.use(compression()); // דחיסת תגובות לשיפור ביצועים
 app.use(express.json({ limit: '10mb' }));
 app.use(express.urlencoded({ extended: true, limit: '10mb' }));
 
