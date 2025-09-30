@@ -1343,6 +1343,7 @@ app.post('/api/save-workout', authenticateToken, async (req, res) => {
       await fieldCacheService.invalidateCache(date, starttime);
       
       console.log(`✅ נשמרה הזמנה: מגרש ${idfield}, תאריך ${date}, שעה ${starttime}`);
+      console.log(`🔄 Cache invalidated for ${date} at ${starttime}`);
     }
     
     res.json({
@@ -1671,11 +1672,18 @@ app.get('/api/user-booked-times/:userId/:date', authenticateToken, async (req, r
 // התחברות ל-Redis
 async function initRedis() {
   try {
-    await redisService.connect();
-    console.log('✅ Redis connected successfully');
+    const connected = await redisService.connect();
+    if (connected) {
+      console.log('✅ Redis connected successfully');
+      console.log('🚀 Redis caching is ENABLED');
+    } else {
+      console.log('⚠️ Redis connection failed - continuing without caching');
+      console.log('🚫 Redis caching is DISABLED');
+    }
   } catch (error) {
     console.error('❌ Redis connection failed:', error);
     console.log('⚠️ Server will continue without Redis caching');
+    console.log('🚫 Redis caching is DISABLED');
   }
 }
 
