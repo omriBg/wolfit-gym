@@ -32,7 +32,8 @@ app.use(cors({
   origin: [
     'http://localhost:3000',
     'https://wolfit-gym.vercel.app',
-    'https://wolfit-gym-frontend.vercel.app'
+    'https://wolfit-gym-frontend.vercel.app',
+    'https://wolfit.onrender.com'
   ],
   credentials: true,
   methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
