@@ -1,48 +1,23 @@
-const redis = require('redis');
 const { logger } = require('./logger');
 
 class RedisService {
   constructor() {
-    this.client = null;
     this.isConnected = false;
-    this.retryCount = 0;
-    this.maxRetries = 5;
+    this.baseUrl = process.env.UPSTASH_REDIS_REST_URL;
+    this.token = process.env.UPSTASH_REDIS_REST_TOKEN;
   }
 
   async connect() {
     try {
-      const redisConfig = {
-        url: process.env.REDIS_URL || 'redis://localhost:6379',
-        socket: {
-          reconnectStrategy: (retries) => {
-            if (retries > this.maxRetries) {
-              logger.error('Redis: Max retries reached, giving up');
-              return new Error('Max retries reached');
-            }
-            return Math.min(retries * 100, 3000);
-          }
-        }
-      };
-
-      // אם יש סיסמה, נוסיף אותה להגדרות
-      if (process.env.REDIS_PASSWORD) {
-        redisConfig.password = process.env.REDIS_PASSWORD;
+      if (!this.baseUrl || !this.token) {
+        logger.warn('Redis: Missing configuration');
+        return false;
       }
 
-      this.client = redis.createClient(redisConfig);
-
-      this.client.on('error', (err) => {
-        logger.error('Redis Client Error:', err);
-        this.isConnected = false;
-      });
-
-      this.client.on('connect', () => {
-        logger.info('Redis: Connected successfully');
-        this.isConnected = true;
-        this.retryCount = 0;
-      });
-
-      await this.client.connect();
+      // בדיקת חיבור פשוטה
+      await this.ping();
+      this.isConnected = true;
+      logger.info('Redis: Connected successfully');
       return true;
     } catch (error) {
       logger.error('Redis connection failed:', error);
@@ -51,11 +26,33 @@ class RedisService {
     }
   }
 
+  async makeRequest(command, args = []) {
+    if (!this.isConnected) return null;
+
+    try {
+      const response = await fetch(`${this.baseUrl}/${command}/${args.join('/')}`, {
+        headers: {
+          Authorization: `Bearer ${this.token}`
+        }
+      });
+
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
+
+      const data = await response.json();
+      return data.result;
+    } catch (error) {
+      logger.error(`Redis ${command} error:`, error);
+      return null;
+    }
+  }
+
   async get(key) {
     if (!this.isConnected) return null;
     try {
-      const value = await this.client.get(key);
-      return value ? JSON.parse(value) : null;
+      const result = await this.makeRequest('get', [key]);
+      return result ? JSON.parse(result) : null;
     } catch (error) {
       logger.error('Redis get error:', error);
       return null;
@@ -65,7 +62,8 @@ class RedisService {
   async set(key, value, ttlSeconds = 300) {
     if (!this.isConnected) return false;
     try {
-      await this.client.setEx(key, ttlSeconds, JSON.stringify(value));
+      const stringValue = JSON.stringify(value);
+      await this.makeRequest('set', [key, stringValue, 'EX', ttlSeconds.toString()]);
       return true;
     } catch (error) {
       logger.error('Redis set error:', error);
@@ -76,10 +74,20 @@ class RedisService {
   async del(key) {
     if (!this.isConnected) return false;
     try {
-      await this.client.del(key);
+      await this.makeRequest('del', [key]);
       return true;
     } catch (error) {
       logger.error('Redis delete error:', error);
+      return false;
+    }
+  }
+
+  async ping() {
+    try {
+      const result = await this.makeRequest('ping');
+      return result === 'PONG';
+    } catch (error) {
+      logger.error('Redis ping error:', error);
       return false;
     }
   }
@@ -95,6 +103,12 @@ class RedisService {
 
   async invalidateFieldAvailability(date, timeSlot) {
     return this.del(`fields:${date}:${timeSlot}`);
+  }
+
+  getConnectionStatus() {
+    return {
+      connected: this.isConnected
+    };
   }
 }
 
