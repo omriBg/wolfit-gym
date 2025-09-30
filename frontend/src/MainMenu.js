@@ -72,6 +72,13 @@ function MainMenu() {
         <div className="header-section">
           <h1 className="brand-title">WOLFit</h1>
           <div className="title-line"></div>
+          <div className="available-hours">
+            {loading ? (
+              <span>טוען שעות זמינות...</span>
+            ) : (
+              <span>שעות זמינות: {availableHours} רבעי שעה</span>
+            )}
+          </div>
         </div>
         
         <div className="buttons-section">

@@ -1,3 +1,15 @@
+.available-hours {
+  margin: 1rem 0;
+  padding: 0.8rem 1.2rem;
+  background: rgba(139, 92, 246, 0.1);
+  border: 1px solid rgba(139, 92, 246, 0.3);
+  border-radius: 8px;
+  color: #ffffff;
+  font-size: 1.1rem;
+  text-align: center;
+  animation: fadeIn 0.5s ease-out;
+}
+
 .order-train-container {
   position: fixed;
   top: 0;
@@ -75,6 +87,7 @@
   transform: translateY(-2px);
   box-shadow: 0 6px 20px rgba(179, 142, 216, 0.6);
 }
+
 .order-train-container .back-button {
   position: absolute !important;
   top: 20px !important;
@@ -157,34 +170,34 @@ select {
     padding-bottom: calc(90px + env(safe-area-inset-bottom)) !important;
   }
   
-.create-workout-button-container {
-  position: fixed !important;
-  bottom: 80px !important;
-  left: 50% !important;
-  transform: translateX(-50%) !important;
-  z-index: 999 !important;
-  width: 90% !important;
-  max-width: 300px !important;
-  display: flex !important;
-  justify-content: center !important;
-  align-items: center !important;
-  margin-bottom: env(safe-area-inset-bottom) !important; /* תמיכה באייפון עם notch */
-}
-
-.create-workout-button {
-  width: 100% !important;
-  margin: 0 auto !important;
-  display: block !important;
-  height: 45px !important;
-  font-size: 15px !important;
-  padding: 0 15px !important;
-  white-space: nowrap !important;
-  overflow: hidden !important;
-  text-overflow: ellipsis !important;
-  border-radius: 8px !important;
-  background: linear-gradient(45deg, #b38ed8, #9c7dc4) !important;
-  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.3) !important;
-}
+  .create-workout-button-container {
+    position: fixed !important;
+    bottom: 80px !important;
+    left: 50% !important;
+    transform: translateX(-50%) !important;
+    z-index: 999 !important;
+    width: 90% !important;
+    max-width: 300px !important;
+    display: flex !important;
+    justify-content: center !important;
+    align-items: center !important;
+    margin-bottom: env(safe-area-inset-bottom) !important; /* תמיכה באייפון עם notch */
+  }
+  
+  .create-workout-button {
+    width: 100% !important;
+    margin: 0 auto !important;
+    display: block !important;
+    height: 45px !important;
+    font-size: 15px !important;
+    padding: 0 15px !important;
+    white-space: nowrap !important;
+    overflow: hidden !important;
+    text-overflow: ellipsis !important;
+    border-radius: 8px !important;
+    background: linear-gradient(45deg, #b38ed8, #9c7dc4) !important;
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.3) !important;
+  }
   
   .order-train-container .back-button {
     top: 10px !important;
@@ -196,14 +209,14 @@ select {
     min-width: 50px !important;
     min-height: 30px !important;
   }
-
+  
   /* התאמת שדות השעה */
   .order-content > div:nth-child(3),
   .order-content > div:nth-child(4) {
     margin-top: 20px !important;
     margin-bottom: 25px !important;
   }
-
+  
   .order-content select {
     width: 100% !important;
     max-width: 250px !important;
@@ -217,7 +230,7 @@ select {
     border-radius: 10px !important;
     box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3) !important;
   }
-
+  
   .order-content h3 {
     font-size: 1.3rem !important;
     margin-bottom: 20px !important;
@@ -278,5 +291,16 @@ select {
     background-position: right 8px center;
     background-size: 16px;
     padding-right: 30px !important;
+  }
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(-10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
   }
 }

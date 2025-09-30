@@ -18,17 +18,38 @@ function OrderTrain(){
   const [blockedTimes, setBlockedTimes] = useState([]);
   const [loadingBlockedTimes, setLoadingBlockedTimes] = useState(false);
   const [availableTimes, setAvailableTimes] = useState([]);
+  const [availableHours, setAvailableHours] = useState(0);
+  const [loading, setLoading] = useState(true);
   
   // 🚀 תיקון 1: הוספת debouncing ו-cache
   const [debounceTimer, setDebounceTimer] = useState(null);
   const [blockedTimesCache, setBlockedTimesCache] = useState({});
 
   useEffect(() => {
-    // לא נחסום את הגלילה במסך הזמנת אימון
-    return () => {
-      // רק נחזיר את הגלילה כשעוזבים
-    };
+    loadUserHours();
   }, []);
+
+  const loadUserHours = async () => {
+    try {
+      setLoading(true);
+      const token = localStorage.getItem('authToken');
+      const response = await fetch(`${API_BASE_URL}/api/user-hours/${user.id}`, {
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json',
+        },
+      });
+      
+      const data = await response.json();
+      if (data.success) {
+        setAvailableHours(data.availableHours);
+      }
+    } catch (err) {
+      console.error('שגיאה בטעינת שעות:', err);
+    } finally {
+      setLoading(false);
+    }
+  };
 
   // 🚀 תיקון 2: debouncing - מניעת קריאות מרובות מהירות
   useEffect(() => {
@@ -272,6 +293,18 @@ function OrderTrain(){
       alert('הטווח שנבחר חופף לאימון קיים. אנא בחר טווח אחר.');
       return;
     }
+
+    // בדיקה אם יש מספיק שעות
+    const [startHour, startMinute] = startTime.split(':').map(Number);
+    const [endHour, endMinute] = endTime.split(':').map(Number);
+    const startMinutes = startHour * 60 + startMinute;
+    const endMinutes = endHour * 60 + endMinute;
+    const requiredQuarters = Math.ceil((endMinutes - startMinutes) / 15);
+
+    if (requiredQuarters > availableHours) {
+      alert(`אין מספיק שעות זמינות. נדרשות ${requiredQuarters} רבעי שעה, יש לך ${availableHours} רבעי שעה.`);
+      return;
+    }
     
     console.log('עוברים ליצירת אימון עם הנתונים:', {
       user,
@@ -303,6 +336,13 @@ function OrderTrain(){
       <button className="back-button" onClick={() => navigate('/main-menu')}>חזרה</button>
       <div className="order-content">
         <h1>הזמנת אימון</h1>
+        <div className="available-hours">
+          {loading ? (
+            <span>טוען שעות זמינות...</span>
+          ) : (
+            <span>שעות זמינות: {availableHours} רבעי שעה</span>
+          )}
+        </div>
         <div style={{marginTop: '50px'}}>
           <DatePicker
             open={true}

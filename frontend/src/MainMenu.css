@@ -67,6 +67,19 @@
   text-transform: uppercase;
 }
 
+.available-hours {
+  margin-top: 1rem;
+  padding: 0.5rem 1rem;
+  background: rgba(255, 255, 255, 0.1);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  border-radius: 8px;
+  color: #ffffff;
+  font-size: 1.1rem;
+  text-align: center;
+  backdrop-filter: blur(10px);
+  animation: fadeIn 1s ease-out 1s both;
+}
+
 .title-line {
   width: 80px;
   height: 2px;
