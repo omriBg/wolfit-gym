@@ -2073,7 +2073,47 @@ app.post('/api/refund-hours/:userId', authenticateToken, async (req, res) => {
 app.get('/api/admin/all-users-hours', authenticateToken, async (req, res) => {
   try {
     console.log('📊 מקבל רשימת כל המשתמשים עם השעות שלהם');
+    console.log('🔑 מידע משתמש מהטוקן:', req.user);
+
+    // בדיקת חיבור למסד הנתונים
+    try {
+      const testConnection = await pool.query('SELECT NOW()');
+      console.log('✅ חיבור למסד הנתונים תקין:', testConnection.rows[0]);
+    } catch (dbError) {
+      console.error('❌ שגיאה בבדיקת חיבור למסד הנתונים:', dbError);
+      throw dbError;
+    }
+
+    // בדיקת מבנה הטבלאות
+    try {
+      const tablesCheck = await pool.query(`
+        SELECT table_name 
+        FROM information_schema.tables 
+        WHERE table_schema = 'public'
+      `);
+      console.log('📋 טבלאות קיימות:', tablesCheck.rows.map(row => row.table_name));
+
+      // בדיקת מבנה טבלת User
+      const userColumns = await pool.query(`
+        SELECT column_name, data_type 
+        FROM information_schema.columns 
+        WHERE table_name = 'User'
+      `);
+      console.log('📋 עמודות בטבלת User:', userColumns.rows);
+
+      // בדיקת מבנה טבלת userhours
+      const userHoursColumns = await pool.query(`
+        SELECT column_name, data_type 
+        FROM information_schema.columns 
+        WHERE table_name = 'userhours'
+      `);
+      console.log('📋 עמודות בטבלת userhours:', userHoursColumns.rows);
+    } catch (schemaError) {
+      console.error('❌ שגיאה בבדיקת מבנה הטבלאות:', schemaError);
+      throw schemaError;
+    }
     
+    console.log('🔍 מתחיל שליפת נתונים...');
     const result = await pool.query(`
       SELECT 
         u.idUser,
@@ -2094,12 +2134,26 @@ app.get('/api/admin/all-users-hours', authenticateToken, async (req, res) => {
       users: result.rows
     });
     
-  } catch (err) {
-    console.error('❌ שגיאה בקבלת רשימת משתמשים:', err);
+    } catch (err) {
+    console.error('❌ שגיאה בקבלת רשימת משתמשים:', {
+      message: err.message,
+      stack: err.stack,
+      code: err.code,
+      detail: err.detail,
+      table: err.table,
+      constraint: err.constraint,
+      query: err.query,
+      position: err.position
+    });
     res.status(500).json({
       success: false,
       message: 'שגיאה בשרת',
-      error: err.message
+      error: err.message,
+      details: {
+        code: err.code,
+        detail: err.detail,
+        table: err.table
+      }
     });
   }
 });
