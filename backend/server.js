@@ -1710,7 +1710,7 @@ app.get('/api/user-hours/:userId', authenticateToken, async (req, res) => {
     
     // בדיקה שהמשתמש קיים
     const userCheck = await pool.query(
-      'SELECT idUser, userName FROM "User" WHERE idUser = $1',
+      'SELECT iduser, name as username FROM "User" WHERE iduser = $1',
       [userId]
     );
     
@@ -1769,7 +1769,7 @@ app.post('/api/admin/add-hours/:userId', authenticateToken, async (req, res) => 
     
     // בדיקה שהמשתמש קיים
     const userCheck = await pool.query(
-      'SELECT idUser, userName FROM "User" WHERE idUser = $1',
+      'SELECT iduser, name as username FROM "User" WHERE iduser = $1',
       [userId]
     );
     
@@ -1845,7 +1845,7 @@ app.post('/api/admin/subtract-hours/:userId', authenticateToken, async (req, res
     
     // בדיקה שהמשתמש קיים
     const userCheck = await pool.query(
-      'SELECT idUser, userName FROM "User" WHERE idUser = $1',
+      'SELECT iduser, name as username FROM "User" WHERE iduser = $1',
       [userId]
     );
     
@@ -1928,7 +1928,7 @@ app.post('/api/use-hours/:userId', authenticateToken, async (req, res) => {
     
     // בדיקה שהמשתמש קיים
     const userCheck = await pool.query(
-      'SELECT idUser, userName FROM "User" WHERE idUser = $1',
+      'SELECT iduser, name as username FROM "User" WHERE iduser = $1',
       [userId]
     );
     
@@ -2011,7 +2011,7 @@ app.post('/api/refund-hours/:userId', authenticateToken, async (req, res) => {
     
     // בדיקה שהמשתמש קיים
     const userCheck = await pool.query(
-      'SELECT idUser, userName FROM "User" WHERE idUser = $1',
+      'SELECT iduser, name as username FROM "User" WHERE iduser = $1',
       [userId]
     );
     
@@ -2071,9 +2071,70 @@ app.post('/api/refund-hours/:userId', authenticateToken, async (req, res) => {
 
 // קבלת רשימת כל המשתמשים עם השעות שלהם (למנהל)
 app.get('/api/admin/all-users-hours', authenticateToken, async (req, res) => {
+  console.log('=== התחלת קבלת רשימת משתמשים ===');
+  console.log('🔑 מידע משתמש מהטוקן:', req.user);
+  console.log('🔑 Headers:', req.headers);
+
   try {
-    console.log('📊 מקבל רשימת כל המשתמשים עם השעות שלהם');
-    console.log('🔑 מידע משתמש מהטוקן:', req.user);
+    // 1. בדיקת חיבור בסיסית למסד הנתונים
+    console.log('1️⃣ בדיקת חיבור למסד הנתונים...');
+    try {
+      const testResult = await pool.query('SELECT 1');
+      console.log('✅ חיבור למסד הנתונים תקין:', testResult.rows);
+    } catch (connErr) {
+      console.error('❌ שגיאה בחיבור למסד הנתונים:', {
+        message: connErr.message,
+        code: connErr.code
+      });
+      throw connErr;
+    }
+
+    // 2. בדיקת טבלאות קיימות
+    console.log('2️⃣ בדיקת טבלאות קיימות...');
+    const tables = await pool.query(`
+      SELECT table_name 
+      FROM information_schema.tables 
+      WHERE table_schema = 'public'
+      ORDER BY table_name
+    `);
+    console.log('📋 טבלאות במסד:', tables.rows.map(r => r.table_name));
+
+    // 3. בדיקת מבנה טבלת User
+    console.log('3️⃣ בדיקת מבנה טבלת User...');
+    const userStructure = await pool.query(`
+      SELECT column_name, data_type, column_default
+      FROM information_schema.columns
+      WHERE table_name = 'User'
+      ORDER BY ordinal_position
+    `);
+    console.log('📋 מבנה טבלת User:', userStructure.rows);
+
+    // 4. בדיקת מבנה טבלת userhours
+    console.log('4️⃣ בדיקת מבנה טבלת userhours...');
+    const userHoursStructure = await pool.query(`
+      SELECT column_name, data_type, column_default
+      FROM information_schema.columns
+      WHERE table_name = 'userhours'
+      ORDER BY ordinal_position
+    `);
+    console.log('📋 מבנה טבלת userhours:', userHoursStructure.rows);
+
+    // 5. בדיקת נתונים בטבלאות
+    console.log('5️⃣ בדיקת נתונים בטבלאות...');
+    const userCount = await pool.query('SELECT COUNT(*) FROM "User"');
+    console.log('👥 מספר משתמשים:', userCount.rows[0].count);
+
+    try {
+      const hoursCount = await pool.query('SELECT COUNT(*) FROM userhours');
+      console.log('⏰ מספר רשומות שעות:', hoursCount.rows[0].count);
+    } catch (hoursErr) {
+      console.error('❌ שגיאה בבדיקת טבלת userhours:', {
+        message: hoursErr.message,
+        code: hoursErr.code
+      });
+    }
+
+    console.log('6️⃣ מתחיל שליפת נתונים...');
 
     // בדיקת חיבור למסד הנתונים
     try {
@@ -2116,15 +2177,15 @@ app.get('/api/admin/all-users-hours', authenticateToken, async (req, res) => {
     console.log('🔍 מתחיל שליפת נתונים...');
     const result = await pool.query(`
       SELECT 
-        u.idUser,
-        u.userName as username,
+        u.iduser,
+        u.name as username,
         u.email,
         COALESCE(uh.availablehours, 0) as availablehours,
         uh.lastupdated,
         uh.notes
       FROM "User" u
-      LEFT JOIN userhours uh ON u.idUser = uh.userid
-      ORDER BY u.username
+      LEFT JOIN userhours uh ON u.iduser = uh.userid
+      ORDER BY u.name
     `);
     
     console.log(`✅ נמצאו ${result.rows.length} משתמשים`);
