@@ -247,7 +247,7 @@ function CreateWorkout({ selectedDate, startTime, endTime }) {
           idfield: slot.field.id,
           bookingdate: selectedDate,
           starttime: slot.time,
-          iduser: user.id
+          iduser: user.id  // חשוב: iduser באותיות קטנות
         }));
 
       if (bookings.length === 0) {
