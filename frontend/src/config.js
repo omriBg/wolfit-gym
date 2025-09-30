@@ -7,7 +7,7 @@ export const SERVER_CONFIG = {
   LOCAL: 'http://localhost:3001',
   
   // שרת ייצור - לפרודקשן
-  PRODUCTION: 'https://wolfit-gym-backend.onrender.com'
+  PRODUCTION: 'https://wolfit.onrender.com'
 };
 
 // בחר כאן איזה שרת להשתמש:

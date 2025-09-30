@@ -1,6 +1,6 @@
 services:
   - type: web
-    name: wolfit-gym-backend
+    name: wolfit
     env: node
     buildCommand: cd backend && npm install
     startCommand: cd backend && npm start
