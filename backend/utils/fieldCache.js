@@ -8,29 +8,20 @@ class FieldCacheService {
   }
 
   async getAvailableFields(date, timeSlot) {
+    // קודם כל ננסה לקבל ממסד הנתונים
+    const fields = await this.fetchFromDatabase(date, timeSlot);
+    
+    // אם Redis מחובר, ננסה לשמור את התוצאה
     try {
-      // נסה לקבל מ-Redis
-      const cachedFields = await redisService.getFieldAvailability(date, timeSlot);
-      if (cachedFields) {
-        logger.info(`Cache hit for fields on ${date} at ${timeSlot}`);
-        return cachedFields;
-      }
-
-      // אם אין ב-cache, קבל ממסד הנתונים
-      logger.info(`Cache miss for fields on ${date} at ${timeSlot}`);
-      const fields = await this.fetchFromDatabase(date, timeSlot);
-      
-      // שמור ב-cache רק אם החיבור ל-Redis פעיל
       if (redisService.isConnected) {
         await redisService.setFieldAvailability(date, timeSlot, fields);
       }
-      
-      return fields;
     } catch (error) {
-      logger.error('Error getting available fields:', error.message);
-      // במקרה של שגיאה, נחזור למסד הנתונים
-      return this.fetchFromDatabase(date, timeSlot);
+      // נתעלם משגיאות Redis - נמשיך עם התוצאה ממסד הנתונים
+      logger.warn('Redis cache failed, continuing without caching:', error.message);
     }
+    
+    return fields;
   }
 
   async fetchFromDatabase(date, timeSlot) {
@@ -72,8 +63,8 @@ class FieldCacheService {
         logger.info(`Invalidated cache for ${date} at ${timeSlot}`);
       }
     } catch (error) {
-      logger.error('Error invalidating cache:', error.message);
-      // נמשיך גם אם יש שגיאה בביטול ה-cache
+      // נתעלם משגיאות Redis
+      logger.warn('Redis cache invalidation failed:', error.message);
     }
   }
 }

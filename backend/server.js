@@ -1057,12 +1057,16 @@ app.post('/api/generate-optimal-workout', workoutLimiter, authenticateToken, asy
     
     console.log('🎯 מקבל בקשה ליצירת אימון אופטימלי:', { userId, date, timeSlots: timeSlots?.length, userPreferences });
     
-    if (!userId || !date || !timeSlots || !Array.isArray(timeSlots)) {
+    if (!userId || !date || !timeSlots) {
       return res.json({
         success: false,
         message: 'נתונים חסרים: userId, date, timeSlots נדרשים'
       });
     }
+
+    // וידוא שיש לנו מערך של זמנים
+    const timeSlotsArray = Array.isArray(timeSlots) ? timeSlots : [timeSlots];
+    console.log('📅 זמנים לבדיקה:', timeSlotsArray);
     
     // בדיקה שהתאריך לא בעבר
     const today = new Date().toISOString().split('T')[0];
