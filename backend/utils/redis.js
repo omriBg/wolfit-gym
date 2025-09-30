@@ -1,18 +1,27 @@
 const { logger } = require('./logger');
+const { Redis } = require('@upstash/redis');
 
 class RedisService {
   constructor() {
     this.isConnected = false;
-    this.baseUrl = process.env.UPSTASH_REDIS_REST_URL;
-    this.token = process.env.UPSTASH_REDIS_REST_TOKEN;
+    this.redis = null;
   }
 
   async connect() {
     try {
-      if (!this.baseUrl || !this.token) {
+      const url = process.env.UPSTASH_REDIS_REST_URL;
+      const token = process.env.UPSTASH_REDIS_REST_TOKEN;
+      
+      if (!url || !token) {
         logger.warn('Redis: Missing configuration - UPSTASH_REDIS_REST_URL or UPSTASH_REDIS_REST_TOKEN not set');
         return false;
       }
+
+      // יצירת חיבור Redis עם SDK החדש
+      this.redis = new Redis({
+        url: url,
+        token: token,
+      });
 
       // בדיקת חיבור פשוטה
       const pingResult = await this.ping();
@@ -33,40 +42,17 @@ class RedisService {
     }
   }
 
+  // פונקציה זו כבר לא נדרשת עם SDK החדש
   async makeRequest(command, args = []) {
-    if (!this.isConnected) {
-      logger.debug(`Redis: Skipping ${command} - not connected`);
-      return null;
-    }
-
-    try {
-      const url = `${this.baseUrl}/${command}/${args.join('/')}`;
-      logger.debug(`Redis: Making request to ${url}`);
-      
-      const response = await fetch(url, {
-        headers: {
-          Authorization: `Bearer ${this.token}`
-        }
-      });
-
-      if (!response.ok) {
-        throw new Error(`HTTP error! status: ${response.status}`);
-      }
-
-      const data = await response.json();
-      return data.result;
-    } catch (err) {
-      const errorMessage = err instanceof Error ? err.message : 'Unknown error';
-      logger.error(`Redis ${command} error:`, errorMessage);
-      return null;
-    }
+    logger.debug(`Redis: makeRequest is deprecated with new SDK`);
+    return null;
   }
 
   async get(key) {
-    if (!this.isConnected) return null;
+    if (!this.isConnected || !this.redis) return null;
     try {
-      const result = await this.makeRequest('get', [key]);
-      return result ? JSON.parse(result) : null;
+      const result = await this.redis.get(key);
+      return result;
     } catch (err) {
       const errorMessage = err instanceof Error ? err.message : 'Unknown error';
       logger.error('Redis get error:', errorMessage);
@@ -75,10 +61,9 @@ class RedisService {
   }
 
   async set(key, value, ttlSeconds = 300) {
-    if (!this.isConnected) return false;
+    if (!this.isConnected || !this.redis) return false;
     try {
-      const stringValue = JSON.stringify(value);
-      await this.makeRequest('set', [key, stringValue, 'EX', ttlSeconds.toString()]);
+      await this.redis.setex(key, ttlSeconds, JSON.stringify(value));
       return true;
     } catch (err) {
       const errorMessage = err instanceof Error ? err.message : 'Unknown error';
@@ -88,9 +73,9 @@ class RedisService {
   }
 
   async del(key) {
-    if (!this.isConnected) return false;
+    if (!this.isConnected || !this.redis) return false;
     try {
-      await this.makeRequest('del', [key]);
+      await this.redis.del(key);
       return true;
     } catch (err) {
       const errorMessage = err instanceof Error ? err.message : 'Unknown error';
@@ -101,7 +86,8 @@ class RedisService {
 
   async ping() {
     try {
-      const result = await this.makeRequest('ping');
+      if (!this.redis) return false;
+      const result = await this.redis.ping();
       return result === 'PONG';
     } catch (err) {
       const errorMessage = err instanceof Error ? err.message : 'Unknown error';
@@ -124,10 +110,13 @@ class RedisService {
   }
 
   getConnectionStatus() {
+    const url = process.env.UPSTASH_REDIS_REST_URL;
+    const token = process.env.UPSTASH_REDIS_REST_TOKEN;
+    
     return {
       connected: this.isConnected,
-      url: this.baseUrl ? '✓' : '✗',
-      token: this.token ? '✓' : '✗'
+      url: url ? '✓' : '✗',
+      token: token ? '✓' : '✗'
     };
   }
 }
