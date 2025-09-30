@@ -1257,7 +1257,7 @@ app.post('/api/save-workout', authenticateToken, async (req, res) => {
     console.log('🔍 בודק התנגשויות עם הזמנות קיימות...');
     
     for (const booking of bookings) {
-      const { startTime } = booking;
+      const { starttime } = booking;
       
       // חישוב רבע שעה לפני ואחרי
       const [hours, minutes] = startTime.split(':');
@@ -1302,27 +1302,27 @@ app.post('/api/save-workout', authenticateToken, async (req, res) => {
     
     // שמירת כל ההזמנות
     for (const booking of bookings) {
-      const { idField, startTime } = booking;
+      const { idfield, starttime, bookingdate } = booking;
       
       // בדיקה שהמגרש קיים
       const fieldCheck = await pool.query(
         'SELECT idfield FROM field WHERE idfield = $1',
-        [idField]
+        [idfield]
       );
       
       if (fieldCheck.rows.length === 0) {
-        console.warn(`⚠️ מגרש ${idField} לא נמצא, מדלג...`);
+        console.warn(`⚠️ מגרש ${idfield} לא נמצא, מדלג...`);
         continue;
       }
       
       // בדיקה שהמגרש לא תפוס כבר
       const existingBooking = await pool.query(
         'SELECT * FROM bookfield WHERE idfield = $1 AND bookingdate = $2 AND starttime = $3',
-        [idField, date, startTime]
+        [idfield, bookingdate, starttime]
       );
       
       if (existingBooking.rows.length > 0) {
-        console.warn(`⚠️ מגרש ${idField} תפוס ב-${date} ${startTime}, מדלג...`);
+        console.warn(`⚠️ מגרש ${idfield} תפוס ב-${bookingdate} ${starttime}, מדלג...`);
         continue;
       }
       
