@@ -2,6 +2,9 @@
   padding: 2rem;
   max-width: 1200px;
   margin: 0 auto;
+  min-height: 100vh;
+  background: #1a202c;
+  color: #e2e8f0;
 }
 
 .admin-header {
@@ -12,8 +15,10 @@
 }
 
 .admin-header h1 {
-  color: #2d3748;
+  color: #e2e8f0;
   margin: 0;
+  font-size: 2rem;
+  font-weight: 600;
 }
 
 .back-button {
@@ -46,10 +51,11 @@
 }
 
 .users-container {
-  background: white;
+  background: #2d3748;
   border-radius: 12px;
-  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
   overflow: hidden;
+  border: 1px solid rgba(255, 255, 255, 0.1);
 }
 
 .users-table {
@@ -61,17 +67,19 @@
 .users-table td {
   padding: 1rem;
   text-align: right;
-  border-bottom: 1px solid #e2e8f0;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+  color: #e2e8f0;
 }
 
 .users-table th {
-  background: #f7fafc;
+  background: #4a5568;
   font-weight: 600;
-  color: #4a5568;
+  color: #e2e8f0;
+  border-bottom: 2px solid rgba(255, 255, 255, 0.2);
 }
 
 .users-table tr:hover {
-  background: #f7fafc;
+  background: #374151;
 }
 
 .actions {
@@ -88,9 +96,12 @@
 
 .hours-control input {
   width: 60px;
-  padding: 0.3rem;
-  border: 1px solid #e2e8f0;
-  border-radius: 4px;
+  padding: 0.5rem;
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  border-radius: 6px;
+  background: #1a202c;
+  color: #e2e8f0;
+  font-size: 0.9rem;
 }
 
 .add-button,

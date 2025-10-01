@@ -256,10 +256,18 @@ function CreateWorkout({ selectedDate, startTime, endTime }) {
         return;
       }
 
+      // חישוב כמות רבעי השעה
+      const [startHour, startMinute] = startTime.split(':').map(Number);
+      const [endHour, endMinute] = endTime.split(':').map(Number);
+      const startMinutes = startHour * 60 + startMinute;
+      const endMinutes = endHour * 60 + endMinute;
+      const requiredQuarters = Math.ceil((endMinutes - startMinutes) / 15);
+
       const requestBody = {
         bookings: bookings,
         userId: user.id,
-        date: selectedDate
+        date: selectedDate,
+        quarters: requiredQuarters // מספר רבעי השעה שצריך להוריד
       };
 
       console.log('💾 שומר אימון:', requestBody);

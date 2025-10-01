@@ -11,7 +11,7 @@ function AdminDashboard() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
   const [selectedUser, setSelectedUser] = useState(null);
-  const [hoursToAdd, setHoursToAdd] = useState(1);
+  const [hoursMap, setHoursMap] = useState({});
   const [showHistory, setShowHistory] = useState(false);
   const [userHistory, setUserHistory] = useState([]);
 
@@ -53,7 +53,7 @@ function AdminDashboard() {
           'Content-Type': 'application/json',
         },
         body: JSON.stringify({
-          hours: hoursToAdd,
+          hours: hoursMap[userId] || 1,
           reason: 'הוספת שעות על ידי מנהל'
         })
       });
@@ -79,7 +79,7 @@ function AdminDashboard() {
           'Content-Type': 'application/json',
         },
         body: JSON.stringify({
-          hours: hoursToAdd,
+          hours: hoursMap[userId] || 1,
           reason: 'הפחתת שעות על ידי מנהל'
         })
       });
@@ -147,15 +147,21 @@ function AdminDashboard() {
                 <tr key={user.iduser}>
                   <td>{user.username}</td>
                   <td>{user.email}</td>
-                  <td>{user.availablehours} רבעי שעה</td>
-                  <td>{new Date(user.lastupdated).toLocaleString()}</td>
+                  <td>{user.availableHours} רבעי שעה</td>
+                  <td>{new Date(user.lastUpdated).toLocaleString()}</td>
                   <td className="actions">
                     <div className="hours-control">
                       <input
                         type="number"
                         min="1"
-                        value={hoursToAdd}
-                        onChange={(e) => setHoursToAdd(parseInt(e.target.value) || 1)}
+                        value={hoursMap[user.iduser] || 1}
+                        onChange={(e) => {
+                          const newValue = parseInt(e.target.value) || 1;
+                          setHoursMap(prev => ({
+                            ...prev,
+                            [user.iduser]: newValue
+                          }));
+                        }}
                       />
                       <button onClick={() => handleAddHours(user.iduser)} className="add-button">
                         הוסף
@@ -194,7 +200,7 @@ function AdminDashboard() {
                     <td>{record.action}</td>
                     <td>{record.hours}</td>
                     <td>{record.reason}</td>
-                    <td>{new Date(record.createdat).toLocaleString()}</td>
+                    <td>{new Date(record.createdAt).toLocaleString()}</td>
                   </tr>
                 ))}
               </tbody>
