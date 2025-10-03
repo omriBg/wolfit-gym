@@ -2291,6 +2291,7 @@ app.get('/api/admin/all-users-hours', authenticateToken, async (req, res) => {
     `);
     
     console.log(`✅ נמצאו ${result.rows.length} משתמשים`);
+    console.log('דוגמה למשתמש:', result.rows[0]);
     
     res.json({
       success: true,

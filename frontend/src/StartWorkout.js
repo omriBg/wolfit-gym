@@ -443,9 +443,11 @@ function StartWorkout() {
       return;
     }
 
+    // הגדרת מצב ביטול מיד
+    setIsCancelling(true);
+    console.log('מבטל אימון:', workoutToCancel);
+
     try {
-      setIsCancelling(true);
-      console.log('מבטל אימון:', workoutToCancel);
       
       if (!user || !user.id) {
         setError('משתמש לא מחובר');
@@ -526,12 +528,15 @@ function StartWorkout() {
         if (failedCancellations.length === 0) {
           console.log('✅ כל האימונים בוטלו בהצלחה');
           setError('');
-          // סגירת דיאלוג האישור
-          setShowCancelConfirm(false);
-          setWorkoutToCancel(null);
           // רענון רשימת האימונים והשעות
           loadFutureWorkouts();
           loadUserHours();
+          // סגירת דיאלוג האישור אחרי העדכון
+          setTimeout(() => {
+            setShowCancelConfirm(false);
+            setWorkoutToCancel(null);
+            setIsCancelling(false);
+          }, 1000); // המתנה של שנייה כדי לראות את הגלגל
         } else if (successfulCancellations.length > 0) {
           // ביטול חלקי - הצגת שגיאה מפורטת
           const errorMessage = `בוטלו ${successfulCancellations.length} מתוך ${bookingsToDelete.length} הזמנות. 
@@ -539,24 +544,28 @@ function StartWorkout() {
           setError(errorMessage);
           console.warn('⚠️ ביטול חלקי:', errorMessage);
           // עדיין נסגור את הדיאלוג ונעדכן את הרשימה
-          setShowCancelConfirm(false);
-          setWorkoutToCancel(null);
           loadFutureWorkouts();
           loadUserHours();
+          setTimeout(() => {
+            setShowCancelConfirm(false);
+            setWorkoutToCancel(null);
+            setIsCancelling(false);
+          }, 1000);
         } else {
           // כל הביטולים נכשלו
           const errorMessage = `כל הביטולים נכשלו: ${failedCancellations.map(f => f.error).join(', ')}`;
           setError(errorMessage);
           console.error('❌ כל הביטולים נכשלו:', errorMessage);
+          setIsCancelling(false);
         }
       } catch (error) {
         console.error('שגיאה כללית בביטול האימון:', error);
         setError('שגיאה בחיבור לשרת. נסה שוב.');
+        setIsCancelling(false);
       }
     } catch (error) {
       console.error('שגיאה בביטול האימון:', error);
       setError('שגיאה בחיבור לשרת. נסה שוב.');
-    } finally {
       setIsCancelling(false);
     }
   };
@@ -564,6 +573,7 @@ function StartWorkout() {
   const cancelCancelWorkout = () => {
     setShowCancelConfirm(false);
     setWorkoutToCancel(null);
+    setIsCancelling(false);
   };
 
   const handleBookNewWorkout = () => {

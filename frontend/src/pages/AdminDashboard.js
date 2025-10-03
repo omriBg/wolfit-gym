@@ -88,6 +88,7 @@ function AdminDashboard() {
       
       const data = await response.json();
       if (data.success) {
+        console.log('משתמשים שהתקבלו:', data.users);
         setUsers(data.users);
         setFilteredUsers(data.users);
       } else {
