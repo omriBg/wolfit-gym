@@ -97,6 +97,27 @@
   white-space: nowrap;
 }
 
+.hours-cell {
+  text-align: center;
+}
+
+.hours-number {
+  font-weight: bold;
+  font-size: 1.1rem;
+  color: #9f7aea;
+}
+
+.hours-unit {
+  font-size: 0.9rem;
+  color: #9ca3af;
+}
+
+.date-cell {
+  text-align: center;
+  font-size: 0.9rem;
+  color: #6b7280;
+}
+
 .users-table {
   width: 100%;
   border-collapse: collapse;

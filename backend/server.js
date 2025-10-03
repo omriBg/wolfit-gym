@@ -2282,11 +2282,11 @@ app.get('/api/admin/all-users-hours', authenticateToken, async (req, res) => {
         u.iduser,
         u.name as username,
         u.email,
-        COALESCE(uh.availableHours, 0) as availableHours,
-        uh.lastUpdated,
+        COALESCE(uh.availablehours, 0) as availableHours,
+        uh.lastupdated as lastUpdated,
         uh.notes
       FROM "User" u
-      LEFT JOIN UserHours uh ON u.iduser = uh.userId
+      LEFT JOIN userhours uh ON u.iduser = uh.userid
       ORDER BY u.name
     `);
     
@@ -2377,11 +2377,11 @@ app.get('/api/admin/search-user', authenticateToken, async (req, res) => {
         u.iduser,
         u.name as username,
         u.email,
-        COALESCE(uh.availableHours, 0) as availableHours,
-        uh.lastUpdated,
+        COALESCE(uh.availablehours, 0) as availableHours,
+        uh.lastupdated as lastUpdated,
         uh.notes
       FROM "User" u
-      LEFT JOIN UserHours uh ON u.iduser = uh.userId
+      LEFT JOIN userhours uh ON u.iduser = uh.userid
       WHERE LOWER(u.email) LIKE LOWER($1)
       ORDER BY u.name
     `, [`%${email.trim()}%`]);

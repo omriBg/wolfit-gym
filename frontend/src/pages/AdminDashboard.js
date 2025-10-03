@@ -216,8 +216,16 @@ function AdminDashboard() {
                 <tr key={user.iduser}>
                   <td>{user.username}</td>
                   <td>{user.email}</td>
-                  <td>{user.availableHours} רבעי שעה</td>
-                  <td>{new Date(user.lastUpdated).toLocaleString()}</td>
+                  <td className="hours-cell">
+                    <span className="hours-number">{user.availableHours || 0}</span>
+                    <span className="hours-unit"> רבעי שעה</span>
+                  </td>
+                  <td className="date-cell">
+                    {user.lastUpdated && user.lastUpdated !== 'Invalid Date' 
+                      ? new Date(user.lastUpdated).toLocaleString('he-IL') 
+                      : 'לא עודכן'
+                    }
+                  </td>
                   <td className="actions">
                     <div className="hours-control">
                       <input
