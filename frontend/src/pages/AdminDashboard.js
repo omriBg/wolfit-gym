@@ -19,6 +19,12 @@ function AdminDashboard() {
   const [searchTimeout, setSearchTimeout] = useState(null);
 
   useEffect(() => {
+    console.log('AdminDashboard נטען');
+    const token = localStorage.getItem('authToken');
+    console.log('טוקן ב-useEffect:', token ? 'קיים' : 'לא קיים');
+    if (token) {
+      console.log('אורך הטוקן:', token.length);
+    }
     loadUsers();
   }, []);
 
@@ -79,6 +85,8 @@ function AdminDashboard() {
     try {
       setLoading(true);
       const token = localStorage.getItem('authToken');
+      console.log('טוקן שנמצא:', token ? 'קיים' : 'לא קיים');
+      console.log('API_BASE_URL:', API_BASE_URL);
       const response = await fetch(`${API_BASE_URL}/api/admin/all-users-hours`, {
         headers: {
           'Authorization': `Bearer ${token}`,
@@ -86,6 +94,7 @@ function AdminDashboard() {
         },
       });
       
+      console.log('סטטוס תגובה:', response.status);
       const data = await response.json();
       console.log('תגובה מהשרת:', data);
       if (data.success) {
