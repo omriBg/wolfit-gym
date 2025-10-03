@@ -89,6 +89,11 @@ function AdminDashboard() {
       const data = await response.json();
       if (data.success) {
         console.log('משתמשים שהתקבלו:', data.users);
+        console.log('דוגמה למשתמש:', data.users[0]);
+        if (data.users[0]) {
+          console.log('availableHours:', data.users[0].availableHours);
+          console.log('lastUpdated:', data.users[0].lastUpdated);
+        }
         setUsers(data.users);
         setFilteredUsers(data.users);
       } else {
@@ -218,7 +223,7 @@ function AdminDashboard() {
                   <td>{user.username}</td>
                   <td>{user.email}</td>
                   <td className="hours-cell">
-                    <span className="hours-number">{user.availableHours || 0}</span>
+                    <span className="hours-number">{user.availableHours !== null && user.availableHours !== undefined ? user.availableHours : 0}</span>
                     <span className="hours-unit"> רבעי שעה</span>
                   </td>
                   <td className="date-cell">

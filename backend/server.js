@@ -2277,6 +2277,57 @@ app.get('/api/admin/all-users-hours', authenticateToken, async (req, res) => {
     }
     
     console.log('🔍 מתחיל שליפת נתונים...');
+    
+    // בדיקה אם טבלת userhours קיימת
+    const userHoursTableCheck = await pool.query(`
+      SELECT EXISTS (
+        SELECT FROM information_schema.tables 
+        WHERE table_name = 'userhours'
+      );
+    `);
+    
+    console.log('📋 טבלת userhours קיימת:', userHoursTableCheck.rows[0].exists);
+    
+    if (!userHoursTableCheck.rows[0].exists) {
+      console.log('⚠️ טבלת userhours לא קיימת, יוצר אותה...');
+      await pool.query(`
+        CREATE TABLE IF NOT EXISTS userhours (
+          userid INTEGER PRIMARY KEY REFERENCES "User"(iduser) ON DELETE CASCADE,
+          availablehours INTEGER DEFAULT 0,
+          lastupdated TIMESTAMP DEFAULT NOW(),
+          notes TEXT,
+          createdby VARCHAR(50) DEFAULT 'system'
+        );
+      `);
+      console.log('✅ טבלת userhours נוצרה');
+    }
+    
+    // בדיקת מבנה טבלת userhours
+    const userHoursColumns = await pool.query(`
+      SELECT column_name, data_type 
+      FROM information_schema.columns 
+      WHERE table_name = 'userhours'
+    `);
+    console.log('📋 עמודות בטבלת userhours:', userHoursColumns.rows);
+    
+    // בדיקת נתונים בטבלת userhours
+    const userHoursCount = await pool.query('SELECT COUNT(*) FROM userhours');
+    console.log('📊 מספר רשומות בטבלת userhours:', userHoursCount.rows[0].count);
+    
+    // אם אין רשומות, נוסיף רשומות ברירת מחדל לכל המשתמשים
+    if (parseInt(userHoursCount.rows[0].count) === 0) {
+      console.log('⚠️ אין רשומות בטבלת userhours, יוצר רשומות ברירת מחדל...');
+      const allUsers = await pool.query('SELECT iduser FROM "User"');
+      for (const user of allUsers.rows) {
+        await pool.query(`
+          INSERT INTO userhours (userid, availablehours, createdby) 
+          VALUES ($1, 0, 'system')
+          ON CONFLICT (userid) DO NOTHING
+        `, [user.iduser]);
+      }
+      console.log(`✅ נוצרו ${allUsers.rows.length} רשומות ברירת מחדל`);
+    }
+    
     const result = await pool.query(`
       SELECT 
         u.iduser,
