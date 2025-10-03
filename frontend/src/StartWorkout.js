@@ -584,8 +584,12 @@ function StartWorkout() {
 
   return (
     <div className="start-workout-container">
-      <button className="back-button" onClick={() => navigate('/main-menu')}>
-        חזרה
+      <button 
+        className="back-button" 
+        onClick={() => navigate('/main-menu')}
+        disabled={isCancelling}
+      >
+        {isCancelling ? 'מבטל...' : 'חזרה'}
       </button>
       
       <div className="start-workout-content">
@@ -737,45 +741,44 @@ function StartWorkout() {
         )}
       </div>
 
+      {/* Overlay למניעת לחיצות במהלך ביטול */}
+      {isCancelling && (
+        <div className="cancelling-overlay">
+          <div className="cancelling-content">
+            <div className="loading-spinner"></div>
+            <p>מבטל את האימון...</p>
+            <p className="cancelling-subtitle">אנא המתן, זה יכול לקחת כמה שניות</p>
+          </div>
+        </div>
+      )}
+
       {/* דיאלוג אישור ביטול אימון */}
-      {showCancelConfirm && (
+      {showCancelConfirm && !isCancelling && (
         <div className="confirm-dialog-overlay">
           <div className="confirm-dialog">
             <div className="confirm-dialog-header">
               <h3>אישור ביטול אימון</h3>
             </div>
             <div className="confirm-dialog-body">
-              {isCancelling ? (
-                <div className="cancelling-content">
-                  <div className="loading-spinner"></div>
-                  <p>מבטל את האימון...</p>
-                  <p className="cancelling-subtitle">אנא המתן, זה יכול לקחת כמה שניות</p>
-                </div>
-              ) : (
-                <>
-                  <p>האם אתה בטוח שברצונך לבטל את האימון?</p>
-                  <p className="confirm-dialog-warning">
-                    ⚠️ פעולה זו לא ניתנת לביטול
-                  </p>
-                </>
-              )}
+              <p>האם אתה בטוח שברצונך לבטל את האימון?</p>
+              <p className="confirm-dialog-warning">
+                ⚠️ פעולה זו לא ניתנת לביטול
+              </p>
             </div>
-            {!isCancelling && (
-              <div className="confirm-dialog-actions">
-                <button 
-                  className="confirm-btn cancel-btn"
-                  onClick={cancelCancelWorkout}
-                >
-                  לא, שמור על האימון
-                </button>
-                <button 
-                  className="confirm-btn confirm-cancel-btn"
-                  onClick={confirmCancelWorkout}
-                >
-                  כן, בטל את האימון
-                </button>
-              </div>
-            )}
+            <div className="confirm-dialog-actions">
+              <button 
+                className="confirm-btn cancel-btn"
+                onClick={cancelCancelWorkout}
+              >
+                לא, שמור על האימון
+              </button>
+              <button 
+                className="confirm-btn confirm-cancel-btn"
+                onClick={confirmCancelWorkout}
+              >
+                כן, בטל את האימון
+              </button>
+            </div>
           </div>
         </div>
       )}
