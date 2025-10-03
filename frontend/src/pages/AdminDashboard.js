@@ -87,12 +87,15 @@ function AdminDashboard() {
       });
       
       const data = await response.json();
+      console.log('תגובה מהשרת:', data);
       if (data.success) {
         console.log('משתמשים שהתקבלו:', data.users);
-        console.log('דוגמה למשתמש:', data.users[0]);
-        if (data.users[0]) {
+        console.log('מספר משתמשים:', data.users.length);
+        if (data.users.length > 0) {
+          console.log('דוגמה למשתמש:', data.users[0]);
           console.log('availableHours:', data.users[0].availableHours);
           console.log('lastUpdated:', data.users[0].lastUpdated);
+          console.log('כל השדות:', Object.keys(data.users[0]));
         }
         setUsers(data.users);
         setFilteredUsers(data.users);
@@ -218,7 +221,9 @@ function AdminDashboard() {
               </tr>
             </thead>
             <tbody>
-              {filteredUsers.map(user => (
+              {filteredUsers.map(user => {
+                console.log('מציג משתמש:', user.username, 'availableHours:', user.availableHours);
+                return (
                 <tr key={user.iduser}>
                   <td>{user.username}</td>
                   <td>{user.email}</td>
@@ -258,7 +263,8 @@ function AdminDashboard() {
                     </button>
                   </td>
                 </tr>
-              ))}
+                );
+              })}
             </tbody>
           </table>
         </div>
