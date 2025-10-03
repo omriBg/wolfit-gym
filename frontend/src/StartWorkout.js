@@ -16,6 +16,7 @@ function StartWorkout() {
   const [error, setError] = useState('');
   const [showCancelConfirm, setShowCancelConfirm] = useState(false);
   const [workoutToCancel, setWorkoutToCancel] = useState(null);
+  const [isCancelling, setIsCancelling] = useState(false);
 
   useEffect(() => {
     // מניעת גלילה של הגוף כשהמסך פתוח
@@ -377,17 +378,31 @@ function StartWorkout() {
   };
 
   const handleCancelWorkout = (workoutGroup) => {
+    // הגנה מפני ביטול כפול
+    if (isCancelling) {
+      console.log('ביטול כבר בתהליך, לא ניתן לבטל אימון נוסף');
+      return;
+    }
+    
     // הצגת דיאלוג אישור
     setWorkoutToCancel(workoutGroup);
     setShowCancelConfirm(true);
   };
 
   const confirmCancelWorkout = async () => {
+    // הגנה מפני לחיצה כפולה
+    if (isCancelling) {
+      console.log('ביטול כבר בתהליך, מדלג...');
+      return;
+    }
+
     try {
+      setIsCancelling(true);
       console.log('מבטל אימון:', workoutToCancel);
       
       if (!user || !user.id) {
         setError('משתמש לא מחובר');
+        setIsCancelling(false);
         return;
       }
 
@@ -410,60 +425,90 @@ function StartWorkout() {
       console.log('מחיקת הזמנות:', bookingsToDelete);
 
       const token = localStorage.getItem('authToken');
-      let hasError = false;
+      const successfulCancellations = [];
+      const failedCancellations = [];
       
       try {
-        // מחיקת כל ההזמנות בנפרד
+        // מחיקת כל ההזמנות בנפרד עם מעקב אחרי הצלחות וכשלונות
         for (const booking of bookingsToDelete) {
-          // עיבוד התאריך והשעה לפורמט נכון ל-URL
-          const encodedDate = booking.bookingDate;
-          // המרת השעה לפורמט שהשרת מצפה לו (ללא נקודותיים)
-          const encodedTime = booking.startTime.replace(/:/g, '');
-          
-          console.log('מנסה לבטל הזמנה:', {
-            userId: user.id,
-            date: encodedDate,
-            fieldId: booking.idField,
-            time: encodedTime
-          });
-          
-          const response = await fetch(
-            `${API_BASE_URL}/api/cancel-workout/${user.id}/${encodedDate}/${booking.idField}/${encodedTime}`,
-            {
-              method: 'DELETE',
-              headers: {
-                'Authorization': `Bearer ${token}`,
-                'Content-Type': 'application/json',
-              }
+          try {
+            // עיבוד התאריך והשעה לפורמט נכון ל-URL
+            const encodedDate = booking.bookingDate;
+            // המרת השעה לפורמט שהשרת מצפה לו (ללא נקודותיים)
+            const encodedTime = booking.startTime.replace(/:/g, '');
+            
+            console.log('מנסה לבטל הזמנה:', {
+              userId: user.id,
+              date: encodedDate,
+              fieldId: booking.idField,
+              time: encodedTime
             });
+            
+            const response = await fetch(
+              `${API_BASE_URL}/api/cancel-workout/${user.id}/${encodedDate}/${booking.idField}/${encodedTime}`,
+              {
+                method: 'DELETE',
+                headers: {
+                  'Authorization': `Bearer ${token}`,
+                  'Content-Type': 'application/json',
+                }
+              });
 
-          const data = await response.json();
-          
-          if (!data.success) {
-            hasError = true;
-            throw new Error(data.message || 'שגיאה בביטול אימון');
+            const data = await response.json();
+            
+            if (data.success) {
+              successfulCancellations.push(booking);
+              console.log('✅ בוטל בהצלחה:', booking);
+            } else {
+              failedCancellations.push({
+                booking,
+                error: data.message || 'שגיאה לא ידועה'
+              });
+              console.error('❌ כשל בביטול:', booking, data.message);
+            }
+          } catch (bookingError) {
+            failedCancellations.push({
+              booking,
+              error: bookingError.message || 'שגיאה בחיבור לשרת'
+            });
+            console.error('❌ שגיאה בביטול הזמנה:', booking, bookingError);
           }
         }
         
-        if (!hasError) {
-          console.log('כל האימונים בוטלו בהצלחה');
+        // בדיקה אם כל הביטולים הצליחו
+        if (failedCancellations.length === 0) {
+          console.log('✅ כל האימונים בוטלו בהצלחה');
+          setError('');
           // סגירת דיאלוג האישור
           setShowCancelConfirm(false);
           setWorkoutToCancel(null);
           // רענון רשימת האימונים
-          window.location.reload();
+          loadFutureWorkouts();
+        } else if (successfulCancellations.length > 0) {
+          // ביטול חלקי - הצגת שגיאה מפורטת
+          const errorMessage = `בוטלו ${successfulCancellations.length} מתוך ${bookingsToDelete.length} הזמנות. 
+          כשלונות: ${failedCancellations.map(f => f.error).join(', ')}`;
+          setError(errorMessage);
+          console.warn('⚠️ ביטול חלקי:', errorMessage);
+          // עדיין נסגור את הדיאלוג ונעדכן את הרשימה
+          setShowCancelConfirm(false);
+          setWorkoutToCancel(null);
+          loadFutureWorkouts();
+        } else {
+          // כל הביטולים נכשלו
+          const errorMessage = `כל הביטולים נכשלו: ${failedCancellations.map(f => f.error).join(', ')}`;
+          setError(errorMessage);
+          console.error('❌ כל הביטולים נכשלו:', errorMessage);
         }
       } catch (error) {
-        console.error('שגיאה בביטול האימון:', error);
-        setError(error.message || 'שגיאה בביטול האימון');
-        setShowCancelConfirm(false);
-        setWorkoutToCancel(null);
+        console.error('שגיאה כללית בביטול האימון:', error);
+        setError('שגיאה בחיבור לשרת. נסה שוב.');
       }
     } catch (error) {
       console.error('שגיאה בביטול האימון:', error);
       setError('שגיאה בחיבור לשרת. נסה שוב.');
-      setShowCancelConfirm(false);
-      setWorkoutToCancel(null);
+    } finally {
+      setIsCancelling(false);
     }
   };
 
@@ -510,8 +555,9 @@ function StartWorkout() {
                 <button 
                   className="cancel-current-workout-btn"
                   onClick={() => handleCancelWorkout(currentWorkout.workoutGroup)}
+                  disabled={isCancelling}
                 >
-                  בטל אימון נוכחי
+                  {isCancelling ? 'מבטל...' : 'בטל אימון נוכחי'}
                 </button>
               </div>
             </div>
@@ -604,21 +650,14 @@ function StartWorkout() {
                         workoutDate.setHours(0, 0, 0, 0);
                         const isToday = today.getTime() === workoutDate.getTime();
                         
-                        return isToday ? (
+                        return (
                           <button 
                             className="cancel-workout-btn"
                             onClick={() => handleCancelWorkout(workoutGroup)}
                             style={{ marginTop: '15px' }}
+                            disabled={isCancelling}
                           >
-                            בטל אימון
-                          </button>
-                        ) : (
-                          <button 
-                            className="cancel-workout-btn"
-                            onClick={() => handleCancelWorkout(workoutGroup)}
-                            style={{ marginTop: '15px' }}
-                          >
-                            בטל אימון
+                            {isCancelling ? 'מבטל...' : 'בטל אימון'}
                           </button>
                         );
                       })()}
@@ -656,8 +695,9 @@ function StartWorkout() {
               <button 
                 className="confirm-btn confirm-cancel-btn"
                 onClick={confirmCancelWorkout}
+                disabled={isCancelling}
               >
-                כן, בטל את האימון
+                {isCancelling ? 'מבטל...' : 'כן, בטל את האימון'}
               </button>
             </div>
           </div>

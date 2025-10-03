@@ -347,6 +347,20 @@
   transform: translateY(0);
 }
 
+.cancel-workout-btn:disabled {
+  background: linear-gradient(45deg, #95a5a6, #7f8c8d);
+  color: #bdc3c7;
+  cursor: not-allowed;
+  transform: none;
+  box-shadow: 0 2px 8px rgba(149, 165, 166, 0.2);
+}
+
+.cancel-workout-btn:disabled:hover {
+  background: linear-gradient(45deg, #95a5a6, #7f8c8d);
+  transform: none;
+  box-shadow: 0 2px 8px rgba(149, 165, 166, 0.2);
+}
+
 /* עיצוב חלון אימון נוכחי */
 .current-workout-section {
   margin-bottom: 40px;
@@ -438,6 +452,20 @@
 
 .cancel-current-workout-btn:active {
   transform: translateY(0);
+}
+
+.cancel-current-workout-btn:disabled {
+  background: linear-gradient(45deg, #95a5a6, #7f8c8d);
+  color: #bdc3c7;
+  cursor: not-allowed;
+  transform: none;
+  box-shadow: 0 2px 8px rgba(149, 165, 166, 0.2);
+}
+
+.cancel-current-workout-btn:disabled:hover {
+  background: linear-gradient(45deg, #95a5a6, #7f8c8d);
+  transform: none;
+  box-shadow: 0 2px 8px rgba(149, 165, 166, 0.2);
 }
 
 @keyframes slideInDown {
@@ -557,6 +585,20 @@
   background: linear-gradient(45deg, #c0392b, #a93226);
   transform: translateY(-2px);
   box-shadow: 0 6px 20px rgba(231, 76, 60, 0.4);
+}
+
+.confirm-cancel-btn:disabled {
+  background: linear-gradient(45deg, #95a5a6, #7f8c8d);
+  color: #bdc3c7;
+  cursor: not-allowed;
+  transform: none;
+  box-shadow: 0 2px 8px rgba(149, 165, 166, 0.2);
+}
+
+.confirm-cancel-btn:disabled:hover {
+  background: linear-gradient(45deg, #95a5a6, #7f8c8d);
+  transform: none;
+  box-shadow: 0 2px 8px rgba(149, 165, 166, 0.2);
 }
 
 .confirm-btn:active {

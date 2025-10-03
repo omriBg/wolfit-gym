@@ -1546,6 +1546,8 @@ app.get('/api/future-workouts/:userId', authenticateToken, async (req, res) => {
 
 // API לביטול אימון
 app.delete('/api/cancel-workout/:userId/:date/:fieldId/:startTime', authenticateToken, async (req, res) => {
+  const client = await pool.connect();
+  
   try {
     const { userId, date, fieldId, startTime } = req.params;
     
@@ -1561,13 +1563,17 @@ app.delete('/api/cancel-workout/:userId/:date/:fieldId/:startTime', authenticate
       });
     }
     
+    // התחלת transaction
+    await client.query('BEGIN');
+    
     // בדיקה שהמשתמש קיים
-    const userCheck = await pool.query(
+    const userCheck = await client.query(
       'SELECT iduser FROM "User" WHERE iduser = $1',
       [userId]
     );
     
     if (userCheck.rows.length === 0) {
+      await client.query('ROLLBACK');
       return res.json({
         success: false,
         message: 'משתמש לא נמצא'
@@ -1575,12 +1581,13 @@ app.delete('/api/cancel-workout/:userId/:date/:fieldId/:startTime', authenticate
     }
     
     // בדיקה שהאימון קיים ושייך למשתמש
-    const bookingCheck = await pool.query(
+    const bookingCheck = await client.query(
       'SELECT * FROM bookfield WHERE iduser = $1 AND bookingdate = $2 AND idfield = $3 AND starttime = $4',
       [userId, date, fieldId, formattedTime]
     );
     
     if (bookingCheck.rows.length === 0) {
+      await client.query('ROLLBACK');
       return res.json({
         success: false,
         message: 'לא נמצא אימון מתאים לביטול'
@@ -1590,6 +1597,7 @@ app.delete('/api/cancel-workout/:userId/:date/:fieldId/:startTime', authenticate
     // בדיקה שהתאריך לא בעבר
     const today = new Date().toISOString().split('T')[0];
     if (date < today) {
+      await client.query('ROLLBACK');
       return res.json({
         success: false,
         message: 'לא ניתן לבטל אימון מהעבר'
@@ -1600,7 +1608,8 @@ app.delete('/api/cancel-workout/:userId/:date/:fieldId/:startTime', authenticate
     if (date === today) {
       const now = new Date();
       const currentTime = now.toTimeString().split(' ')[0];
-      if (startTime < currentTime) {
+      if (formattedTime < currentTime) {
+        await client.query('ROLLBACK');
         return res.json({
           success: false,
           message: 'לא ניתן לבטל אימון שכבר התחיל'
@@ -1609,12 +1618,10 @@ app.delete('/api/cancel-workout/:userId/:date/:fieldId/:startTime', authenticate
     }
     
     // חישוב רבעי השעה שצריך להחזיר
-    const [startHour, startMinute] = formattedTime.split(':').map(Number);
-    const endMinutes = startMinute + 15; // רבע שעה
     const quarters = 1; // תמיד רבע שעה
 
     // קבלת שעות נוכחיות
-    const currentHours = await pool.query(
+    const currentHours = await client.query(
       'SELECT availableHours FROM UserHours WHERE userId = $1',
       [userId]
     );
@@ -1623,29 +1630,41 @@ app.delete('/api/cancel-workout/:userId/:date/:fieldId/:startTime', authenticate
     const newAvailableHours = currentAvailable + quarters;
 
     // מחיקת האימון
-    await pool.query(
+    const deleteResult = await client.query(
       'DELETE FROM bookfield WHERE iduser = $1 AND bookingdate = $2 AND idfield = $3 AND starttime = $4',
       [userId, date, fieldId, formattedTime]
     );
 
+    // וידוא שהמחיקה הצליחה
+    if (deleteResult.rowCount === 0) {
+      await client.query('ROLLBACK');
+      return res.json({
+        success: false,
+        message: 'האימון כבר בוטל או לא קיים'
+      });
+    }
+
     // החזרת השעות למשתמש
     if (currentHours.rows.length > 0) {
-      await pool.query(
+      await client.query(
         'UPDATE userhours SET availablehours = $1, lastupdated = NOW() WHERE userid = $2',
         [newAvailableHours, userId]
       );
     } else {
-      await pool.query(
+      await client.query(
         'INSERT INTO userhours (userid, availablehours, createdby) VALUES ($1, $2, $3)',
         [userId, quarters, 'system']
       );
     }
 
     // הוספה להיסטוריה
-    await pool.query(
+    await client.query(
       'INSERT INTO UserHoursHistory (userId, action, hours, reason, createdBy) VALUES ($1, $2, $3, $4, $5)',
       [userId, 'REFUND', quarters, `ביטול אימון בתאריך ${date}`, 'system']
     );
+    
+    // אישור ה-transaction
+    await client.query('COMMIT');
     
     console.log('✅ האימון בוטל והשעות הוחזרו בהצלחה');
     
@@ -1656,12 +1675,17 @@ app.delete('/api/cancel-workout/:userId/:date/:fieldId/:startTime', authenticate
     });
     
   } catch (err) {
+    // rollback במקרה של שגיאה
+    await client.query('ROLLBACK');
     console.error('❌ שגיאה בביטול האימון:', err);
     res.status(500).json({
       success: false,
       message: 'שגיאה בביטול האימון',
       error: err.message
     });
+  } finally {
+    // שחרור ה-client
+    client.release();
   }
 });
 
