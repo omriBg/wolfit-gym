@@ -8,16 +8,72 @@ function AdminDashboard() {
   const navigate = useNavigate();
   const { user } = useAuth();
   const [users, setUsers] = useState([]);
+  const [filteredUsers, setFilteredUsers] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
   const [selectedUser, setSelectedUser] = useState(null);
   const [hoursMap, setHoursMap] = useState({});
   const [showHistory, setShowHistory] = useState(false);
   const [userHistory, setUserHistory] = useState([]);
+  const [searchEmail, setSearchEmail] = useState('');
+  const [searchTimeout, setSearchTimeout] = useState(null);
 
   useEffect(() => {
     loadUsers();
   }, []);
+
+  useEffect(() => {
+    if (searchEmail.trim() === '') {
+      setFilteredUsers(users);
+    } else {
+      // Clear existing timeout
+      if (searchTimeout) {
+        clearTimeout(searchTimeout);
+      }
+      
+      // Set new timeout for debounced search
+      const timeout = setTimeout(() => {
+        searchUsers(searchEmail);
+      }, 300); // 300ms delay
+      
+      setSearchTimeout(timeout);
+    }
+    
+    // Cleanup timeout on unmount
+    return () => {
+      if (searchTimeout) {
+        clearTimeout(searchTimeout);
+      }
+    };
+  }, [users, searchEmail]);
+
+  const searchUsers = async (email) => {
+    if (email.trim() === '') {
+      setFilteredUsers(users);
+      return;
+    }
+
+    try {
+      const token = localStorage.getItem('authToken');
+      const response = await fetch(`${API_BASE_URL}/api/admin/search-user?email=${encodeURIComponent(email)}`, {
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json',
+        },
+      });
+      
+      const data = await response.json();
+      if (data.success) {
+        setFilteredUsers(data.users);
+      } else {
+        setError('שגיאה בחיפוש משתמשים');
+        setFilteredUsers([]);
+      }
+    } catch (err) {
+      setError('שגיאה בחיפוש משתמשים');
+      setFilteredUsers([]);
+    }
+  };
 
   const loadUsers = async () => {
     try {
@@ -33,6 +89,7 @@ function AdminDashboard() {
       const data = await response.json();
       if (data.success) {
         setUsers(data.users);
+        setFilteredUsers(data.users);
       } else {
         setError('שגיאה בטעינת משתמשים');
       }
@@ -132,6 +189,18 @@ function AdminDashboard() {
         <div className="loading">טוען...</div>
       ) : (
         <div className="users-container">
+          <div className="search-container">
+            <input
+              type="text"
+              placeholder="חיפוש משתמש לפי אימייל..."
+              value={searchEmail}
+              onChange={(e) => setSearchEmail(e.target.value)}
+              className="search-input"
+            />
+            <div className="search-results-count">
+              {filteredUsers.length} מתוך {users.length} משתמשים
+            </div>
+          </div>
           <table className="users-table">
             <thead>
               <tr>
@@ -143,7 +212,7 @@ function AdminDashboard() {
               </tr>
             </thead>
             <tbody>
-              {users.map(user => (
+              {filteredUsers.map(user => (
                 <tr key={user.iduser}>
                   <td>{user.username}</td>
                   <td>{user.email}</td>

@@ -2333,3 +2333,50 @@ app.get('/api/user-hours-history/:userId', authenticateToken, async (req, res) =
     });
   }
 });
+
+// חיפוש משתמש לפי אימייל (למנהל)
+app.get('/api/admin/search-user', authenticateToken, async (req, res) => {
+  try {
+    const { email } = req.query;
+    
+    console.log(`🔍 מחפש משתמש לפי אימייל: ${email}`);
+    
+    if (!email || email.trim() === '') {
+      return res.json({
+        success: false,
+        message: 'אימייל נדרש לחיפוש'
+      });
+    }
+    
+    const result = await pool.query(`
+      SELECT 
+        u.iduser,
+        u.name as username,
+        u.email,
+        COALESCE(uh.availableHours, 0) as availableHours,
+        uh.lastUpdated,
+        uh.notes
+      FROM "User" u
+      LEFT JOIN UserHours uh ON u.iduser = uh.userId
+      WHERE LOWER(u.email) LIKE LOWER($1)
+      ORDER BY u.name
+    `, [`%${email.trim()}%`]);
+    
+    console.log(`✅ נמצאו ${result.rows.length} משתמשים תואמים`);
+    
+    res.json({
+      success: true,
+      users: result.rows,
+      searchTerm: email,
+      totalFound: result.rows.length
+    });
+    
+  } catch (err) {
+    console.error('❌ שגיאה בחיפוש משתמש:', err);
+    res.status(500).json({
+      success: false,
+      message: 'שגיאה בשרת',
+      error: err.message
+    });
+  }
+});
