@@ -264,7 +264,7 @@ function OrderTrain(){
     const startTimeInMinutes = startHour * 60 + startMinute;
     const times = [];
     
-    for (let duration = 30; duration <= 90; duration += 15) {
+    for (let duration = 30; duration <= 120; duration += 15) {
       const endTimeInMinutes = startTimeInMinutes + duration;
       const endHour = Math.floor(endTimeInMinutes / 60);
       const endMinute = endTimeInMinutes % 60;

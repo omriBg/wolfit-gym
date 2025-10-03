@@ -17,12 +17,35 @@ function StartWorkout() {
   const [showCancelConfirm, setShowCancelConfirm] = useState(false);
   const [workoutToCancel, setWorkoutToCancel] = useState(null);
   const [isCancelling, setIsCancelling] = useState(false);
+  const [availableHours, setAvailableHours] = useState(0);
 
   useEffect(() => {
     // מניעת גלילה של הגוף כשהמסך פתוח
     document.body.style.overflow = 'hidden';
     
     // פונקציה לטעינת האימונים העתידיים מהשרת
+    const loadUserHours = async () => {
+      try {
+        if (!user || !user.id) return;
+        
+        const token = localStorage.getItem('authToken');
+        const response = await fetch(`${API_BASE_URL}/api/user-hours/${user.id}`, {
+          headers: {
+            'Authorization': `Bearer ${token}`,
+            'Content-Type': 'application/json',
+          },
+        });
+        
+        const data = await response.json();
+        if (data.success) {
+          setAvailableHours(data.availableHours);
+          console.log('שעות זמינות נטענו:', data.availableHours);
+        }
+      } catch (err) {
+        console.error('שגיאה בטעינת שעות:', err);
+      }
+    };
+    
     const fetchWorkouts = async () => {
       try {
         setLoading(true);
@@ -222,6 +245,7 @@ function StartWorkout() {
       }
     };
 
+    loadUserHours();
     fetchWorkouts();
 
     // החזרת הגלילה כשיוצאים מהמסך
@@ -377,6 +401,29 @@ function StartWorkout() {
     }
   };
 
+  const loadFutureWorkouts = async () => {
+    try {
+      if (!user || !user.id) return;
+      
+      const token = localStorage.getItem('authToken');
+      const response = await fetch(`${API_BASE_URL}/api/future-workouts/${user.id}`, {
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json',
+        },
+      });
+      
+      const data = await response.json();
+      if (data.success) {
+        setWorkouts(data.workouts);
+        setWorkoutsByField(data.workoutsByField);
+        console.log('אימונים נטענו מחדש:', data.workouts.length);
+      }
+    } catch (err) {
+      console.error('שגיאה בטעינת אימונים:', err);
+    }
+  };
+
   const handleCancelWorkout = (workoutGroup) => {
     // הגנה מפני ביטול כפול
     if (isCancelling) {
@@ -482,8 +529,9 @@ function StartWorkout() {
           // סגירת דיאלוג האישור
           setShowCancelConfirm(false);
           setWorkoutToCancel(null);
-          // רענון רשימת האימונים
+          // רענון רשימת האימונים והשעות
           loadFutureWorkouts();
+          loadUserHours();
         } else if (successfulCancellations.length > 0) {
           // ביטול חלקי - הצגת שגיאה מפורטת
           const errorMessage = `בוטלו ${successfulCancellations.length} מתוך ${bookingsToDelete.length} הזמנות. 
@@ -494,6 +542,7 @@ function StartWorkout() {
           setShowCancelConfirm(false);
           setWorkoutToCancel(null);
           loadFutureWorkouts();
+          loadUserHours();
         } else {
           // כל הביטולים נכשלו
           const errorMessage = `כל הביטולים נכשלו: ${failedCancellations.map(f => f.error).join(', ')}`;
@@ -530,7 +579,13 @@ function StartWorkout() {
       </button>
       
       <div className="start-workout-content">
-        <h1>האימונים שלך</h1>
+        <div className="workout-header">
+          <h1>האימונים שלך</h1>
+          <div className="available-hours">
+            <span className="hours-label">שעות זמינות:</span>
+            <span className="hours-value">{availableHours} רבעי שעה</span>
+          </div>
+        </div>
         
         {/* חלון אימון נוכחי */}
         {currentWorkout && (
@@ -680,26 +735,37 @@ function StartWorkout() {
               <h3>אישור ביטול אימון</h3>
             </div>
             <div className="confirm-dialog-body">
-              <p>האם אתה בטוח שברצונך לבטל את האימון?</p>
-              <p className="confirm-dialog-warning">
-                ⚠️ פעולה זו לא ניתנת לביטול
-              </p>
+              {isCancelling ? (
+                <div className="cancelling-content">
+                  <div className="loading-spinner"></div>
+                  <p>מבטל את האימון...</p>
+                  <p className="cancelling-subtitle">אנא המתן, זה יכול לקחת כמה שניות</p>
+                </div>
+              ) : (
+                <>
+                  <p>האם אתה בטוח שברצונך לבטל את האימון?</p>
+                  <p className="confirm-dialog-warning">
+                    ⚠️ פעולה זו לא ניתנת לביטול
+                  </p>
+                </>
+              )}
             </div>
-            <div className="confirm-dialog-actions">
-              <button 
-                className="confirm-btn cancel-btn"
-                onClick={cancelCancelWorkout}
-              >
-                לא, שמור על האימון
-              </button>
-              <button 
-                className="confirm-btn confirm-cancel-btn"
-                onClick={confirmCancelWorkout}
-                disabled={isCancelling}
-              >
-                {isCancelling ? 'מבטל...' : 'כן, בטל את האימון'}
-              </button>
-            </div>
+            {!isCancelling && (
+              <div className="confirm-dialog-actions">
+                <button 
+                  className="confirm-btn cancel-btn"
+                  onClick={cancelCancelWorkout}
+                >
+                  לא, שמור על האימון
+                </button>
+                <button 
+                  className="confirm-btn confirm-cancel-btn"
+                  onClick={confirmCancelWorkout}
+                >
+                  כן, בטל את האימון
+                </button>
+              </div>
+            )}
           </div>
         </div>
       )}
