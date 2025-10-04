@@ -1307,6 +1307,38 @@ app.post('/api/save-workout', authenticateToken, async (req, res) => {
     
     console.log('✅ לא נמצאו התנגשויות עם הזמנות קיימות');
     
+    // בדיקה נוספת שכל המגרשים עדיין זמינים (למקרה של race condition)
+    console.log('🔍 בודק זמינות מגרשים לפני שמירה...');
+    const unavailableFields = [];
+    
+    for (const booking of bookings) {
+      const { idfield, starttime, bookingdate } = booking;
+      
+      const availabilityCheck = await pool.query(
+        'SELECT * FROM bookfield WHERE idfield = $1 AND bookingdate = $2 AND starttime = $3',
+        [idfield, bookingdate, starttime]
+      );
+      
+      if (availabilityCheck.rows.length > 0) {
+        unavailableFields.push({
+          field: idfield,
+          time: starttime,
+          reason: 'המגרש תפוס כבר'
+        });
+      }
+    }
+    
+    if (unavailableFields.length > 0) {
+      console.warn('⚠️ נמצאו מגרשים לא זמינים:', unavailableFields);
+      return res.json({
+        success: false,
+        message: `חלק מהמגרשים לא זמינים יותר: ${unavailableFields.map(uf => `מגרש ${uf.field} ב-${uf.time}`).join(', ')}. אנא נסה שוב.`,
+        unavailableFields: unavailableFields
+      });
+    }
+    
+    console.log('✅ כל המגרשים עדיין זמינים');
+    
     // בדיקה שיש מספיק שעות זמינות
     const { quarters } = req.body;
     if (!quarters || quarters <= 0) {
@@ -1332,44 +1364,75 @@ app.post('/api/save-workout', authenticateToken, async (req, res) => {
     }
 
     // שמירת כל ההזמנות
+    const savedBookings = [];
+    const failedBookings = [];
+    
     for (const booking of bookings) {
       const { idfield, starttime, bookingdate } = booking;
       
-      // בדיקה שהמגרש קיים
-      const fieldCheck = await pool.query(
-        'SELECT idfield FROM field WHERE idfield = $1',
-        [idfield]
-      );
-      
-      if (fieldCheck.rows.length === 0) {
-        console.warn(`⚠️ מגרש ${idfield} לא נמצא, מדלג...`);
-        continue;
+      try {
+        // בדיקה שהמגרש קיים
+        const fieldCheck = await pool.query(
+          'SELECT idfield FROM field WHERE idfield = $1',
+          [idfield]
+        );
+        
+        if (fieldCheck.rows.length === 0) {
+          console.warn(`⚠️ מגרש ${idfield} לא נמצא, מדלג...`);
+          failedBookings.push({
+            booking,
+            reason: `מגרש ${idfield} לא נמצא במערכת`
+          });
+          continue;
+        }
+        
+        // בדיקה מחדש שהמגרש לא תפוס (למקרה של race condition)
+        const existingBooking = await pool.query(
+          'SELECT * FROM bookfield WHERE idfield = $1 AND bookingdate = $2 AND starttime = $3',
+          [idfield, bookingdate, starttime]
+        );
+        
+        if (existingBooking.rows.length > 0) {
+          console.warn(`⚠️ מגרש ${idfield} תפוס ב-${bookingdate} ${starttime}, מדלג...`);
+          failedBookings.push({
+            booking,
+            reason: `המגרש תפוס כבר ב-${bookingdate} בשעה ${starttime}`
+          });
+          continue;
+        }
+        
+        // הכנסת ההזמנה עם try-catch
+        console.log('💾 מנסה לשמור הזמנה:', { idfield, bookingdate, starttime, userId });
+        await pool.query(
+          'INSERT INTO bookfield (idfield, bookingdate, starttime, iduser) VALUES ($1, $2, $3, $4)',
+          [idfield, bookingdate, starttime, userId]
+        );
+        
+        console.log('✅ הזמנה נשמרה בהצלחה');
+        savedBookings.push(booking);
+        
+        // ביטול ה-cache אחרי הזמנה חדשה
+        await fieldCacheService.invalidateCache(date, starttime);
+        
+        console.log(`✅ נשמרה הזמנה: מגרש ${idfield}, תאריך ${date}, שעה ${starttime}`);
+        console.log(`🔄 Cache invalidated for ${date} at ${starttime}`);
+        
+      } catch (err) {
+        console.error(`❌ שגיאה בשמירת הזמנה ${idfield} ב-${bookingdate} ${starttime}:`, err);
+        
+        // בדיקה אם זו שגיאת UNIQUE constraint
+        if (err.code === '23505') { // PostgreSQL unique violation error code
+          failedBookings.push({
+            booking,
+            reason: `המגרש תפוס כבר ב-${bookingdate} בשעה ${starttime} (הזמנה כפולה)`
+          });
+        } else {
+          failedBookings.push({
+            booking,
+            reason: `שגיאה טכנית: ${err.message}`
+          });
+        }
       }
-      
-      // בדיקה שהמגרש לא תפוס כבר
-      const existingBooking = await pool.query(
-        'SELECT * FROM bookfield WHERE idfield = $1 AND bookingdate = $2 AND starttime = $3',
-        [idfield, bookingdate, starttime]
-      );
-      
-      if (existingBooking.rows.length > 0) {
-        console.warn(`⚠️ מגרש ${idfield} תפוס ב-${bookingdate} ${starttime}, מדלג...`);
-        continue;
-      }
-      
-      // הכנסת ההזמנה
-      console.log('💾 מנסה לשמור הזמנה:', { idfield, bookingdate, starttime, userId });
-      await pool.query(
-        'INSERT INTO bookfield (idfield, bookingdate, starttime, iduser) VALUES ($1, $2, $3, $4)',
-        [idfield, bookingdate, starttime, userId]
-      );
-      console.log('✅ הזמנה נשמרה בהצלחה');
-      
-      // ביטול ה-cache אחרי הזמנה חדשה
-      await fieldCacheService.invalidateCache(date, starttime);
-      
-      console.log(`✅ נשמרה הזמנה: מגרש ${idfield}, תאריך ${date}, שעה ${starttime}`);
-      console.log(`🔄 Cache invalidated for ${date} at ${starttime}`);
     }
 
     // הורדת השעות מהמשתמש
@@ -1392,10 +1455,35 @@ app.post('/api/save-workout', authenticateToken, async (req, res) => {
       [userId, 'USE', quarters, `הזמנת אימון בתאריך ${date}`, 'system']
     );
     
+    // הכנת הודעה מפורטת למשתמש
+    let message = '';
+    let success = true;
+    
+    if (savedBookings.length === bookings.length) {
+      // כל ההזמנות הצליחו
+      message = `האימון נשמר בהצלחה! נשמרו ${savedBookings.length} הזמנות`;
+    } else if (savedBookings.length > 0) {
+      // חלק מההזמנות הצליחו
+      message = `נשמרו ${savedBookings.length} מתוך ${bookings.length} הזמנות. `;
+      if (failedBookings.length > 0) {
+        message += `הזמנות שלא נשמרו: ${failedBookings.map(fb => `${fb.booking.idfield} ב-${fb.booking.starttime} (${fb.reason})`).join(', ')}`;
+      }
+    } else {
+      // אף הזמנה לא הצליחה
+      success = false;
+      message = `לא ניתן לשמור אף הזמנה. `;
+      if (failedBookings.length > 0) {
+        message += `סיבות: ${failedBookings.map(fb => `${fb.booking.idfield} ב-${fb.booking.starttime} (${fb.reason})`).join(', ')}`;
+      }
+    }
+    
     res.json({
-      success: true,
-      message: `האימון נשמר בהצלחה! נשמרו ${bookings.length} הזמנות`,
-      savedCount: bookings.length
+      success: success,
+      message: message,
+      savedCount: savedBookings.length,
+      failedCount: failedBookings.length,
+      savedBookings: savedBookings,
+      failedBookings: failedBookings
     });
     
   } catch (err) {
