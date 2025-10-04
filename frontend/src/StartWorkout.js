@@ -753,7 +753,7 @@ function StartWorkout() {
       )}
 
       {/* דיאלוג אישור ביטול אימון */}
-      {showCancelConfirm && !isCancelling && (
+      {showCancelConfirm && (
         <div className="confirm-dialog-overlay">
           <div className="confirm-dialog">
             <div className="confirm-dialog-header">
@@ -769,14 +769,16 @@ function StartWorkout() {
               <button 
                 className="confirm-btn cancel-btn"
                 onClick={cancelCancelWorkout}
+                disabled={isCancelling}
               >
                 לא, שמור על האימון
               </button>
               <button 
                 className="confirm-btn confirm-cancel-btn"
                 onClick={confirmCancelWorkout}
+                disabled={isCancelling}
               >
-                כן, בטל את האימון
+                {isCancelling ? 'מבטל...' : 'כן, בטל את האימון'}
               </button>
             </div>
           </div>
