@@ -2314,6 +2314,14 @@ app.get('/api/admin/all-users-hours', authenticateToken, async (req, res) => {
     const userHoursCount = await pool.query('SELECT COUNT(*) FROM userhours');
     console.log('📊 מספר רשומות בטבלת userhours:', userHoursCount.rows[0].count);
     
+    // בדיקת כל הרשומות בטבלת userhours
+    const allUserHours = await pool.query('SELECT * FROM userhours');
+    console.log('📋 כל הרשומות בטבלת userhours:', JSON.stringify(allUserHours.rows, null, 2));
+    
+    // בדיקת כל המשתמשים
+    const allUsers = await pool.query('SELECT * FROM "User"');
+    console.log('👥 כל המשתמשים:', JSON.stringify(allUsers.rows, null, 2));
+    
     // אם אין רשומות, נוסיף רשומות ברירת מחדל לכל המשתמשים
     if (parseInt(userHoursCount.rows[0].count) === 0) {
       console.log('⚠️ אין רשומות בטבלת userhours, יוצר רשומות ברירת מחדל...');
@@ -2328,7 +2336,8 @@ app.get('/api/admin/all-users-hours', authenticateToken, async (req, res) => {
       console.log(`✅ נוצרו ${allUsers.rows.length} רשומות ברירת מחדל`);
     }
     
-    const result = await pool.query(`
+    console.log('🔍 מבצע שאילתה לקבלת משתמשים עם שעות...');
+    const query = `
       SELECT 
         u.iduser,
         u.name as username,
@@ -2339,10 +2348,20 @@ app.get('/api/admin/all-users-hours', authenticateToken, async (req, res) => {
       FROM "User" u
       LEFT JOIN userhours uh ON u.iduser = uh.userid
       ORDER BY u.name
-    `);
+    `;
+    console.log('📝 השאילתה:', query);
+    
+    const result = await pool.query(query);
     
     console.log(`✅ נמצאו ${result.rows.length} משתמשים`);
-    console.log('דוגמה למשתמש:', result.rows[0]);
+    console.log('📊 כל המשתמשים:', JSON.stringify(result.rows, null, 2));
+    
+    if (result.rows.length > 0) {
+      console.log('🔍 דוגמה למשתמש ראשון:', result.rows[0]);
+      console.log('🔍 שדות במשתמש ראשון:', Object.keys(result.rows[0]));
+      console.log('🔍 availableHours במשתמש ראשון:', result.rows[0].availableHours);
+      console.log('🔍 typeof availableHours:', typeof result.rows[0].availableHours);
+    }
     
     res.json({
       success: true,
