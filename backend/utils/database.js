@@ -38,14 +38,16 @@ if (process.env.DATABASE_URL) {
     keepAliveInitialDelayMillis: 0
   };
 } else {
-  // משתנים נפרדים - ללא SSL עבור חיבור מקומי
+  // משתנים נפרדים
   dbConfig = {
     user: process.env.DB_USER,
     password: process.env.DB_PASSWORD,
     host: process.env.DB_HOST,
     port: process.env.DB_PORT || 5432,
     database: process.env.DB_NAME,
-    ssl: false, // ללא SSL עבור חיבור מקומי
+    ssl: {
+      rejectUnauthorized: false
+    },
     // הגדרות connection pooling
     max: 20,
     min: 2,
