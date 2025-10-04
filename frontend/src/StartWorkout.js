@@ -19,32 +19,32 @@ function StartWorkout() {
   const [isCancelling, setIsCancelling] = useState(false);
   const [availableHours, setAvailableHours] = useState(0);
 
+  // פונקציה לטעינת השעות הזמינות
+  const loadUserHours = async () => {
+    try {
+      if (!user || !user.id) return;
+      
+      const token = localStorage.getItem('authToken');
+      const response = await fetch(`${API_BASE_URL}/api/user-hours/${user.id}`, {
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json',
+        },
+      });
+      
+      const data = await response.json();
+      if (data.success) {
+        setAvailableHours(data.availableHours);
+        console.log('שעות זמינות נטענו:', data.availableHours);
+      }
+    } catch (err) {
+      console.error('שגיאה בטעינת שעות:', err);
+    }
+  };
+
   useEffect(() => {
     // מניעת גלילה של הגוף כשהמסך פתוח
     document.body.style.overflow = 'hidden';
-    
-    // פונקציה לטעינת האימונים העתידיים מהשרת
-    const loadUserHours = async () => {
-      try {
-        if (!user || !user.id) return;
-        
-        const token = localStorage.getItem('authToken');
-        const response = await fetch(`${API_BASE_URL}/api/user-hours/${user.id}`, {
-          headers: {
-            'Authorization': `Bearer ${token}`,
-            'Content-Type': 'application/json',
-          },
-        });
-        
-        const data = await response.json();
-        if (data.success) {
-          setAvailableHours(data.availableHours);
-          console.log('שעות זמינות נטענו:', data.availableHours);
-        }
-      } catch (err) {
-        console.error('שגיאה בטעינת שעות:', err);
-      }
-    };
     
     const fetchWorkouts = async () => {
       try {
