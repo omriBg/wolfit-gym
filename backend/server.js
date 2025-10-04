@@ -2342,8 +2342,8 @@ app.get('/api/admin/all-users-hours', authenticateToken, async (req, res) => {
         u.iduser,
         u.name as username,
         u.email,
-        COALESCE(uh.availablehours, 0) as availableHours,
-        uh.lastupdated as lastUpdated,
+        COALESCE(uh.availablehours, 0) as "availableHours",
+        uh.lastupdated as "lastUpdated",
         uh.notes
       FROM "User" u
       LEFT JOIN userhours uh ON u.iduser = uh.userid
