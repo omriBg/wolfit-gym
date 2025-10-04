@@ -426,8 +426,8 @@ function StartWorkout() {
 
   const handleCancelWorkout = (workoutGroup) => {
     // הגנה מפני ביטול כפול
-    if (isCancelling) {
-      console.log('ביטול כבר בתהליך, לא ניתן לבטל אימון נוסף');
+    if (isCancelling || showCancelConfirm) {
+      console.log('ביטול כבר בתהליך או דיאלוג פתוח, לא ניתן לבטל אימון נוסף');
       return;
     }
     
@@ -624,9 +624,9 @@ function StartWorkout() {
                 <button 
                   className="cancel-current-workout-btn"
                   onClick={() => handleCancelWorkout(currentWorkout.workoutGroup)}
-                  disabled={isCancelling}
+                  disabled={isCancelling || showCancelConfirm}
                 >
-                  {isCancelling ? 'מבטל...' : 'בטל אימון נוכחי'}
+                  {isCancelling ? 'מבטל...' : showCancelConfirm ? 'ממתין לאישור...' : 'בטל אימון נוכחי'}
                 </button>
               </div>
             </div>
@@ -724,9 +724,9 @@ function StartWorkout() {
                             className="cancel-workout-btn"
                             onClick={() => handleCancelWorkout(workoutGroup)}
                             style={{ marginTop: '15px' }}
-                            disabled={isCancelling}
+                            disabled={isCancelling || showCancelConfirm}
                           >
-                            {isCancelling ? 'מבטל...' : 'בטל אימון'}
+                            {isCancelling ? 'מבטל...' : showCancelConfirm ? 'ממתין לאישור...' : 'בטל אימון'}
                           </button>
                         );
                       })()}
