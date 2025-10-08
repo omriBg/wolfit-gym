@@ -523,7 +523,7 @@ app.post('/api/register', async (req, res) => {
     // בדיקה אם המשתמש כבר קיים
     const existingUser = await pool.query(
       'SELECT * FROM "User" WHERE email = $1 OR googleid = $2',
-      [email, googleid]
+      [email, googleId]
     );
 
     if (existingUser.rows.length > 0) {
