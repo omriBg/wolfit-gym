@@ -514,8 +514,8 @@ app.post('/api/register', async (req, res) => {
       height,
       weight,
       birthdate,
-      intensitylevel,
-      googleid,
+      intensityLevel,
+      googleId,
       selectedSports,
       preferenceMode
     } = req.body;
@@ -566,8 +566,8 @@ app.post('/api/register', async (req, res) => {
         heightNum,
         weightNum,
         formattedBirthdate,
-        intensitylevel.toString() || 'medium',
-        googleid || null
+        intensityLevel.toString() || 'medium',
+        googleId || null
       ]
     );
 
