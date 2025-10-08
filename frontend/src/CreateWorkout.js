@@ -297,7 +297,18 @@ function CreateWorkout({ selectedDate, startTime, endTime }) {
           navigate('/main-menu');
         }, 3000); // 3 שניות כדי שהמשתמש יראה את הודעת ההצלחה
       } else {
-        setError(`שגיאה בשמירת האימון: ${data.message}`);
+        // בדיקה אם צריך ליצור אימון חדש
+        if (data.requiresNewWorkout) {
+          console.log('🔄 צריך ליצור אימון חדש, מעביר לתפריט הראשי');
+          setError(`שגיאה בשמירת האימון: ${data.message}`);
+          
+          // מעביר לתפריט הראשי אחרי 3 שניות
+          setTimeout(() => {
+            navigate('/main-menu');
+          }, 3000);
+        } else {
+          setError(`שגיאה בשמירת האימון: ${data.message}`);
+        }
       }
 
     } catch (error) {

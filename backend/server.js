@@ -551,7 +551,7 @@ app.post('/api/register', async (req, res) => {
       weight: weightNum,
       birthdate: formattedBirthdate,
       intensitylevel,
-      googleId
+      googleid
     });
 
     // יצירת משתמש חדש
