@@ -176,27 +176,30 @@ select {
     left: 50% !important;
     transform: translateX(-50%) !important;
     z-index: 999 !important;
-    width: 90% !important;
+    width: 100% !important;
     max-width: 300px !important;
     display: flex !important;
     justify-content: center !important;
     align-items: center !important;
     margin-bottom: env(safe-area-inset-bottom) !important; /* תמיכה באייפון עם notch */
+    padding: 0 20px !important;
   }
   
   .create-workout-button {
     width: 100% !important;
+    max-width: 280px !important;
     margin: 0 auto !important;
-    display: block !important;
-    height: 45px !important;
-    font-size: 15px !important;
-    padding: 0 15px !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    height: 50px !important;
+    font-size: 16px !important;
+    padding: 0 20px !important;
     white-space: nowrap !important;
-    overflow: hidden !important;
-    text-overflow: ellipsis !important;
-    border-radius: 8px !important;
+    border-radius: 10px !important;
     background: linear-gradient(45deg, #b38ed8, #9c7dc4) !important;
     box-shadow: 0 4px 15px rgba(0, 0, 0, 0.3) !important;
+    text-align: center !important;
   }
   
   .order-train-container .back-button {
@@ -269,9 +272,15 @@ select {
   }
   
   .create-workout-button {
-    width: 180px;
-    height: 45px;
-    font-size: 16px;
+    width: 100% !important;
+    max-width: 250px !important;
+    height: 45px !important;
+    font-size: 15px !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    margin: 0 auto !important;
+    text-align: center !important;
   }
   
   .order-train-container .back-button {
