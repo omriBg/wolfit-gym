@@ -55,10 +55,7 @@ function DashboardPage() {
 
   const textLines = [
     "WOLFit",
-    "אתה יודע למה הגעת",
-    "אתה יודע מה מחכה לך",
-    "אתה יודע איך זה מרגיש לצאת מפה",
-    "הגיע הזמן לשבור את השיא של אתמול",
+   
     "Play Different, Train Better"
   ];
 
