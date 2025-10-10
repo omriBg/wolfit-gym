@@ -89,20 +89,18 @@ function LoginPage() {
               disabled={isLoading}
               style={{
                 width: '100%',
-                maxWidth: '340px',
-                height: '60px',
-                borderRadius: '16px',
-                border: '2px solid #e8eaed',
-                background: 'linear-gradient(135deg, #ffffff 0%, #f8f9fa 50%, #ffffff 100%)',
-                boxShadow: '0 6px 20px rgba(0, 0, 0, 0.08), 0 2px 8px rgba(0, 0, 0, 0.04)',
-                transition: 'all 0.4s cubic-bezier(0.25, 0.46, 0.45, 0.94)',
-                fontFamily: "'Google Sans', 'Roboto', 'Segoe UI', sans-serif",
+                maxWidth: '240px',
+                height: '40px',
+                borderRadius: '8px',
+                border: '1px solid #dadce0',
+                background: '#ffffff',
+                fontFamily: "'Roboto', sans-serif",
                 fontWeight: '500',
-                fontSize: '16px',
+                fontSize: '14px',
                 color: '#3c4043',
-                letterSpacing: '0.3px',
-                position: 'relative',
-                overflow: 'hidden'
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center'
               }}
             />
           </div>
