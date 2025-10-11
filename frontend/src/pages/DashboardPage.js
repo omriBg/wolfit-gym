@@ -55,7 +55,6 @@ function DashboardPage() {
 
   const textLines = [
     "WOLFit",
-   
     "Play Different, Train Better"
   ];
 
