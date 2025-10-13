@@ -360,6 +360,7 @@ function EditUser() {
                       <button 
                         onClick={() => toggleSport(sport.id)}
                         className={preferenceMode === 'ranked' ? 'ranked-sport-button' : ''}
+                        data-sport={sport.name === 'כדורסל' ? 'basketball' : ''}
                       >
                         {preferenceMode === 'ranked' && (
                           <div className="ranking-display">
@@ -403,7 +404,10 @@ function EditUser() {
               <div className="sports-list">
                 {getSportsByPreference().others.map(sport => (
                   <div key={sport.id} className="sport-item">
-                    <button onClick={() => toggleSport(sport.id)}>
+                    <button 
+                      onClick={() => toggleSport(sport.id)}
+                      data-sport={sport.name === 'כדורסל' ? 'basketball' : ''}
+                    >
                       <span className="sport-icon">{sport.icon}</span>
                       <span className="sport-name">{sport.name}</span>
                     </button> 
