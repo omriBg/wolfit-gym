@@ -260,26 +260,27 @@
   margin: 0 10px;
 }
 
-/* עיצוב מיוחד לכפתור כדורסל */
+/* עיצוב מציאותי וקלאסי לכפתור כדורסל */
 .sport-item button[data-sport="basketball"] {
   background: linear-gradient(135deg, 
-    rgba(255, 140, 0, 0.9) 0%, 
-    rgba(255, 69, 0, 0.8) 50%, 
-    rgba(255, 140, 0, 0.9) 100%) !important;
+    #8B4513 0%, 
+    #A0522D 30%, 
+    #CD853F 60%, 
+    #DEB887 100%) !important;
   background-image: 
-    radial-gradient(circle at 20% 30%, rgba(255, 255, 255, 0.3) 2px, transparent 2px),
-    radial-gradient(circle at 80% 70%, rgba(255, 255, 255, 0.2) 1px, transparent 1px),
+    radial-gradient(circle at 25% 25%, rgba(255, 255, 255, 0.1) 1px, transparent 1px),
+    radial-gradient(circle at 75% 75%, rgba(0, 0, 0, 0.1) 1px, transparent 1px),
     linear-gradient(45deg, 
-      rgba(255, 140, 0, 0.8) 0%, 
-      rgba(255, 69, 0, 0.9) 25%, 
-      rgba(255, 140, 0, 0.8) 50%, 
-      rgba(255, 69, 0, 0.9) 75%, 
-      rgba(255, 140, 0, 0.8) 100%);
-  background-size: 20px 20px, 10px 10px, 100% 100%;
-  border: 3px solid rgba(255, 140, 0, 0.9) !important;
+      rgba(139, 69, 19, 0.8) 0%, 
+      rgba(160, 82, 45, 0.9) 25%, 
+      rgba(205, 133, 63, 0.8) 50%, 
+      rgba(222, 184, 135, 0.9) 75%, 
+      rgba(139, 69, 19, 0.8) 100%);
+  background-size: 15px 15px, 20px 20px, 100% 100%;
+  border: 2px solid #8B4513 !important;
   box-shadow: 
-    0 0 20px rgba(255, 140, 0, 0.5),
-    inset 0 0 20px rgba(255, 255, 255, 0.1);
+    0 2px 8px rgba(0, 0, 0, 0.3),
+    inset 0 1px 2px rgba(255, 255, 255, 0.2);
   position: relative;
   overflow: hidden;
 }
@@ -290,10 +291,10 @@
   top: 50%;
   left: 50%;
   transform: translate(-50%, -50%);
-  font-size: 2.5rem;
+  font-size: 1.8rem;
   z-index: 2;
-  text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.5);
-  animation: basketballBounce 2s ease-in-out infinite;
+  text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.3);
+  opacity: 0.9;
 }
 
 .sport-item button[data-sport="basketball"]::after {
@@ -304,99 +305,61 @@
   right: 0;
   bottom: 0;
   background: 
-    radial-gradient(circle at 30% 20%, rgba(255, 255, 255, 0.4) 1px, transparent 1px),
-    radial-gradient(circle at 70% 80%, rgba(255, 255, 255, 0.3) 1px, transparent 1px),
-    linear-gradient(45deg, transparent 48%, rgba(255, 255, 255, 0.1) 49%, rgba(255, 255, 255, 0.1) 51%, transparent 52%);
-  background-size: 15px 15px, 25px 25px, 30px 30px;
+    radial-gradient(circle at 30% 20%, rgba(255, 255, 255, 0.1) 1px, transparent 1px),
+    radial-gradient(circle at 70% 80%, rgba(0, 0, 0, 0.1) 1px, transparent 1px);
+  background-size: 20px 20px, 25px 25px;
   z-index: 1;
 }
 
-@keyframes basketballBounce {
-  0%, 100% { 
-    transform: translate(-50%, -50%) scale(1); 
-  }
-  50% { 
-    transform: translate(-50%, -50%) scale(1.1); 
-  }
-}
-
-/* אנימציה מיוחדת לכדורסל */
-@keyframes basketballSpin {
-  0% { 
-    transform: translate(-50%, -50%) rotate(0deg) scale(1); 
-  }
-  50% { 
-    transform: translate(-50%, -50%) rotate(180deg) scale(1.05); 
-  }
-  100% { 
-    transform: translate(-50%, -50%) rotate(360deg) scale(1); 
-  }
-}
-
-/* אפקט זוהר לכפתור כדורסל */
+/* אפקט עדין לכפתור כדורסל */
 .sport-item button[data-sport="basketball"]:focus {
   outline: none;
-  animation: basketballGlow 1s ease-in-out infinite alternate;
-}
-
-@keyframes basketballGlow {
-  0% {
-    box-shadow: 
-      0 0 20px rgba(255, 140, 0, 0.5),
-      inset 0 0 20px rgba(255, 255, 255, 0.1);
-  }
-  100% {
-    box-shadow: 
-      0 0 30px rgba(255, 140, 0, 0.8),
-      0 0 40px rgba(255, 69, 0, 0.4),
-      inset 0 0 30px rgba(255, 255, 255, 0.2);
-  }
+  box-shadow: 
+    0 2px 8px rgba(0, 0, 0, 0.3),
+    inset 0 1px 2px rgba(255, 255, 255, 0.2),
+    0 0 0 2px rgba(139, 69, 19, 0.3);
 }
 
 .sport-item button[data-sport="basketball"]:hover {
   background: linear-gradient(135deg, 
-    rgba(255, 140, 0, 1) 0%, 
-    rgba(255, 69, 0, 0.95) 50%, 
-    rgba(255, 140, 0, 1) 100%) !important;
-  transform: translateY(-3px) scale(1.02);
+    #A0522D 0%, 
+    #CD853F 30%, 
+    #DEB887 60%, 
+    #F5DEB3 100%) !important;
+  transform: translateY(-2px);
   box-shadow: 
-    0 8px 25px rgba(255, 140, 0, 0.6),
-    0 0 30px rgba(255, 140, 0, 0.4),
-    inset 0 0 25px rgba(255, 255, 255, 0.2);
+    0 4px 12px rgba(0, 0, 0, 0.4),
+    inset 0 1px 3px rgba(255, 255, 255, 0.3);
 }
 
 .sport-item button[data-sport="basketball"]:hover::before {
-  animation: basketballBounce 0.5s ease-in-out infinite;
+  opacity: 1;
+  transform: translate(-50%, -50%) scale(1.05);
 }
 
 .sport-item button[data-sport="basketball"] .sport-name {
-  color: white !important;
-  font-weight: bold !important;
-  text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.7);
+  color: #2F1B14 !important;
+  font-weight: 600 !important;
+  text-shadow: 1px 1px 2px rgba(255, 255, 255, 0.5);
   z-index: 3;
   position: relative;
 }
 
-/* עיצוב מיוחד לכפתור כדורסל במצב דירוג */
+/* עיצוב מציאותי וקלאסי לכפתור כדורסל במצב דירוג */
 .ranked-sport-button[data-sport="basketball"] {
   background: linear-gradient(135deg, 
-    rgba(255, 140, 0, 0.95) 0%, 
-    rgba(255, 69, 0, 0.9) 50%, 
-    rgba(255, 140, 0, 0.95) 100%) !important;
+    #8B4513 0%, 
+    #A0522D 30%, 
+    #CD853F 60%, 
+    #DEB887 100%) !important;
   background-image: 
-    radial-gradient(circle at 25% 25%, rgba(255, 255, 255, 0.4) 3px, transparent 3px),
-    radial-gradient(circle at 75% 75%, rgba(255, 255, 255, 0.3) 2px, transparent 2px),
-    linear-gradient(45deg, 
-      rgba(255, 140, 0, 0.9) 0%, 
-      rgba(255, 69, 0, 0.95) 25%, 
-      rgba(255, 140, 0, 0.9) 50%, 
-      rgba(255, 69, 0, 0.95) 75%, 
-      rgba(255, 140, 0, 0.9) 100%);
-  background-size: 25px 25px, 15px 15px, 100% 100%;
-  border: 4px solid rgba(255, 140, 0, 1) !important;
+    radial-gradient(circle at 25% 25%, rgba(255, 255, 255, 0.1) 1px, transparent 1px),
+    radial-gradient(circle at 75% 75%, rgba(0, 0, 0, 0.1) 1px, transparent 1px);
+  background-size: 20px 20px, 25px 25px;
+  border: 3px solid #8B4513 !important;
   box-shadow: 
-    0 0 25px rgba(255, 140, 0, 0.6),
-    inset 0 0 25px rgba(255, 255, 255, 0.15);
+    0 3px 10px rgba(0, 0, 0, 0.4),
+    inset 0 1px 3px rgba(255, 255, 255, 0.2);
 }
 
 .ranked-sport-button[data-sport="basketball"]::before {
@@ -405,111 +368,97 @@
   top: 50%;
   left: 20px;
   transform: translateY(-50%);
-  font-size: 3rem;
+  font-size: 2rem;
   z-index: 2;
-  text-shadow: 3px 3px 6px rgba(0, 0, 0, 0.6);
-  animation: basketballBounce 2s ease-in-out infinite;
+  text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.3);
+  opacity: 0.9;
 }
 
 .ranked-sport-button[data-sport="basketball"]:hover {
   background: linear-gradient(135deg, 
-    rgba(255, 140, 0, 1) 0%, 
-    rgba(255, 69, 0, 1) 50%, 
-    rgba(255, 140, 0, 1) 100%) !important;
-  transform: translateY(-4px) scale(1.03);
+    #A0522D 0%, 
+    #CD853F 30%, 
+    #DEB887 60%, 
+    #F5DEB3 100%) !important;
+  transform: translateY(-3px);
   box-shadow: 
-    0 10px 30px rgba(255, 140, 0, 0.7),
-    0 0 35px rgba(255, 140, 0, 0.5),
-    inset 0 0 30px rgba(255, 255, 255, 0.25);
+    0 5px 15px rgba(0, 0, 0, 0.5),
+    inset 0 1px 4px rgba(255, 255, 255, 0.3);
 }
 
 .ranked-sport-button[data-sport="basketball"]:hover::before {
-  animation: basketballBounce 0.3s ease-in-out infinite;
+  opacity: 1;
+  transform: translateY(-50%) scale(1.05);
 }
 
 .ranked-sport-button[data-sport="basketball"] .sport-name {
-  color: white !important;
-  font-weight: bold !important;
-  text-shadow: 3px 3px 6px rgba(0, 0, 0, 0.8);
+  color: #2F1B14 !important;
+  font-weight: 600 !important;
+  text-shadow: 1px 1px 2px rgba(255, 255, 255, 0.5);
   z-index: 3;
   position: relative;
   font-size: 1.1rem;
 }
 
-/* אפקט זוהר מיוחד לכפתור כדורסל במצב דירוג */
+/* אפקט עדין לכפתור כדורסל במצב דירוג */
 .ranked-sport-button[data-sport="basketball"]:focus {
   outline: none;
-  animation: basketballGlow 1s ease-in-out infinite alternate;
+  box-shadow: 
+    0 3px 10px rgba(0, 0, 0, 0.4),
+    inset 0 1px 3px rgba(255, 255, 255, 0.2),
+    0 0 0 2px rgba(139, 69, 19, 0.3);
 }
 
-/* אנימציה מיוחדת לכדורסל במצב דירוג */
+/* אפקט עדין לכדורסל במצב דירוג */
 .ranked-sport-button[data-sport="basketball"]:hover::before {
-  animation: basketballSpin 0.8s ease-in-out infinite;
+  opacity: 1;
+  transform: translateY(-50%) scale(1.05);
 }
 
-/* אפקט מיוחד לכפתור כדורסל כשנבחר */
+/* אפקט עדין לכפתור כדורסל כשנבחר */
 .sport-item button[data-sport="basketball"].selected {
   background: linear-gradient(135deg, 
-    rgba(255, 140, 0, 1) 0%, 
-    rgba(255, 69, 0, 1) 50%, 
-    rgba(255, 140, 0, 1) 100%) !important;
+    #A0522D 0%, 
+    #CD853F 30%, 
+    #DEB887 60%, 
+    #F5DEB3 100%) !important;
   box-shadow: 
-    0 0 35px rgba(255, 140, 0, 0.8),
-    0 0 50px rgba(255, 69, 0, 0.6),
-    inset 0 0 30px rgba(255, 255, 255, 0.3);
-  transform: scale(1.05);
+    0 4px 15px rgba(0, 0, 0, 0.5),
+    inset 0 2px 4px rgba(255, 255, 255, 0.4);
+  transform: scale(1.02);
 }
 
 .sport-item button[data-sport="basketball"].selected::before {
-  animation: basketballSpin 1s ease-in-out infinite;
+  opacity: 1;
+  transform: translate(-50%, -50%) scale(1.1);
 }
 
-/* אפקט מיוחד לכפתור כדורסל במצב דירוג כשנבחר */
+/* אפקט עדין לכפתור כדורסל במצב דירוג כשנבחר */
 .ranked-sport-button[data-sport="basketball"].selected {
   background: linear-gradient(135deg, 
-    rgba(255, 140, 0, 1) 0%, 
-    rgba(255, 69, 0, 1) 50%, 
-    rgba(255, 140, 0, 1) 100%) !important;
+    #A0522D 0%, 
+    #CD853F 30%, 
+    #DEB887 60%, 
+    #F5DEB3 100%) !important;
   box-shadow: 
-    0 0 40px rgba(255, 140, 0, 0.9),
-    0 0 60px rgba(255, 69, 0, 0.7),
-    inset 0 0 35px rgba(255, 255, 255, 0.35);
-  transform: scale(1.08);
+    0 5px 20px rgba(0, 0, 0, 0.6),
+    inset 0 2px 5px rgba(255, 255, 255, 0.4);
+  transform: scale(1.03);
 }
 
 .ranked-sport-button[data-sport="basketball"].selected::before {
-  animation: basketballSpin 0.6s ease-in-out infinite;
+  opacity: 1;
+  transform: translateY(-50%) scale(1.1);
 }
 
-/* אפקט מיוחד לכפתור כדורסל במצב דירוג כשנבחר */
+/* אפקט עדין לכפתור כדורסל במצב דירוג כשנבחר */
 .ranked-sport-button[data-sport="basketball"].selected .sport-name {
-  color: white !important;
-  font-weight: bold !important;
-  text-shadow: 4px 4px 8px rgba(0, 0, 0, 0.9);
+  color: #2F1B14 !important;
+  font-weight: 700 !important;
+  text-shadow: 1px 1px 2px rgba(255, 255, 255, 0.6);
   z-index: 3;
   position: relative;
   font-size: 1.2rem;
-  animation: textGlow 1.5s ease-in-out infinite alternate;
-}
-
-@keyframes textGlow {
-  0% {
-    text-shadow: 4px 4px 8px rgba(0, 0, 0, 0.9);
-  }
-  100% {
-    text-shadow: 4px 4px 8px rgba(0, 0, 0, 0.9), 0 0 20px rgba(255, 255, 255, 0.5);
-  }
-}
-
-/* אפקט מיוחד לכפתור כדורסל במצב דירוג כשנבחר */
-.ranked-sport-button[data-sport="basketball"].selected .sport-name {
-  color: white !important;
-  font-weight: bold !important;
-  text-shadow: 4px 4px 8px rgba(0, 0, 0, 0.9);
-  z-index: 3;
-  position: relative;
-  font-size: 1.2rem;
-  animation: textGlow 1.5s ease-in-out infinite alternate;
 }
 
 .sport-name {
