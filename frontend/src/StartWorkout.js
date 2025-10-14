@@ -130,6 +130,12 @@ function StartWorkout() {
           console.log(`סוננו ${data.workouts.length - filteredWorkouts.length} אימונים שהיום שלהם כבר הסתיים`);
           
           const sortedWorkouts = filteredWorkouts.sort((a, b) => {
+            // בדיקת בטיחות - וידוא שהשדות קיימים
+            if (!a.startTime || !b.startTime || !a.date || !b.date) {
+              console.warn('אימון חסר נתונים:', { a, b });
+              return 0; // לא משנה את הסדר אם חסרים נתונים
+            }
+            
             const dateA = new Date(a.date + ' ' + a.startTime);
             const dateB = new Date(b.date + ' ' + b.startTime);
             return dateA - dateB;
@@ -138,6 +144,12 @@ function StartWorkout() {
           // חלוקה לפי תאריך ויצירת אימונים רציפים
           const workoutsByDateDisplay = {};
           sortedWorkouts.forEach(workout => {
+            // בדיקת בטיחות
+            if (!workout.date || !workout.startTime) {
+              console.warn('דילוג על אימון חסר נתונים:', workout);
+              return;
+            }
+            
             const dateKey = workout.date;
             if (!workoutsByDateDisplay[dateKey]) {
               workoutsByDateDisplay[dateKey] = [];
@@ -148,9 +160,24 @@ function StartWorkout() {
             if (lastWorkoutGroup && lastWorkoutGroup.length > 0) {
               const lastSlot = lastWorkoutGroup[lastWorkoutGroup.length - 1];
               
+              // בדיקת בטיחות נוספת
+              if (!lastSlot.startTime) {
+                console.warn('דילוג על slot חסר startTime:', lastSlot);
+                workoutsByDateDisplay[dateKey].push([workout]);
+                return;
+              }
+              
               // חישוב הזמן בצורה פשוטה יותר
               const lastTime = lastSlot.startTime.split(':');
               const currentTime = workout.startTime.split(':');
+              
+              // בדיקת תקינות הפורמט
+              if (lastTime.length !== 2 || currentTime.length !== 2) {
+                console.warn('פורמט זמן לא תקין:', { lastTime, currentTime });
+                workoutsByDateDisplay[dateKey].push([workout]);
+                return;
+              }
+              
               const lastMinutes = parseInt(lastTime[0]) * 60 + parseInt(lastTime[1]);
               const currentMinutes = parseInt(currentTime[0]) * 60 + parseInt(currentTime[1]);
               const timeDiff = currentMinutes - lastMinutes;
@@ -404,6 +431,9 @@ function StartWorkout() {
   const loadFutureWorkouts = async () => {
     try {
       if (!user || !user.id) return;
+      
+      // הוספת עיכוב קטן כדי לוודא שהמחיקה הושלמה
+      await new Promise(resolve => setTimeout(resolve, 500));
       
       const token = localStorage.getItem('authToken');
       const response = await fetch(`${API_BASE_URL}/api/future-workouts/${user.id}`, {
