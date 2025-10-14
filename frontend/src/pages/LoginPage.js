@@ -134,7 +134,6 @@ function LoginPage() {
                 animation: 'spin 1s linear infinite',
                 marginLeft: '8px'
               }}></div>
-              מתחבר עם Google...
             </div>
           )}
         </div>
