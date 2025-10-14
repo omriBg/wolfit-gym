@@ -2549,3 +2549,15 @@ app.get('/api/admin/search-user', authenticateToken, async (req, res) => {
     });
   }
 });
+
+// Import error handlers
+const { globalErrorHandler, handleNotFound, handleDatabaseConnectionError } = require('./utils/errorHandler');
+
+// Handle database connection errors
+app.use(handleDatabaseConnectionError);
+
+// Handle 404 errors
+app.all('*', handleNotFound);
+
+// Global error handling middleware (must be last)
+app.use(globalErrorHandler);

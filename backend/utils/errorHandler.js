@@ -37,6 +37,18 @@ const handleDatabaseError = (err) => {
   } else if (err.code === 'ETIMEDOUT') {
     const message = 'פג זמן החיבור למסד הנתונים';
     error = new AppError(message, 504);
+  } else if (err.message && err.message.includes('Connection terminated')) {
+    const message = 'החיבור למסד הנתונים נקטע';
+    error = new AppError(message, 503);
+  } else if (err.message && err.message.includes('Control plane request failed')) {
+    const message = 'בעיה זמנית במסד הנתונים';
+    error = new AppError(message, 503);
+  } else if (err.message && err.message.includes('Connection terminated due to connection timeout')) {
+    const message = 'פג זמן החיבור למסד הנתונים';
+    error = new AppError(message, 504);
+  } else if (err.message && err.message.includes('Connection terminated unexpectedly')) {
+    const message = 'החיבור למסד הנתונים נקטע באופן לא צפוי';
+    error = new AppError(message, 503);
   }
 
   return error;
@@ -149,6 +161,27 @@ const catchAsync = (fn) => {
   };
 };
 
+// Middleware לטיפול בשגיאות חיבור למסד נתונים
+const handleDatabaseConnectionError = (err, req, res, next) => {
+  if (err.message && (
+    err.message.includes('Connection terminated') ||
+    err.message.includes('Control plane request failed') ||
+    err.message.includes('Connection terminated due to connection timeout') ||
+    err.message.includes('Connection terminated unexpectedly')
+  )) {
+    console.error('🔌 שגיאת חיבור למסד נתונים:', err.message);
+    
+    return res.status(503).json({
+      success: false,
+      message: 'בעיה זמנית במסד הנתונים. אנא נסה שוב בעוד כמה דקות.',
+      error: 'Database connection error',
+      retryAfter: 30 // שניות
+    });
+  }
+  
+  next(err);
+};
+
 module.exports = {
   AppError,
   globalErrorHandler,
@@ -156,5 +189,6 @@ module.exports = {
   handleUncaughtException,
   handleNotFound,
   catchAsync,
+  handleDatabaseConnectionError,
   logger
 };

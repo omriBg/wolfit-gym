@@ -27,15 +27,19 @@ if (process.env.DATABASE_URL) {
       rejectUnauthorized: false,
       require: true
     },
-    // הגדרות connection pooling
-    max: 20,
-    min: 2,
-    idleTimeoutMillis: 30000,
-    connectionTimeoutMillis: 10000,
-    acquireTimeoutMillis: 60000,
+    // הגדרות connection pooling משופרות
+    max: 10, // הקטנת המקסימום
+    min: 1,  // הקטנת המינימום
+    idleTimeoutMillis: 60000, // הגדלת הזמן
+    connectionTimeoutMillis: 30000, // הגדלת timeout
+    acquireTimeoutMillis: 120000, // הגדלת acquire timeout
     // הגדרות נוספות לחיבור יציב
     keepAlive: true,
-    keepAliveInitialDelayMillis: 0
+    keepAliveInitialDelayMillis: 10000,
+    // הגדרות נוספות ליציבות
+    statement_timeout: 30000,
+    query_timeout: 30000,
+    application_name: 'wolfit-gym-backend'
   };
 } else {
   // משתנים נפרדים
@@ -76,9 +80,24 @@ if (dbConfig.connectionString) {
   });
 }
 
-// יצירת pool ללא בדיקה מיידית
-let pool = new Pool(dbConfig);
-console.log('✅ Pool created successfully without connection test');
+// יצירת pool עם מנגנון retry
+let pool;
+let retryCount = 0;
+const maxRetries = 3;
+
+function createPool() {
+  try {
+    pool = new Pool(dbConfig);
+    console.log('✅ Pool created successfully without connection test');
+    return pool;
+  } catch (error) {
+    console.error('❌ שגיאה ביצירת pool:', error);
+    throw error;
+  }
+}
+
+// יצירת pool ראשונית
+createPool();
 
 // פונקציה לחיבור event listeners
 function setupPoolEventListeners(poolInstance) {
@@ -150,49 +169,74 @@ const testConnection = async () => {
   }
 };
 
-// פונקציה לביצוע שאילתה עם timeout
-const queryWithTimeout = async (text, params, timeoutMs = 30000) => {
+// פונקציה לביצוע שאילתה עם timeout ו-retry
+const queryWithTimeout = async (text, params, timeoutMs = 30000, maxRetries = 3) => {
   console.log('🔍 Attempting database query:', {
     query: text,
     params: params,
-    timeout: timeoutMs
+    timeout: timeoutMs,
+    maxRetries: maxRetries
   });
 
-  let client;
-  try {
-    client = await pool.connect();
-    console.log('✅ Connected to database successfully');
-  } catch (err) {
-    console.error('❌ Failed to connect to database:', err);
-    throw err;
-  }
+  for (let attempt = 1; attempt <= maxRetries; attempt++) {
+    let client;
+    try {
+      client = await pool.connect();
+      console.log(`✅ Connected to database successfully (attempt ${attempt}/${maxRetries})`);
+    } catch (err) {
+      console.error(`❌ Failed to connect to database (attempt ${attempt}/${maxRetries}):`, err.message);
+      
+      if (attempt < maxRetries) {
+        const delay = attempt * 1000; // 1, 2, 3 שניות
+        console.log(`⏳ Waiting ${delay}ms before retry...`);
+        await new Promise(resolve => setTimeout(resolve, delay));
+        continue;
+      }
+      throw err;
+    }
 
-  try {
-    // הגדרת timeout לשאילתה
-    await client.query(`SET statement_timeout = ${timeoutMs}`);
-    console.log('✅ Set query timeout');
-    
-    const startTime = Date.now();
-    const result = await client.query(text, params);
-    const duration = Date.now() - startTime;
-    
-    logger.debug('שאילתה בוצעה בהצלחה', {
-      duration: `${duration}ms`,
-      rowCount: result.rowCount,
-      query: text.substring(0, 100) + (text.length > 100 ? '...' : '')
-    });
-    
-    return result;
-  } catch (err) {
-    logger.error('שגיאה בביצוע שאילתה:', {
-      error: err.message,
-      code: err.code,
-      query: text.substring(0, 100) + (text.length > 100 ? '...' : ''),
-      params: params
-    });
-    throw err;
-  } finally {
-    client.release();
+    try {
+      // הגדרת timeout לשאילתה
+      await client.query(`SET statement_timeout = ${timeoutMs}`);
+      console.log('✅ Set query timeout');
+      
+      const startTime = Date.now();
+      const result = await client.query(text, params);
+      const duration = Date.now() - startTime;
+      
+      logger.debug('שאילתה בוצעה בהצלחה', {
+        duration: `${duration}ms`,
+        rowCount: result.rowCount,
+        query: text.substring(0, 100) + (text.length > 100 ? '...' : ''),
+        attempt: attempt
+      });
+      
+      return result;
+    } catch (err) {
+      logger.error(`שגיאה בביצוע שאילתה (attempt ${attempt}/${maxRetries}):`, {
+        error: err.message,
+        code: err.code,
+        query: text.substring(0, 100) + (text.length > 100 ? '...' : ''),
+        params: params
+      });
+      
+      if (attempt < maxRetries && (
+        err.message.includes('Connection terminated') ||
+        err.message.includes('Control plane request failed') ||
+        err.message.includes('timeout')
+      )) {
+        const delay = attempt * 1000;
+        console.log(`⏳ Retrying query in ${delay}ms...`);
+        await new Promise(resolve => setTimeout(resolve, delay));
+        continue;
+      }
+      
+      throw err;
+    } finally {
+      if (client) {
+        client.release();
+      }
+    }
   }
 };
 
