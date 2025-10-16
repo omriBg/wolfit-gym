@@ -71,6 +71,9 @@ function LoginPage() {
 
   // פונקציה לשליחת קוד SMS
   const handleSendSMS = async () => {
+    console.log('🚀 מתחיל שליחת SMS...');
+    console.log('📱 מספר טלפון מקורי:', phoneNumber);
+    
     if (!phoneNumber.trim()) {
       setLoginMessage('אנא הזן מספר טלפון');
       return;
@@ -85,6 +88,8 @@ function LoginPage() {
       // אם לא מתחיל ב-+, הוסף +972
       formattedPhone = '+972' + phoneNumber;
     }
+
+    console.log('📱 מספר טלפון מעוצב:', formattedPhone);
 
     setIsLoading(true);
     setLoginMessage('שולח קוד SMS...');
@@ -101,12 +106,16 @@ function LoginPage() {
       });
       
       const result = await response.json();
+      console.log('📨 תגובה מהשרת:', result);
       
       if (result.success) {
         setSmsSent(true);
         setLoginMessage('קוד SMS נשלח בהצלחה! בדוק את הטלפון שלך.');
+        console.log('✅ SMS נשלח, עובר למצב הזנת קוד');
+        console.log('🔄 smsSent:', true);
       } else {
         setLoginMessage(result.message || 'שגיאה בשליחת SMS');
+        console.error('❌ שגיאה בשליחת SMS:', result);
       }
     } catch (error) {
       console.error('שגיאה בשליחת SMS:', error);
@@ -236,6 +245,7 @@ function LoginPage() {
 
           {/* SMS Login Button */}
           <div className="sms-login-container">
+            {console.log('🔍 smsSent:', smsSent, 'loginMethod:', loginMethod)}
             {!smsSent ? (
               <div>
                 <button
