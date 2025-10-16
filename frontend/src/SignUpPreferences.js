@@ -54,6 +54,13 @@ function SignUpPreferences() {
     };
   }, []);
 
+  useEffect(() => {
+    console.log('🔍 SignUpPreferences - userData:', userData);
+    console.log('🔍 SignUpPreferences - googleData:', googleData);
+    console.log('🔍 SignUpPreferences - phoneData:', phoneData);
+    console.log('🔍 SignUpPreferences - phoneData.phoneNumber:', phoneData?.phoneNumber);
+  }, [userData, googleData, phoneData]);
+
   function changeToSimple() {
     setPreferenceMode('simple');
   }

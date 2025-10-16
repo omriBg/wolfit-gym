@@ -6,6 +6,7 @@ function SignUpScreen() {
   const navigate = useNavigate();
   const location = useLocation();
   const googleData = location.state?.googleData;
+  const phoneData = location.state?.phoneData;
     const [userName, setUserName] = useState(googleData?.name || '');
     const [email, setEmail] = useState(googleData?.email || '');
     const [height, setHeight] = useState('');
@@ -85,9 +86,10 @@ function SignUpScreen() {
     // לוגים לבדיקה
     useEffect(() => {
         console.log('🔍 SignUpScreen - נתוני Google:', googleData);
+        console.log('🔍 SignUpScreen - נתוני טלפון:', phoneData);
         console.log('🔍 SignUpScreen - שם משתמש:', userName);
         console.log('🔍 SignUpScreen - אימייל:', email);
-    }, [googleData, userName, email]);
+    }, [googleData, phoneData, userName, email]);
 
     const validateField = (fieldName, value) => {
         let error = '';
@@ -226,7 +228,7 @@ function SignUpScreen() {
           weight,
           birthdate
         };
-        navigate('/signup-preferences', { state: { userData, googleData } });
+        navigate('/signup-preferences', { state: { userData, googleData, phoneData } });
     };
 
     return (
