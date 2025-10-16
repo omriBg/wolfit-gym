@@ -20,6 +20,7 @@
         "nodemailer": "^7.0.6",
         "pg": "^8.16.3",
         "redis": "^5.8.2",
+        "twilio": "^5.10.3",
         "winston": "^3.11.0"
     },
     "devDependencies": {
