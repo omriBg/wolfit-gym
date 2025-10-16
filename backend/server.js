@@ -666,19 +666,22 @@ app.post('/api/register', async (req, res) => {
       intensityLevel,
       googleId,
       selectedSports,
-      preferenceMode
+      preferenceMode,
+      phoneData
     } = req.body;
+
+    console.log('📱 נתוני טלפון:', phoneData);
 
     // בדיקה אם המשתמש כבר קיים
     const existingUser = await pool.query(
-      'SELECT * FROM "User" WHERE email = $1 OR googleid = $2',
-      [email, googleId]
+      'SELECT * FROM "User" WHERE email = $1 OR googleid = $2 OR phone_number = $3',
+      [email, googleId, phoneData?.phoneNumber]
     );
 
     if (existingUser.rows.length > 0) {
       return res.status(400).json({
         success: false,
-        message: 'משתמש עם אימייל או Google ID זה כבר קיים'
+        message: 'משתמש עם אימייל, Google ID או מספר טלפון זה כבר קיים'
       });
     }
 
@@ -707,8 +710,8 @@ app.post('/api/register', async (req, res) => {
     const newUser = await pool.query(
       `INSERT INTO "User" (
         name, email, height, weight, birthdate,
-        intensitylevel, googleid
-      ) VALUES ($1, $2, $3, $4, $5, $6, $7) RETURNING *`,
+        intensitylevel, googleid, phone_number
+      ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8) RETURNING *`,
       [
         userName,
         email,
@@ -716,7 +719,8 @@ app.post('/api/register', async (req, res) => {
         weightNum,
         formattedBirthdate,
         intensityLevel.toString() || 'medium',
-        googleId || null
+        googleId || null,
+        phoneData?.phoneNumber || null
       ]
     );
 
