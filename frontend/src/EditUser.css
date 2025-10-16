@@ -442,33 +442,7 @@
 .sport-item:nth-child(8) { animation-delay: 0.8s; }
 .sport-item:nth-child(9) { animation-delay: 0.9s; }
 
-/* סגנון לכפתור ספורט רגיל */
-.sport-button {
-  width: 80px;
-  height: 80px;
-  padding: 0;
-  background: transparent;
-  border: none;
-  border-radius: 15px;
-  color: white;
-  font-size: 0.9rem;
-  cursor: pointer;
-  transition: all 0.3s ease;
-  text-align: center;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 0;
-  margin: 0 auto;
-  overflow: hidden;
-}
-
-.sport-button:hover {
-  background: transparent;
-  border: none;
-  transform: scale(1.05);
-  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.4);
-}
+/* סגנון לכפתור ספורט רגיל - הוסר כי התמונה עצמה היא הכפתור */
 
 
 /* עיצוב מציאותי וקלאסי לכפתור כדורסל */

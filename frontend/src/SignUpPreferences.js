@@ -328,12 +328,13 @@ function SignUpPreferences() {
                 {getSportsByPreference().others.map(function(sport) {
                   return (
                     <div key={sport.id} className="sport-item">
-                      <button onClick={function() { toggleSport(sport.id); }}>
-                        <div className="sport-image-container">
-                          <img src={sport.image} alt={sport.name} className="sport-image" />
-                          <div className="sport-name-overlay">{sport.name}</div>
-                        </div>
-                      </button> 
+                      <div 
+                        className="sport-image-container"
+                        onClick={function() { toggleSport(sport.id); }}
+                      >
+                        <img src={sport.image} alt={sport.name} className="sport-image" />
+                        <div className="sport-name-overlay">{sport.name}</div>
+                      </div> 
                     </div>
                   );
                 })}

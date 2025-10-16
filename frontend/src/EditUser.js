@@ -411,15 +411,14 @@ function EditUser() {
               <div className="sports-list">
                 {getSportsByPreference().others.map(sport => (
                   <div key={sport.id} className="sport-item">
-                    <button 
+                    <div 
+                      className="sport-image-container"
                       onClick={() => toggleSport(sport.id)}
                       data-sport={sport.name === 'כדורסל' ? 'basketball' : ''}
                     >
-                      <div className="sport-image-container">
-                        <img src={sport.image} alt={sport.name} className="sport-image" />
-                        <div className="sport-name-overlay">{sport.name}</div>
-                      </div>
-                    </button> 
+                      <img src={sport.image} alt={sport.name} className="sport-image" />
+                      <div className="sport-name-overlay">{sport.name}</div>
+                    </div> 
                   </div>
                 ))}
               </div>
