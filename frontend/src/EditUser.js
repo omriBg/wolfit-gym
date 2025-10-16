@@ -17,15 +17,15 @@ function EditUser() {
   const [isSaving, setIsSaving] = useState(false);
 
   const SPORTS_LIST = [
-    { id: 1, name: 'כדורגל', icon: '⚽' },
-    { id: 2, name: 'כדורסל', icon: '🏀' },
-    { id: 3, name: 'טיפוס', icon: '🧗' },
-    { id: 4, name: 'חדר כושר', icon: '🏋️' },
-    { id: 5, name: 'קורדינציה', icon: '🎯' },
-    { id: 6, name: 'טניס', icon: '🎾' },
-    { id: 7, name: 'פינגפונג', icon: '🏓' },
-    { id: 8, name: 'ריקוד', icon: '💃' },
-    { id: 9, name: 'אופניים', icon: '🚴' }
+    { id: 1, name: 'כדורגל', icon: '⚽', image: '/images/sports/football.jpg' },
+    { id: 2, name: 'כדורסל', icon: '🏀', image: '/images/sports/basketball.jpg' },
+    { id: 3, name: 'טיפוס', icon: '🧗', image: '/images/sports/climbing.jpg' },
+    { id: 4, name: 'חדר כושר', icon: '🏋️', image: '/images/sports/gym.jpg' },
+    { id: 5, name: 'קורדינציה', icon: '🎯', image: '/images/sports/coordination.jpg' },
+    { id: 6, name: 'טניס', icon: '🎾', image: '/images/sports/tennis.jpg' },
+    { id: 7, name: 'פינגפונג', icon: '🏓', image: '/images/sports/pingpong.jpg' },
+    { id: 8, name: 'ריקוד', icon: '💃', image: '/images/sports/dance.jpg' },
+    { id: 9, name: 'אופניים', icon: '🚴', image: '/images/sports/cycling.jpg' }
   ];
 
   const loadUserPreferences = async () => {
@@ -367,13 +367,17 @@ function EditUser() {
                         {preferenceMode === 'ranked' && (
                           <div className="ranking-display">
                             <div className="rank-number">{rank}</div>
-                            <div className="sport-icon">{sport.icon}</div>
+                            <div className="sport-image-container">
+                              <img src={sport.image} alt={sport.name} className="sport-image" />
+                            </div>
                             <div className="sport-name">{sport.name}</div>
                           </div>
                         )}
                         {preferenceMode === 'simple' && (
                           <>
-                            <span className="sport-icon">{sport.icon}</span>
+                            <div className="sport-image-container">
+                              <img src={sport.image} alt={sport.name} className="sport-image" />
+                            </div>
                             <span className="sport-name">{sport.name}</span>
                           </>
                         )}
@@ -413,7 +417,9 @@ function EditUser() {
                       onClick={() => toggleSport(sport.id)}
                       data-sport={sport.name === 'כדורסל' ? 'basketball' : ''}
                     >
-                      <span className="sport-icon">{sport.icon}</span>
+                      <div className="sport-image-container">
+                        <img src={sport.image} alt={sport.name} className="sport-image" />
+                      </div>
                       <span className="sport-name">{sport.name}</span>
                     </button> 
                   </div>

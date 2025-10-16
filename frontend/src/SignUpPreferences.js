@@ -27,15 +27,15 @@ async function sendRegistrationToServer(userData) {
   }
 
   const SPORTS_LIST = [
-    { id: 1, name: 'כדורגל', icon: '⚽' },        // Soccer
-    { id: 2, name: 'כדורסל', icon: '🏀' },       // Basketball  
-    { id: 3, name: 'טיפוס', icon: '🧗' },         // Climbing
-    { id: 4, name: 'חדר כושר', icon: '🏋️' },     // Strength Training
-    { id: 5, name: 'קורדינציה', icon: '🎯' },    // Coordination
-    { id: 6, name: 'טניס', icon: '🎾' },         // Tennis
-    { id: 7, name: 'פינגפונג', icon: '🏓' },     // Ping Pong
-    { id: 8, name: 'ריקוד', icon: '💃' },        // Dance
-    { id: 9, name: 'אופניים', icon: '🚴' }       // Cycling
+    { id: 1, name: 'כדורגל', icon: '⚽', image: '/images/sports/football.jpg' },        // Soccer
+    { id: 2, name: 'כדורסל', icon: '🏀', image: '/images/sports/basketball.jpg' },       // Basketball  
+    { id: 3, name: 'טיפוס', icon: '🧗', image: '/images/sports/climbing.jpg' },         // Climbing
+    { id: 4, name: 'חדר כושר', icon: '🏋️', image: '/images/sports/gym.jpg' },     // Strength Training
+    { id: 5, name: 'קורדינציה', icon: '🎯', image: '/images/sports/coordination.jpg' },    // Coordination
+    { id: 6, name: 'טניס', icon: '🎾', image: '/images/sports/tennis.jpg' },         // Tennis
+    { id: 7, name: 'פינגפונג', icon: '🏓', image: '/images/sports/pingpong.jpg' },     // Ping Pong
+    { id: 8, name: 'ריקוד', icon: '💃', image: '/images/sports/dance.jpg' },        // Dance
+    { id: 9, name: 'אופניים', icon: '🚴', image: '/images/sports/cycling.jpg' }       // Cycling
   ];
 
 function SignUpPreferences() {
@@ -283,13 +283,17 @@ function SignUpPreferences() {
                         {preferenceMode === 'ranked' && (
                           <div className="ranking-display">
                             <div className="rank-number">{rank}</div>
-                            <div className="sport-icon">{sport.icon}</div>
+                            <div className="sport-image-container">
+                              <img src={sport.image} alt={sport.name} className="sport-image" />
+                            </div>
                             <div className="sport-name">{sport.name}</div>
                           </div>
                         )}
                         {preferenceMode === 'simple' && (
                           <>
-                            <span className="sport-icon">{sport.icon}</span>
+                            <div className="sport-image-container">
+                              <img src={sport.image} alt={sport.name} className="sport-image" />
+                            </div>
                             <span className="sport-name">{sport.name}</span>
                           </>
                         )}
@@ -327,7 +331,9 @@ function SignUpPreferences() {
                   return (
                     <div key={sport.id} className="sport-item">
                       <button onClick={function() { toggleSport(sport.id); }}>
-                        <span className="sport-icon">{sport.icon}</span>
+                        <div className="sport-image-container">
+                          <img src={sport.image} alt={sport.name} className="sport-image" />
+                        </div>
                         <span className="sport-name">{sport.name}</span>
                       </button> 
                     </div>
