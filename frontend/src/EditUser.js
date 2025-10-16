@@ -4,6 +4,77 @@ import { useAuth } from './contexts/AuthContext';
 import './EditUser.css';
 import { API_BASE_URL } from './config';
 
+// DnD Kit imports
+import {
+  DndContext,
+  closestCenter,
+  KeyboardSensor,
+  PointerSensor,
+  useSensor,
+  useSensors,
+} from '@dnd-kit/core';
+import {
+  arrayMove,
+  SortableContext,
+  sortableKeyboardCoordinates,
+  verticalListSortingStrategy,
+} from '@dnd-kit/sortable';
+import {
+  useSortable,
+} from '@dnd-kit/sortable';
+import { CSS } from '@dnd-kit/utilities';
+
+// רכיב SortableItem חדש
+function SortableItem({ sport, rank, onToggle, isSelected }) {
+  const {
+    attributes,
+    listeners,
+    setNodeRef,
+    transform,
+    transition,
+    isDragging,
+  } = useSortable({ id: sport.id });
+
+  const style = {
+    transform: CSS.Transform.toString(transform),
+    transition,
+    opacity: isDragging ? 0.5 : 1,
+  };
+
+  return (
+    <div
+      ref={setNodeRef}
+      style={style}
+      className={`sport-item ${isSelected ? 'selected' : ''} ${isDragging ? 'dragging' : ''}`}
+    >
+      <button
+        className={`ranked-sport-button ${isSelected ? 'selected' : ''}`}
+        onClick={() => onToggle(sport.id)}
+        {...attributes}
+        {...listeners}
+      >
+        <div className="ranking-display">
+          <div className="rank-number">
+            {isSelected ? rank : '○'}
+          </div>
+          <div className="sport-icon">{sport.icon}</div>
+          <div className="sport-name">{sport.name}</div>
+        </div>
+        <div className="drag-handle">
+          <div className="drag-dots">
+            <div className="dot"></div>
+            <div className="dot"></div>
+            <div className="dot"></div>
+            <div className="dot"></div>
+            <div className="dot"></div>
+            <div className="dot"></div>
+          </div>
+        </div>
+      </button>
+    </div>
+  );
+}
+
 function EditUser() {
   const { user: currentUser } = useAuth();
   const navigate = useNavigate();
@@ -11,6 +82,14 @@ function EditUser() {
   const [preferenceMode, setPreferenceMode] = useState('simple');
   const [intensityLevel, setIntensityLevel] = useState(2);
   const [isLoading, setIsLoading] = useState(false);
+
+  // DnD sensors
+  const sensors = useSensors(
+    useSensor(PointerSensor),
+    useSensor(KeyboardSensor, {
+      coordinateGetter: sortableKeyboardCoordinates,
+    })
+  );
   const [saveMessage, setSaveMessage] = useState('');
   const [isSaving, setIsSaving] = useState(false);
 
@@ -249,6 +328,19 @@ function EditUser() {
     }
   };
 
+  // פונקציה לטיפול ב-drag and drop
+  const handleDragEnd = (event) => {
+    const { active, over } = event;
+
+    if (active.id !== over.id) {
+      setSelectedSports((items) => {
+        const oldIndex = items.indexOf(active.id);
+        const newIndex = items.indexOf(over.id);
+        return arrayMove(items, oldIndex, newIndex);
+      });
+    }
+  };
+
   const getSportsByPreference = () => {
     const preferred = [];
     const others = [];
@@ -343,7 +435,7 @@ function EditUser() {
           {preferenceMode === 'ranked' && (
             <div className="ranking-instructions">
               <p>📋 לחץ על הספורט כדי להוסיף/להסיר מהרשימה</p>
-              <p>⬆️⬇️ השתמש בחצים כדי לשנות את סדר הדירוג</p>
+              <p>🔄 גרור את הספורטים כדי לשנות את סדר הדירוג</p>
             </div>
           )}
 
@@ -352,51 +444,49 @@ function EditUser() {
               <h3>
                 {preferenceMode === 'ranked' ? '🏆 תחומים מדורגים' : 'תחומים מועדפים'}
               </h3>
-              <div className="sports-list">
-                {getSortedPreferred().map((sport, index) => { 
-                  const rank = preferenceMode === 'ranked' ? index + 1 : null;
-                  return (
-                    <div key={sport.id} className="sport-item">
-                      <button 
-                        onClick={() => toggleSport(sport.id)}
-                        className={preferenceMode === 'ranked' ? 'ranked-sport-button' : ''}
-                        data-sport={sport.name === 'כדורסל' ? 'basketball' : ''}
-                      >
-                        {preferenceMode === 'ranked' && (
-                          <div className="ranking-display">
-                            <span className="sport-icon">{sport.icon}</span>
-                            <span className="sport-name">{sport.name}</span>
-                          </div>
-                        )}
-                        {preferenceMode === 'simple' && (
-                          <>
-                            <span className="sport-icon">{sport.icon}</span>
-                            <span className="sport-name">{sport.name}</span>
-                          </>
-                        )}
-                      </button>
-                      {preferenceMode === 'ranked' && (
-                        <div className="ranking-controls">
-                          <button 
-                            className="rank-control-btn up-btn"
-                            onClick={() => moveSportUp(sport.id)}
-                            disabled={index === 0}
-                          >
-                            ⬆️
-                          </button>
-                          <button 
-                            className="rank-control-btn down-btn"
-                            onClick={() => moveSportDown(sport.id)}
-                            disabled={index === getSortedPreferred().length - 1}
-                          >
-                            ⬇️
-                          </button>
-                        </div>
-                      )}
+              {preferenceMode === 'ranked' ? (
+                <DndContext
+                  sensors={sensors}
+                  collisionDetection={closestCenter}
+                  onDragEnd={handleDragEnd}
+                >
+                  <SortableContext
+                    items={selectedSports}
+                    strategy={verticalListSortingStrategy}
+                  >
+                    <div className="sports-list">
+                      {getSortedPreferred().map((sport, index) => {
+                        const rank = index + 1;
+                        return (
+                          <SortableItem
+                            key={sport.id}
+                            sport={sport}
+                            rank={rank}
+                            onToggle={toggleSport}
+                            isSelected={true}
+                          />
+                        );
+                      })}
                     </div>
-                  );
-                })}
-              </div>
+                  </SortableContext>
+                </DndContext>
+              ) : (
+                <div className="sports-list">
+                  {getSortedPreferred().map((sport, index) => {
+                    return (
+                      <div key={sport.id} className="sport-item">
+                        <button 
+                          onClick={() => toggleSport(sport.id)}
+                          className="sport-button"
+                        >
+                          <span className="sport-icon">{sport.icon}</span>
+                          <span className="sport-name">{sport.name}</span>
+                        </button>
+                      </div>
+                    );
+                  })}
+                </div>
+              )}
             </div>
             
             <div className="sports-column">

@@ -257,7 +257,7 @@ function SignUpPreferences() {
           {preferenceMode === 'ranked' && (
             <div className="ranking-instructions">
               <p>📋 לחץ על הספורט כדי להוסיף/להסיר מהרשימה</p>
-              <p>⬆️⬇️ השתמש בחצים כדי לשנות את סדר הדירוג</p>
+              <p>🔄 גרור את הספורטים כדי לשנות את סדר הדירוג</p>
             </div>
           )}
 
