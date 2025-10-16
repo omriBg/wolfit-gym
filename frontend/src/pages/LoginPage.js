@@ -282,7 +282,7 @@ function LoginPage() {
                       color: '#666',
                       textAlign: 'center'
                     }}>
-                      🇮🇱 הזן מספר טלפון ישראלי (הקוד +972 יתווסף אוטומטית)
+                      לא להשתמש בזה!!! אני מוגבל חינמית תכנסו בגימיל בנתיים
                     </p>
                     <input
                       type="tel"
