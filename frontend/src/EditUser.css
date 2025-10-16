@@ -204,13 +204,13 @@
 }
 
 .sports-column:first-child .sport-item button {
-  background: rgba(135, 98, 171, 0.705);
-  border-color: rgba(135, 98, 171, 0.7);
+  background: transparent;
+  border: none;
 }
 
 .sports-column:first-child .sport-item button:hover {
-  background: rgba(135, 98, 171, 0.475);
-  border-color: rgba(135, 98, 171, 0.6);
+  background: transparent;
+  border: none;
 }
 
 /* סגנונות לדירוג */
@@ -219,8 +219,8 @@
   align-items: center;
   justify-content: flex-start;
   padding: 10px !important;
-  background: rgba(255, 255, 255, 0.1) !important;
-  border: 1px solid rgba(255, 255, 255, 0.2) !important;
+  background: transparent !important;
+  border: none !important;
   border-radius: 10px !important;
   position: relative;
   overflow: hidden;
@@ -447,33 +447,17 @@
 /* סגנון לכפתור ספורט רגיל - הוסר כי התמונה עצמה היא הכפתור */
 
 
-/* עיצוב מציאותי וקלאסי לכפתור כדורסל */
+/* עיצוב מציאותי וקלאסי לכפתור כדורסל - הוסר רקע סגול */
 .sport-item button[data-sport="basketball"] {
-  background: linear-gradient(135deg, 
-    #8B4513 0%, 
-    #A0522D 30%, 
-    #CD853F 60%, 
-    #DEB887 100%) !important;
-  background-image: 
-    radial-gradient(circle at 25% 25%, rgba(255, 255, 255, 0.1) 1px, transparent 1px),
-    radial-gradient(circle at 75% 75%, rgba(0, 0, 0, 0.1) 1px, transparent 1px),
-    linear-gradient(45deg, 
-      rgba(139, 69, 19, 0.8) 0%, 
-      rgba(160, 82, 45, 0.9) 25%, 
-      rgba(205, 133, 63, 0.8) 50%, 
-      rgba(222, 184, 135, 0.9) 75%, 
-      rgba(139, 69, 19, 0.8) 100%);
-  background-size: 15px 15px, 20px 20px, 100% 100%;
-  border: 2px solid #8B4513 !important;
-  box-shadow: 
-    0 2px 8px rgba(0, 0, 0, 0.3),
-    inset 0 1px 2px rgba(255, 255, 255, 0.2);
+  background: transparent !important;
+  border: none !important;
+  box-shadow: none;
   position: relative;
   overflow: hidden;
 }
 
 .sport-item button[data-sport="basketball"]::before {
-  content: '🏀';
+  content: '';
   position: absolute;
   top: 50%;
   left: 50%;
@@ -534,19 +518,9 @@
 
 /* עיצוב מציאותי וקלאסי לכפתור כדורסל במצב דירוג */
 .ranked-sport-button[data-sport="basketball"] {
-  background: linear-gradient(135deg, 
-    #8B4513 0%, 
-    #A0522D 30%, 
-    #CD853F 60%, 
-    #DEB887 100%) !important;
-  background-image: 
-    radial-gradient(circle at 25% 25%, rgba(255, 255, 255, 0.1) 1px, transparent 1px),
-    radial-gradient(circle at 75% 75%, rgba(0, 0, 0, 0.1) 1px, transparent 1px);
-  background-size: 20px 20px, 25px 25px;
-  border: 3px solid #8B4513 !important;
-  box-shadow: 
-    0 3px 10px rgba(0, 0, 0, 0.4),
-    inset 0 1px 3px rgba(255, 255, 255, 0.2);
+  background: transparent !important;
+  border: none !important;
+  box-shadow: none;
 }
 
 .ranked-sport-button[data-sport="basketball"]::before {
