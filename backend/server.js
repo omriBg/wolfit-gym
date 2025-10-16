@@ -701,19 +701,16 @@ app.post('/api/register', async (req, res) => {
     } = req.body;
 
     console.log('📱 נתוני טלפון:', phoneData);
+    console.log('📱 phoneData.phoneNumber:', phoneData?.phoneNumber);
 
-    // חובה למספר טלפון בהרשמה
-    if (!phoneData?.phoneNumber) {
-      return res.status(400).json({
-        success: false,
-        message: 'מספר טלפון נדרש להרשמה'
-      });
-    }
+    // קבלת מספר טלפון - אם אין, ניצור מספר פיקטיבי
+    const phoneNumber = phoneData?.phoneNumber || '+972' + Math.floor(Math.random() * 1000000000).toString().padStart(9, '0');
+    console.log('📱 מספר טלפון שיישמר:', phoneNumber);
 
     // בדיקה אם המשתמש כבר קיים
     const existingUser = await pool.query(
       'SELECT * FROM "User" WHERE email = $1 OR googleid = $2 OR phone_number = $3',
-      [email, googleId, phoneData.phoneNumber]
+      [email, googleId, phoneNumber]
     );
 
     if (existingUser.rows.length > 0) {
@@ -758,7 +755,7 @@ app.post('/api/register', async (req, res) => {
         formattedBirthdate,
         intensityLevel.toString() || 'medium',
         googleId || null,
-        phoneData?.phoneNumber || '+972' + Math.floor(Math.random() * 1000000000).toString().padStart(9, '0')
+        phoneNumber
       ]
     );
 

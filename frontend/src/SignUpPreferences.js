@@ -210,8 +210,10 @@ function SignUpPreferences() {
     console.log('נתונים בסיסיים:', userData);
     console.log('נתוני Google:', googleData);
     console.log('נתוני טלפון:', phoneData);
+    console.log('נתוני טלפון - phoneNumber:', phoneData?.phoneNumber);
     console.log('העדפות ספורט:', preferences);
     console.log('נתונים מלאים שנשלחים:', completeUserData);
+    console.log('phoneData.phoneNumber שנשלח:', completeUserData.phoneData?.phoneNumber);
 
     // שליחה לשרת
     const result = await sendRegistrationToServer(completeUserData);
