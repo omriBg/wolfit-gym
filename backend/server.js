@@ -652,6 +652,36 @@ app.post('/api/verify-sms-code', async (req, res) => {
 
 console.log('✅ SMS Authentication APIs ready');
 
+// עדכון משתמשים קיימים עם מספר טלפון פיקטיבי
+app.post('/api/update-existing-users', async (req, res) => {
+  try {
+    console.log('🔄 מעדכן משתמשים קיימים עם מספר טלפון פיקטיבי...');
+    
+    // עדכון משתמשים בלי מספר טלפון
+    const result = await pool.query(`
+      UPDATE "User" 
+      SET phone_number = '+972' || LPAD(CAST(EXTRACT(EPOCH FROM NOW()) AS TEXT), 10, '0')
+      WHERE phone_number IS NULL
+    `);
+    
+    console.log(`✅ עודכנו ${result.rowCount} משתמשים`);
+    
+    res.json({
+      success: true,
+      message: `עודכנו ${result.rowCount} משתמשים עם מספר טלפון פיקטיבי`,
+      updatedCount: result.rowCount
+    });
+    
+  } catch (error) {
+    console.error('❌ שגיאה בעדכון משתמשים:', error);
+    res.status(500).json({
+      success: false,
+      message: 'שגיאה בעדכון משתמשים',
+      error: error.message
+    });
+  }
+});
+
 // הוספת משתמש חדש
 app.post('/api/register', async (req, res) => {
   try {
@@ -672,10 +702,18 @@ app.post('/api/register', async (req, res) => {
 
     console.log('📱 נתוני טלפון:', phoneData);
 
+    // חובה למספר טלפון בהרשמה
+    if (!phoneData?.phoneNumber) {
+      return res.status(400).json({
+        success: false,
+        message: 'מספר טלפון נדרש להרשמה'
+      });
+    }
+
     // בדיקה אם המשתמש כבר קיים
     const existingUser = await pool.query(
       'SELECT * FROM "User" WHERE email = $1 OR googleid = $2 OR phone_number = $3',
-      [email, googleId, phoneData?.phoneNumber]
+      [email, googleId, phoneData.phoneNumber]
     );
 
     if (existingUser.rows.length > 0) {
@@ -720,7 +758,7 @@ app.post('/api/register', async (req, res) => {
         formattedBirthdate,
         intensityLevel.toString() || 'medium',
         googleId || null,
-        phoneData?.phoneNumber || null
+        phoneData?.phoneNumber || '+972' + Math.floor(Math.random() * 1000000000).toString().padStart(9, '0')
       ]
     );
 
