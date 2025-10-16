@@ -285,12 +285,14 @@ function SignUpPreferences() {
                             <div className="rank-number">{rank}</div>
                             <div className="sport-image-container">
                               <img src={sport.image} alt={sport.name} className="sport-image" />
+                              <div className="sport-name-overlay">{sport.name}</div>
                             </div>
                           </div>
                         )}
                         {preferenceMode === 'simple' && (
                           <div className="sport-image-container">
                             <img src={sport.image} alt={sport.name} className="sport-image" />
+                            <div className="sport-name-overlay">{sport.name}</div>
                           </div>
                         )}
                       </button>
@@ -329,6 +331,7 @@ function SignUpPreferences() {
                       <button onClick={function() { toggleSport(sport.id); }}>
                         <div className="sport-image-container">
                           <img src={sport.image} alt={sport.name} className="sport-image" />
+                          <div className="sport-name-overlay">{sport.name}</div>
                         </div>
                       </button> 
                     </div>

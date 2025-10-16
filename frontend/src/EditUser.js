@@ -369,12 +369,14 @@ function EditUser() {
                             <div className="rank-number">{rank}</div>
                             <div className="sport-image-container">
                               <img src={sport.image} alt={sport.name} className="sport-image" />
+                              <div className="sport-name-overlay">{sport.name}</div>
                             </div>
                           </div>
                         )}
                         {preferenceMode === 'simple' && (
                           <div className="sport-image-container">
                             <img src={sport.image} alt={sport.name} className="sport-image" />
+                            <div className="sport-name-overlay">{sport.name}</div>
                           </div>
                         )}
                       </button>
@@ -415,6 +417,7 @@ function EditUser() {
                     >
                       <div className="sport-image-container">
                         <img src={sport.image} alt={sport.name} className="sport-image" />
+                        <div className="sport-name-overlay">{sport.name}</div>
                       </div>
                     </button> 
                   </div>
