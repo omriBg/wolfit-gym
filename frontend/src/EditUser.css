@@ -257,19 +257,39 @@
 }
 
 .rank-number {
-  font-size: 0.9rem;
-  font-weight: 600;
-  min-width: 24px;
+  font-size: 0.8rem;
+  font-weight: 700;
+  min-width: 20px;
   text-align: center;
-  color: #FFD700;
-  background: rgba(255, 215, 0, 0.1);
+  color: #ffffff;
+  background: #333333;
   border-radius: 50%;
-  width: 24px;
-  height: 24px;
+  width: 20px;
+  height: 20px;
   display: flex;
   align-items: center;
   justify-content: center;
-  border: 1px solid rgba(255, 215, 0, 0.3);
+  border: 2px solid #ffffff;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+  transition: all 0.3s ease;
+}
+
+.rank-number:hover {
+  background: #555555;
+  transform: scale(1.1);
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.3);
+}
+
+/* גרסה עם רקע לבן */
+.rank-number.white {
+  color: #333333;
+  background: #ffffff;
+  border: 2px solid #333333;
+}
+
+.rank-number.white:hover {
+  background: #f0f0f0;
+  border-color: #555555;
 }
 
 @keyframes rankPulse {
