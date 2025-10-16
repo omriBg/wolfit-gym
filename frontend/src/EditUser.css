@@ -170,8 +170,9 @@
 
 .sports-list {
   display: flex;
-  flex-direction: column;
-  gap: 10px;
+  flex-wrap: wrap;
+  gap: 15px;
+  justify-content: flex-start;
 }
 
 .sport-item {
@@ -223,8 +224,8 @@
   overflow: hidden;
   cursor: grab;
   transition: all 0.3s ease;
-  width: 80px;
-  height: 80px;
+  width: 60px;
+  height: 60px;
 }
 
 .ranked-sport-button:active {
@@ -353,11 +354,11 @@
 
 ֿ/* עיצוב תמונות ספורט - כפתורים מלאים */
 .sport-image-container {
-  width: 80px;
-  height: 80px;
-  border-radius: 15px;
+  width: 60px;
+  height: 60px;
+  border-radius: 12px;
   overflow: hidden;
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+  box-shadow: 0 3px 8px rgba(0, 0, 0, 0.3);
   transition: all 0.3s ease;
   position: relative;
   background: transparent;
@@ -379,11 +380,11 @@
   right: 0;
   background: rgba(0, 0, 0, 0.8);
   color: white;
-  font-size: 0.8rem;
+  font-size: 0.7rem;
   font-weight: 600;
   text-align: center;
-  padding: 4px 2px;
-  line-height: 1.2;
+  padding: 3px 2px;
+  line-height: 1.1;
 }
 
 .sport-image-container:hover {
@@ -439,12 +440,12 @@
 
 /* סגנון לכפתור ספורט רגיל */
 .sport-button {
-  width: 80px;
-  height: 80px;
+  width: 60px;
+  height: 60px;
   padding: 0;
   background: transparent;
   border: none;
-  border-radius: 15px;
+  border-radius: 12px;
   color: white;
   font-size: 0.9rem;
   cursor: pointer;
