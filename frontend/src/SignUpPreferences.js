@@ -131,29 +131,7 @@ function SignUpPreferences() {
     }
   }
 
-  function moveSportUp(sportId) {
-    const currentSelected = selectedSports.slice();
-    const index = currentSelected.indexOf(sportId);
-    
-    if (index > 0) {
-      const temp = currentSelected[index];
-      currentSelected[index] = currentSelected[index - 1];
-      currentSelected[index - 1] = temp;
-      setSelectedSports(currentSelected);
-    }
-  }
 
-  function moveSportDown(sportId) {
-    const currentSelected = selectedSports.slice();
-    const index = currentSelected.indexOf(sportId);
-    
-    if (index < currentSelected.length - 1) {
-      const temp = currentSelected[index];
-      currentSelected[index] = currentSelected[index + 1];
-      currentSelected[index + 1] = temp;
-      setSelectedSports(currentSelected);
-    }
-  }
 
   function getSportsByPreference() {
     const preferred = [];
