@@ -170,9 +170,9 @@
 
 .sports-list {
   display: flex;
-  flex-wrap: wrap;
+  flex-direction: column;
   gap: 15px;
-  justify-content: center;
+  justify-content: flex-start;
   align-items: center;
 }
 
@@ -217,16 +217,18 @@
 .ranked-sport-button {
   display: flex !important;
   align-items: center;
-  justify-content: space-between;
-  padding: 0 !important;
-  background: transparent !important;
-  border: none !important;
+  justify-content: flex-start;
+  padding: 10px !important;
+  background: rgba(255, 255, 255, 0.1) !important;
+  border: 1px solid rgba(255, 255, 255, 0.2) !important;
+  border-radius: 10px !important;
   position: relative;
   overflow: hidden;
   cursor: grab;
   transition: all 0.3s ease;
-  width: 80px;
-  height: 80px;
+  width: 100%;
+  min-height: 80px;
+  margin-bottom: 10px;
 }
 
 .ranked-sport-button:active {
@@ -256,10 +258,10 @@
 .ranking-display {
   display: flex;
   align-items: center;
-  gap: 8px;
+  gap: 10px;
   width: 100%;
-  justify-content: center;
-  flex-direction: column;
+  justify-content: flex-start;
+  flex-direction: row;
 }
 
 .rank-number {
