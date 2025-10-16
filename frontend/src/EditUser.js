@@ -70,6 +70,30 @@ function SortableItem({ sport, rank, onToggle, isSelected }) {
             <div className="dot"></div>
           </div>
         </div>
+        <div className="rank-controls">
+          <button 
+            className="rank-control-btn up-btn"
+            onClick={(e) => {
+              e.stopPropagation();
+              moveSportUp(sport.id);
+            }}
+            disabled={rank === 1}
+            title="העבר למעלה"
+          >
+            ⬆️
+          </button>
+          <button 
+            className="rank-control-btn down-btn"
+            onClick={(e) => {
+              e.stopPropagation();
+              moveSportDown(sport.id);
+            }}
+            disabled={rank === selectedSports.length}
+            title="העבר למטה"
+          >
+            ⬇️
+          </button>
+        </div>
       </button>
     </div>
   );
@@ -83,9 +107,13 @@ function EditUser() {
   const [intensityLevel, setIntensityLevel] = useState(2);
   const [isLoading, setIsLoading] = useState(false);
 
-  // DnD sensors
+  // DnD sensors - מונע גרירה בטעות במובייל
   const sensors = useSensors(
-    useSensor(PointerSensor),
+    useSensor(PointerSensor, {
+      activationConstraint: {
+        distance: 8, // דורש מרחק מינימלי לפני התחלת גרירה
+      },
+    }),
     useSensor(KeyboardSensor, {
       coordinateGetter: sortableKeyboardCoordinates,
     })
@@ -435,7 +463,7 @@ function EditUser() {
           {preferenceMode === 'ranked' && (
             <div className="ranking-instructions">
               <p>📋 לחץ על הספורט כדי להוסיף/להסיר מהרשימה</p>
-              <p>🔄 גרור את הספורטים כדי לשנות את סדר הדירוג</p>
+              <p>🔄 גרור את הספורטים או השתמש בחצים כדי לשנות את סדר הדירוג</p>
             </div>
           )}
 

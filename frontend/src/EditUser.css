@@ -257,15 +257,15 @@
 }
 
 .rank-number {
-  font-size: 1.8rem;
+  font-size: 1.2rem;
   font-weight: bold;
-  min-width: 50px;
+  min-width: 30px;
   text-align: center;
   background: linear-gradient(45deg, #FFD700, #FFA500);
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
   background-clip: text;
-  text-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.3);
   animation: rankPulse 2s infinite;
 }
 
@@ -307,6 +307,48 @@
 
 .drag-handle:hover .dot {
   background: rgba(255, 255, 255, 0.9);
+}
+
+/* כפתורי בקרה לדירוג */
+.rank-controls {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  margin-left: 8px;
+}
+
+.rank-control-btn {
+  width: 24px;
+  height: 24px;
+  border: none;
+  background: rgba(255, 255, 255, 0.2);
+  border-radius: 4px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 12px;
+  transition: all 0.3s ease;
+  opacity: 0.7;
+}
+
+.rank-control-btn:hover:not(:disabled) {
+  background: rgba(255, 255, 255, 0.4);
+  opacity: 1;
+  transform: scale(1.1);
+}
+
+.rank-control-btn:disabled {
+  opacity: 0.3;
+  cursor: not-allowed;
+}
+
+.rank-control-btn.up-btn:hover:not(:disabled) {
+  background: rgba(76, 175, 80, 0.3);
+}
+
+.rank-control-btn.down-btn:hover:not(:disabled) {
+  background: rgba(244, 67, 54, 0.3);
 }
 
 /* סגנונות למצב גרירה */
