@@ -19,6 +19,9 @@ const { OptimalHungarianAlgorithm, CompleteOptimalWorkoutScheduler, SPORT_MAPPIN
 const redisService = require('./utils/redis');
 const fieldCacheService = require('./utils/fieldCache');
 
+// SMS service
+const { sendSMSCode, validatePhoneNumber, cleanPhoneNumber } = require('./smsService');
+
 const app = express();
 const PORT = process.env.PORT || 10000;
 
@@ -502,6 +505,152 @@ app.post('/api/google-login', async (req, res) => {  // הסרנו את loginLim
 });
 
 console.log('✅ Google Login API ready');
+
+// SMS Authentication APIs
+console.log('🔍 יוצר SMS Authentication APIs...');
+
+// שליחת קוד SMS
+app.post('/api/send-sms-code', async (req, res) => {
+  try {
+    console.log('📱 מקבל בקשה לשליחת קוד SMS:', req.body);
+    
+    const { phoneNumber } = req.body;
+    
+    if (!phoneNumber) {
+      return res.status(400).json({
+        success: false,
+        message: 'מספר טלפון נדרש'
+      });
+    }
+    
+    // בדיקת פורמט טלפון
+    const phoneValidation = validatePhoneNumber(phoneNumber);
+    if (!phoneValidation.valid) {
+      return res.status(400).json({
+        success: false,
+        message: phoneValidation.error
+      });
+    }
+    
+    const formattedPhone = phoneValidation.formatted;
+    console.log('📱 מספר טלפון מעוצב:', formattedPhone);
+    
+    // שליחת קוד SMS
+    const smsResult = await sendSMSCode(formattedPhone);
+    
+    if (!smsResult.success) {
+      return res.status(500).json({
+        success: false,
+        message: 'שגיאה בשליחת SMS: ' + smsResult.error
+      });
+    }
+    
+    console.log('✅ קוד SMS נשלח בהצלחה:', smsResult.messageId);
+    
+    res.json({
+      success: true,
+      message: 'קוד SMS נשלח בהצלחה',
+      messageId: smsResult.messageId
+    });
+    
+  } catch (error) {
+    console.error('❌ שגיאה בשליחת קוד SMS:', error);
+    res.status(500).json({
+      success: false,
+      message: 'שגיאה בשליחת קוד SMS',
+      error: error.message
+    });
+  }
+});
+
+// אימות קוד SMS והתחברות
+app.post('/api/verify-sms-code', async (req, res) => {
+  try {
+    console.log('🔐 מקבל בקשה לאימות קוד SMS:', req.body);
+    
+    const { phoneNumber, smsCode } = req.body;
+    
+    if (!phoneNumber || !smsCode) {
+      return res.status(400).json({
+        success: false,
+        message: 'מספר טלפון וקוד SMS נדרשים'
+      });
+    }
+    
+    // בדיקת פורמט טלפון
+    const phoneValidation = validatePhoneNumber(phoneNumber);
+    if (!phoneValidation.valid) {
+      return res.status(400).json({
+        success: false,
+        message: phoneValidation.error
+      });
+    }
+    
+    const formattedPhone = phoneValidation.formatted;
+    console.log('📱 מספר טלפון מעוצב:', formattedPhone);
+    console.log('🔐 קוד SMS:', smsCode);
+    
+    // בדיקה אם המשתמש קיים במסד הנתונים
+    console.log('🔍 מחפש משתמש לפי מספר טלפון:', formattedPhone);
+    
+    const existingUser = await pool.query(
+      'SELECT * FROM "User" WHERE phone_number = $1',
+      [formattedPhone]
+    );
+    
+    if (existingUser.rows.length > 0) {
+      // משתמש קיים - התחברות ישירה
+      const user = existingUser.rows[0];
+      console.log('✅ משתמש קיים:', user.email || user.name);
+      
+      // יצירת JWT token (בדיוק כמו Google!)
+      const token = jwt.sign(
+        { 
+          userId: user.iduser,
+          email: user.email,
+          name: user.name 
+        },
+        JWT_SECRET,
+        { expiresIn: '7d' }
+      );
+        
+      console.log('✅ SMS login successful for user:', user.email || user.name);
+        
+      res.json({
+        success: true,
+        token,
+        user: {
+          id: user.iduser,
+          email: user.email,
+          name: user.name,
+          picture: user.picture
+        }
+      });
+    } else {
+      // משתמש חדש - שליחה למסך הרשמה
+      console.log('🆕 משתמש חדש - שליחה למסך הרשמה:', formattedPhone);
+      
+      res.json({
+        success: false,
+        isNewUser: true,
+        message: 'משתמש חדש - אנא הירשם תחילה',
+        phoneData: {
+          phoneNumber: formattedPhone
+        }
+      });
+    }
+
+  } catch (error) {
+    console.error('❌ SMS verification error:', error);
+    res.status(500).json({
+      success: false,
+      error: 'SMS verification failed',
+      details: error.message 
+    });
+  }
+});
+
+console.log('✅ SMS Authentication APIs ready');
 
 // הוספת משתמש חדש
 app.post('/api/register', async (req, res) => {
