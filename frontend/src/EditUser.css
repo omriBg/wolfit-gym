@@ -348,14 +348,13 @@
   filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.3));
 }
 
-ֿ/* עיצוב תמונות ספורט */
+ֿ/* עיצוב תמונות ספורט - כפתורים מלאים */
 .sport-image-container {
-  width: 40px;
-  height: 40px;
+  width: 80px;
+  height: 80px;
   border-radius: 50%;
   overflow: hidden;
-  margin: 0 15px;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
   transition: all 0.3s ease;
 }
 
@@ -368,11 +367,11 @@
 
 .sport-image-container:hover {
   transform: scale(1.1);
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.4);
 }
 
 .sport-image-container:hover .sport-image {
-  transform: scale(1.1);
+  transform: scale(1.05);
 }
 
 .sport-name {

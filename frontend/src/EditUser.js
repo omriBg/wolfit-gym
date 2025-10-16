@@ -370,16 +370,12 @@ function EditUser() {
                             <div className="sport-image-container">
                               <img src={sport.image} alt={sport.name} className="sport-image" />
                             </div>
-                            <div className="sport-name">{sport.name}</div>
                           </div>
                         )}
                         {preferenceMode === 'simple' && (
-                          <>
-                            <div className="sport-image-container">
-                              <img src={sport.image} alt={sport.name} className="sport-image" />
-                            </div>
-                            <span className="sport-name">{sport.name}</span>
-                          </>
+                          <div className="sport-image-container">
+                            <img src={sport.image} alt={sport.name} className="sport-image" />
+                          </div>
                         )}
                       </button>
                       {preferenceMode === 'ranked' && (
@@ -420,7 +416,6 @@ function EditUser() {
                       <div className="sport-image-container">
                         <img src={sport.image} alt={sport.name} className="sport-image" />
                       </div>
-                      <span className="sport-name">{sport.name}</span>
                     </button> 
                   </div>
                 ))}
