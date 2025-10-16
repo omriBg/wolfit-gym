@@ -216,13 +216,15 @@
   display: flex !important;
   align-items: center;
   justify-content: space-between;
-  padding: 15px 20px !important;
-  background: linear-gradient(135deg, rgba(135, 98, 171, 0.8), rgba(179, 142, 216, 0.6)) !important;
-  border: 2px solid rgba(135, 98, 171, 0.8) !important;
+  padding: 0 !important;
+  background: transparent !important;
+  border: none !important;
   position: relative;
   overflow: hidden;
   cursor: grab;
   transition: all 0.3s ease;
+  width: 80px;
+  height: 80px;
 }
 
 .ranked-sport-button:active {
@@ -230,8 +232,8 @@
 }
 
 .ranked-sport-button:hover {
-  transform: translateY(-2px);
-  box-shadow: 0 8px 25px rgba(135, 98, 171, 0.3);
+  transform: scale(1.05);
+  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.4);
 }
 
 .ranked-sport-button::before {
@@ -252,8 +254,9 @@
 .ranking-display {
   display: flex;
   align-items: center;
-  gap: 15px;
+  gap: 10px;
   width: 100%;
+  justify-content: flex-start;
 }
 
 .rank-number {
@@ -350,8 +353,8 @@
 
 ֿ/* עיצוב תמונות ספורט - כפתורים מלאים */
 .sport-image-container {
-  width: 100px;
-  height: 100px;
+  width: 80px;
+  height: 80px;
   border-radius: 15px;
   overflow: hidden;
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
@@ -436,8 +439,8 @@
 
 /* סגנון לכפתור ספורט רגיל */
 .sport-button {
-  width: 100px;
-  height: 100px;
+  width: 80px;
+  height: 80px;
   padding: 0;
   background: transparent;
   border: none;
