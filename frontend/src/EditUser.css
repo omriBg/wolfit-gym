@@ -257,16 +257,19 @@
 }
 
 .rank-number {
-  font-size: 1.2rem;
-  font-weight: bold;
-  min-width: 30px;
+  font-size: 0.9rem;
+  font-weight: 600;
+  min-width: 24px;
   text-align: center;
-  background: linear-gradient(45deg, #FFD700, #FFA500);
-  -webkit-background-clip: text;
-  -webkit-text-fill-color: transparent;
-  background-clip: text;
-  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.3);
-  animation: rankPulse 2s infinite;
+  color: #FFD700;
+  background: rgba(255, 215, 0, 0.1);
+  border-radius: 50%;
+  width: 24px;
+  height: 24px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: 1px solid rgba(255, 215, 0, 0.3);
 }
 
 @keyframes rankPulse {
@@ -274,40 +277,6 @@
   50% { transform: scale(1.1); }
 }
 
-/* Drag handle */
-.drag-handle {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  padding: 8px;
-  cursor: grab;
-  opacity: 0.7;
-  transition: opacity 0.3s ease;
-}
-
-.drag-handle:hover {
-  opacity: 1;
-}
-
-.drag-dots {
-  display: grid;
-  grid-template-columns: repeat(2, 1fr);
-  gap: 3px;
-  width: 20px;
-  height: 20px;
-}
-
-.drag-dots .dot {
-  width: 4px;
-  height: 4px;
-  background: rgba(255, 255, 255, 0.6);
-  border-radius: 50%;
-  transition: background 0.3s ease;
-}
-
-.drag-handle:hover .dot {
-  background: rgba(255, 255, 255, 0.9);
-}
 
 /* כפתורי בקרה לדירוג */
 .rank-controls {
@@ -351,46 +320,7 @@
   background: rgba(244, 67, 54, 0.3);
 }
 
-/* סגנונות למצב גרירה */
-.sport-item.dragging {
-  opacity: 0.5;
-  transform: rotate(5deg);
-}
 
-.sport-item.dragging .ranked-sport-button {
-  box-shadow: 0 10px 30px rgba(135, 98, 171, 0.5);
-  transform: rotate(5deg) scale(1.05);
-}
-
-/* אפקט זוהר למספר הדירוג */
-.rank-number {
-  position: relative;
-}
-
-.rank-number::before {
-  content: '';
-  position: absolute;
-  top: -2px;
-  left: -2px;
-  right: -2px;
-  bottom: -2px;
-  background: linear-gradient(45deg, #FFD700, #FFA500, #FFD700);
-  border-radius: 50%;
-  z-index: -1;
-  opacity: 0.3;
-  animation: glow 2s ease-in-out infinite alternate;
-}
-
-@keyframes glow {
-  from {
-    opacity: 0.3;
-    transform: scale(1);
-  }
-  to {
-    opacity: 0.6;
-    transform: scale(1.1);
-  }
-}
 
 .sport-icon {
   font-size: 1.5rem;
@@ -465,53 +395,6 @@
   box-shadow: 0 4px 12px rgba(255, 255, 255, 0.1);
 }
 
-/* אפקט זוהר לכפתורי ספורט */
-.sport-button:hover,
-.ranked-sport-button:hover {
-  position: relative;
-  overflow: hidden;
-}
-
-.sport-button:hover::before,
-.ranked-sport-button:hover::before {
-  content: '';
-  position: absolute;
-  top: 0;
-  left: -100%;
-  width: 100%;
-  height: 100%;
-  background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.2), transparent);
-  transition: left 0.5s ease;
-}
-
-.sport-button:hover::before,
-.ranked-sport-button:hover::before {
-  left: 100%;
-}
-
-/* אפקט זוהר לכפתורי ספורט */
-.sport-button:hover,
-.ranked-sport-button:hover {
-  position: relative;
-  overflow: hidden;
-}
-
-.sport-button:hover::before,
-.ranked-sport-button:hover::before {
-  content: '';
-  position: absolute;
-  top: 0;
-  left: -100%;
-  width: 100%;
-  height: 100%;
-  background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.2), transparent);
-  transition: left 0.5s ease;
-}
-
-.sport-button:hover::before,
-.ranked-sport-button:hover::before {
-  left: 100%;
-}
 
 /* עיצוב מציאותי וקלאסי לכפתור כדורסל */
 .sport-item button[data-sport="basketball"] {

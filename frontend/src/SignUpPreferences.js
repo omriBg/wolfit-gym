@@ -4,100 +4,6 @@ import { useAuth } from './contexts/AuthContext';
 import './SignUpPreferences.css';
 import { API_BASE_URL } from './config';
 
-// DnD Kit imports
-import {
-  DndContext,
-  closestCenter,
-  KeyboardSensor,
-  PointerSensor,
-  useSensor,
-  useSensors,
-} from '@dnd-kit/core';
-import {
-  arrayMove,
-  SortableContext,
-  sortableKeyboardCoordinates,
-  verticalListSortingStrategy,
-} from '@dnd-kit/sortable';
-import {
-  useSortable,
-} from '@dnd-kit/sortable';
-import { CSS } from '@dnd-kit/utilities';
-
-// רכיב SortableItem חדש
-function SortableItem({ sport, rank, onToggle, isSelected }) {
-  const {
-    attributes,
-    listeners,
-    setNodeRef,
-    transform,
-    transition,
-    isDragging,
-  } = useSortable({ id: sport.id });
-
-  const style = {
-    transform: CSS.Transform.toString(transform),
-    transition,
-    opacity: isDragging ? 0.5 : 1,
-  };
-
-  return (
-    <div
-      ref={setNodeRef}
-      style={style}
-      className={`sport-item ${isSelected ? 'selected' : ''} ${isDragging ? 'dragging' : ''}`}
-    >
-      <button
-        className={`ranked-sport-button ${isSelected ? 'selected' : ''}`}
-        onClick={() => onToggle(sport.id)}
-        {...attributes}
-        {...listeners}
-      >
-        <div className="ranking-display">
-          <div className="rank-number">
-            {isSelected ? rank : '○'}
-          </div>
-          <div className="sport-icon">{sport.icon}</div>
-          <div className="sport-name">{sport.name}</div>
-        </div>
-        <div className="drag-handle">
-          <div className="drag-dots">
-            <div className="dot"></div>
-            <div className="dot"></div>
-            <div className="dot"></div>
-            <div className="dot"></div>
-            <div className="dot"></div>
-            <div className="dot"></div>
-          </div>
-        </div>
-        <div className="rank-controls">
-          <button 
-            className="rank-control-btn up-btn"
-            onClick={(e) => {
-              e.stopPropagation();
-              moveSportUp(sport.id);
-            }}
-            disabled={rank === 1}
-            title="העבר למעלה"
-          >
-            ⬆️
-          </button>
-          <button 
-            className="rank-control-btn down-btn"
-            onClick={(e) => {
-              e.stopPropagation();
-              moveSportDown(sport.id);
-            }}
-            disabled={rank === selectedSports.length}
-            title="העבר למטה"
-          >
-            ⬇️
-          </button>
-        </div>
-      </button>
-    </div>
-  );
-}
 
 async function sendRegistrationToServer(userData) {
     try {
@@ -141,17 +47,6 @@ function SignUpPreferences() {
   const [preferenceMode, setPreferenceMode] = useState('simple');
   const [intensityLevel, setIntensityLevel] = useState(2);
 
-  // DnD sensors - מונע גרירה בטעות במובייל
-  const sensors = useSensors(
-    useSensor(PointerSensor, {
-      activationConstraint: {
-        distance: 8, // דורש מרחק מינימלי לפני התחלת גרירה
-      },
-    }),
-    useSensor(KeyboardSensor, {
-      coordinateGetter: sortableKeyboardCoordinates,
-    })
-  );
 
   useEffect(() => {
     document.body.style.overflow = 'hidden';
@@ -175,18 +70,6 @@ function SignUpPreferences() {
     setPreferenceMode('ranked');
   }
 
-  // פונקציה לטיפול ב-drag and drop
-  const handleDragEnd = (event) => {
-    const { active, over } = event;
-
-    if (active.id !== over.id) {
-      setSelectedSports((items) => {
-        const oldIndex = items.indexOf(active.id);
-        const newIndex = items.indexOf(over.id);
-        return arrayMove(items, oldIndex, newIndex);
-      });
-    }
-  };
 
   // פונקציות להעברת ספורטים
   const moveSportUp = (sportId) => {
@@ -401,7 +284,7 @@ function SignUpPreferences() {
           {preferenceMode === 'ranked' && (
             <div className="ranking-instructions">
               <p>📋 לחץ על הספורט כדי להוסיף/להסיר מהרשימה</p>
-              <p>🔄 גרור את הספורטים או השתמש בחצים כדי לשנות את סדר הדירוג</p>
+              <p>⬆️⬇️ השתמש בחצים כדי לשנות את סדר הדירוג</p>
             </div>
           )}
 
@@ -410,49 +293,53 @@ function SignUpPreferences() {
               <h3>
                 {preferenceMode === 'ranked' ? '🏆 תחומים מדורגים' : 'תחומים מועדפים'}
               </h3>
-              {preferenceMode === 'ranked' ? (
-                <DndContext
-                  sensors={sensors}
-                  collisionDetection={closestCenter}
-                  onDragEnd={handleDragEnd}
-                >
-                  <SortableContext
-                    items={selectedSports}
-                    strategy={verticalListSortingStrategy}
-                  >
-                    <div className="sports-list">
-                      {getSortedPreferred().map((sport, index) => {
-                        const rank = index + 1;
-                        return (
-                          <SortableItem
-                            key={sport.id}
-                            sport={sport}
-                            rank={rank}
-                            onToggle={toggleSport}
-                            isSelected={true}
-                          />
-                        );
-                      })}
+              <div className="sports-list">
+                {getSortedPreferred().map((sport, index) => {
+                  const rank = preferenceMode === 'ranked' ? index + 1 : null;
+                  return (
+                    <div key={sport.id} className="sport-item">
+                      <button 
+                        onClick={() => toggleSport(sport.id)}
+                        className={preferenceMode === 'ranked' ? 'ranked-sport-button' : 'sport-button'}
+                      >
+                        {preferenceMode === 'ranked' && (
+                          <div className="ranking-display">
+                            <div className="rank-number">{rank}</div>
+                            <div className="sport-icon">{sport.icon}</div>
+                            <div className="sport-name">{sport.name}</div>
+                          </div>
+                        )}
+                        {preferenceMode === 'simple' && (
+                          <>
+                            <span className="sport-icon">{sport.icon}</span>
+                            <span className="sport-name">{sport.name}</span>
+                          </>
+                        )}
+                      </button>
+                      {preferenceMode === 'ranked' && (
+                        <div className="ranking-controls">
+                          <button 
+                            className="rank-control-btn up-btn"
+                            onClick={() => moveSportUp(sport.id)}
+                            disabled={index === 0}
+                            title="העבר למעלה"
+                          >
+                            ⬆️
+                          </button>
+                          <button 
+                            className="rank-control-btn down-btn"
+                            onClick={() => moveSportDown(sport.id)}
+                            disabled={index === getSortedPreferred().length - 1}
+                            title="העבר למטה"
+                          >
+                            ⬇️
+                          </button>
+                        </div>
+                      )}
                     </div>
-                  </SortableContext>
-                </DndContext>
-              ) : (
-                <div className="sports-list">
-                  {getSortedPreferred().map((sport, index) => {
-                    return (
-                      <div key={sport.id} className="sport-item">
-                        <button 
-                          onClick={() => toggleSport(sport.id)}
-                          className="sport-button"
-                        >
-                          <span className="sport-icon">{sport.icon}</span>
-                          <span className="sport-name">{sport.name}</span>
-                        </button>
-                      </div>
-                    );
-                  })}
-                </div>
-              )}
+                  );
+                })}
+              </div>
             </div>
             
             <div className="sports-column">
