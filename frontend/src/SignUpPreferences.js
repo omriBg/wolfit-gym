@@ -42,7 +42,7 @@ function SignUpPreferences() {
   const navigate = useNavigate();
   const location = useLocation();
   const { login } = useAuth();
-  const { userData, googleData } = location.state || {};
+  const { userData, googleData, phoneData } = location.state || {};
   const [selectedSports, setSelectedSports] = useState([]);
   const [preferenceMode, setPreferenceMode] = useState('simple');
   const [intensityLevel, setIntensityLevel] = useState(2);
@@ -197,10 +197,12 @@ function SignUpPreferences() {
       const completeUserData = {
         ...userData,
         ...preferences,
-        googleId: googleData?.googleId
+        googleId: googleData?.googleId,
+        phoneData: phoneData
       };
     console.log('נתונים בסיסיים:', userData);
     console.log('נתוני Google:', googleData);
+    console.log('נתוני טלפון:', phoneData);
     console.log('העדפות ספורט:', preferences);
     console.log('נתונים מלאים שנשלחים:', completeUserData);
 
