@@ -22,6 +22,52 @@ const fieldCacheService = require('./utils/fieldCache');
 // SMS service
 const { sendSMSCode, validatePhoneNumber, cleanPhoneNumber } = require('./smsService');
 
+// Session-based locking system - מונע בקשות מקבילות מאותו משתמש
+const userLocks = new Map();
+const LOCK_TIMEOUT = 30000; // 30 שניות timeout לנעילה
+
+const acquireUserLock = (userId) => {
+  const lockKey = `user_${userId}`;
+  const now = Date.now();
+  
+  // בדיקה אם יש נעילה פעילה
+  if (userLocks.has(lockKey)) {
+    const lockInfo = userLocks.get(lockKey);
+    if (now - lockInfo.timestamp < LOCK_TIMEOUT) {
+      console.log(`🔒 משתמש ${userId} כבר בתהליך הזמנה - נעילה פעילה`);
+      return false; // נעילה פעילה
+    } else {
+      // נעילה פגה - נמחק אותה
+      userLocks.delete(lockKey);
+      console.log(`⏰ נעילה פגה עבור משתמש ${userId} - נמחקת`);
+    }
+  }
+  
+  // יצירת נעילה חדשה
+  userLocks.set(lockKey, { timestamp: now });
+  console.log(`✅ נעילה נוצרה עבור משתמש ${userId}`);
+  return true;
+};
+
+const releaseUserLock = (userId) => {
+  const lockKey = `user_${userId}`;
+  if (userLocks.has(lockKey)) {
+    userLocks.delete(lockKey);
+    console.log(`🔓 נעילה שוחררה עבור משתמש ${userId}`);
+  }
+};
+
+// ניקוי נעילות פגות כל 5 דקות
+setInterval(() => {
+  const now = Date.now();
+  for (const [lockKey, lockInfo] of userLocks.entries()) {
+    if (now - lockInfo.timestamp > LOCK_TIMEOUT) {
+      userLocks.delete(lockKey);
+      console.log(`🧹 ניקוי נעילה פגה: ${lockKey}`);
+    }
+  }
+}, 300000); // כל 5 דקות
+
 const app = express();
 const PORT = process.env.PORT || 10000;
 
@@ -1387,6 +1433,7 @@ app.post('/api/generate-optimal-workout', workoutLimiter, authenticateToken, asy
 
 // API לשמירת אימון
 app.post('/api/save-workout', authenticateToken, async (req, res) => {
+  let lockAcquired = false;
   try {
     const { bookings, userId, date } = req.body;
     
@@ -1396,6 +1443,17 @@ app.post('/api/save-workout', authenticateToken, async (req, res) => {
       date,
       firstBooking: bookings?.[0]
     });
+    
+    // בדיקה וקבלת נעילה למשתמש - מונע בקשות מקבילות
+    if (!acquireUserLock(userId)) {
+      return res.json({
+        success: false,
+        message: 'הזמנה בתהליך, אנא המתן לסיום ההזמנה הקודמת...',
+        requiresNewWorkout: true
+      });
+    }
+    lockAcquired = true;
+    console.log(`🔒 נעילה נרכשה עבור משתמש ${userId}`);
     
     if (!bookings || !Array.isArray(bookings) || bookings.length === 0) {
       return res.json({
@@ -1537,18 +1595,22 @@ app.post('/api/save-workout', authenticateToken, async (req, res) => {
       });
     }
 
-    // קבלת שעות נוכחיות
+    // קבלת שעות נוכחיות עם נעילה (FOR UPDATE) - מונע race conditions
+    console.log(`🔒 נעילת שורה עבור משתמש ${userId} - מונע הזמנות מקבילות`);
     const currentHours = await pool.query(
-      'SELECT availableHours FROM UserHours WHERE userId = $1',
+      'SELECT availableHours FROM UserHours WHERE userId = $1 FOR UPDATE',
       [userId]
     );
 
     const currentAvailable = currentHours.rows.length > 0 ? currentHours.rows[0].availablehours : 0;
+    console.log(`📊 שעות זמינות נוכחיות: ${currentAvailable}, נדרשות: ${quarters}`);
 
     if (currentAvailable < quarters) {
+      console.log(`❌ אין מספיק שעות זמינות: ${currentAvailable} < ${quarters}`);
       return res.json({
         success: false,
-        message: `אין מספיק שעות זמינות. יש ${currentAvailable} לבנות אימון, נדרשים ${quarters} לבנות אימון`
+        message: `אין מספיק שעות זמינות. יש ${currentAvailable} לבנות אימון, נדרשים ${quarters} לבנות אימון`,
+        requiresNewWorkout: true
       });
     }
 
@@ -1674,6 +1736,11 @@ app.post('/api/save-workout', authenticateToken, async (req, res) => {
       message: 'שגיאה בשמירת האימון',
       error: err.message
     });
+  } finally {
+    // שחרור נעילה תמיד - גם במקרה של שגיאה
+    if (lockAcquired) {
+      releaseUserLock(req.body.userId);
+    }
   }
 });
 
@@ -1808,10 +1875,21 @@ app.get('/api/future-workouts/:userId', authenticateToken, async (req, res) => {
 
 // API לביטול אימון
 app.delete('/api/cancel-workout/:userId/:date/:fieldId/:startTime', authenticateToken, async (req, res) => {
+  let lockAcquired = false;
   const client = await pool.connect();
   
   try {
     const { userId, date, fieldId, startTime } = req.params;
+    
+    // בדיקה וקבלת נעילה למשתמש - מונע ביטולים מקבילים
+    if (!acquireUserLock(userId)) {
+      return res.json({
+        success: false,
+        message: 'ביטול אימון בתהליך, אנא המתן לסיום הביטול הקודם...'
+      });
+    }
+    lockAcquired = true;
+    console.log(`🔒 נעילה נרכשה עבור ביטול אימון - משתמש ${userId}`);
     
     // המרת השעה חזרה לפורמט המקורי (הוספת נקודותיים)
     const formattedTime = startTime.replace(/(\d{2})(\d{2})(\d{2})/, '$1:$2:$3');
@@ -1882,9 +1960,10 @@ app.delete('/api/cancel-workout/:userId/:date/:fieldId/:startTime', authenticate
     // חישוב לבנות אימון שצריך להחזיר
     const quarters = 1; // תמיד לבנות אימון
 
-    // קבלת שעות נוכחיות
+    // קבלת שעות נוכחיות עם נעילה (FOR UPDATE) - מונע race conditions
+    console.log(`🔒 נעילת שורה עבור משתמש ${userId} - מונע ביטולים מקבילים`);
     const currentHours = await client.query(
-      'SELECT availableHours FROM UserHours WHERE userId = $1',
+      'SELECT availableHours FROM UserHours WHERE userId = $1 FOR UPDATE',
       [userId]
     );
 
@@ -1946,6 +2025,10 @@ app.delete('/api/cancel-workout/:userId/:date/:fieldId/:startTime', authenticate
       error: err.message
     });
   } finally {
+    // שחרור נעילה תמיד - גם במקרה של שגיאה
+    if (lockAcquired) {
+      releaseUserLock(req.params.userId);
+    }
     // שחרור ה-client
     client.release();
   }
@@ -2303,9 +2386,10 @@ app.post('/api/use-hours/:userId', authenticateToken, async (req, res) => {
       });
     }
     
-    // קבלת שעות נוכחיות
+    // קבלת שעות נוכחיות עם נעילה (FOR UPDATE) - מונע race conditions
+    console.log(`🔒 נעילת שורה עבור משתמש ${userId} - מונע שימוש מקביל בשעות`);
     const currentHours = await pool.query(
-      'SELECT availableHours FROM UserHours WHERE userId = $1',
+      'SELECT availableHours FROM UserHours WHERE userId = $1 FOR UPDATE',
       [userId]
     );
     

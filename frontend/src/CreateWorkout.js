@@ -144,6 +144,12 @@ function CreateWorkout({ selectedDate, startTime, endTime }) {
   const generateOptimalWorkout = async () => {
     console.log('🎯 מתחיל יצירת תוכנית אימון אופטימלית...');
     
+    // בדיקה אם כבר בתהליך יצירה - מונע לחיצות מרובות
+    if (isGenerating) {
+      console.log('⚠️ יצירת אימון כבר בתהליך - מונע לחיצה נוספת');
+      return null;
+    }
+    
     if (timeSlots.length === 0) {
       console.log('❌ אין זמנים זמינים ליצירת אימון');
       return null;
@@ -235,9 +241,16 @@ function CreateWorkout({ selectedDate, startTime, endTime }) {
       return;
     }
 
+    // בדיקה אם כבר בתהליך שמירה - מונע לחיצות מרובות
+    if (isSaving) {
+      console.log('⚠️ שמירה כבר בתהליך - מונע לחיצה נוספת');
+      return;
+    }
+
     setIsSaving(true);
     setError('');
     setSaveSuccess(false);
+    console.log('🔒 נעילת כפתור שמירה - מונע לחיצות מרובות');
 
     try {
       // הכנת רשימת הזמנות למגרשים
