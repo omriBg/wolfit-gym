@@ -223,11 +223,11 @@
   border: none !important;
   border-radius: 10px !important;
   position: relative;
-  overflow: hidden;
+  overflow: visible;
   cursor: grab;
   transition: all 0.3s ease;
   width: 100%;
-  min-height: 80px;
+  min-height: 120px;
   margin-bottom: 10px;
 }
 

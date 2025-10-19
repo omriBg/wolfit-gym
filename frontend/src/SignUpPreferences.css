@@ -260,3 +260,54 @@
 .sport-item:nth-child(7) { animation-delay: 0.7s; }
 .sport-item:nth-child(8) { animation-delay: 0.8s; }
 .sport-item:nth-child(9) { animation-delay: 0.9s; }
+
+/* עיצוב כפתורים מדורגים */
+.ranked-sport-button {
+  display: flex !important;
+  align-items: center;
+  justify-content: flex-start;
+  padding: 10px !important;
+  background: transparent !important;
+  border: none !important;
+  border-radius: 10px !important;
+  position: relative;
+  overflow: visible;
+  cursor: grab;
+  transition: all 0.3s ease;
+  width: 100%;
+  min-height: 120px;
+  margin-bottom: 10px;
+}
+
+.ranked-sport-button:active {
+  cursor: grabbing;
+}
+
+.ranked-sport-button:hover {
+  transform: scale(1.05);
+  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.4);
+}
+
+.ranking-display {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  width: 100%;
+  justify-content: flex-start;
+  flex-direction: row;
+}
+
+.rank-number {
+  font-size: 1.2rem;
+  font-weight: bold;
+  color: #ffd700;
+  text-shadow: 0 2px 4px rgba(0, 0, 0, 0.5);
+  background: linear-gradient(45deg, #ff6b35, #f7931e);
+  border-radius: 50%;
+  width: 30px;
+  height: 30px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
+}
