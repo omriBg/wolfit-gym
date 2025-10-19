@@ -20,3 +20,4 @@ WHERE tablename = 'User' AND indexname LIKE '%phone%';
 -- בדיקה 4: ניסיון להוסיף משתמש עם טלפון (בדיקה שהכל עובד)
 -- זה רק בדיקה - לא נוסיף משתמש אמיתי
 SELECT 'phone_number field added successfully!' as status;
+

@@ -60,3 +60,4 @@ async function testSMSAPI() {
 
 // הרצת הבדיקה
 testSMSAPI().catch(console.error);
+
