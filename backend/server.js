@@ -1301,7 +1301,7 @@ app.post('/api/generate-optimal-workout', workoutLimiter, authenticateToken, asy
     for (const timeSlot of timeSlots) {
       console.log(`⏰ בודק זמינות ל-${timeSlot}`);
       
-      // בדיקה אם המשתמש כבר הזמין אימון בזמן זה או בטווח של רבע שעה לפני ואחרי
+      // בדיקה אם המשתמש כבר הזמין אימון בזמן זה או בטווח של לבנות אימון לפני ואחרי
       let isUserBooked = false;
       for (const bookedTime of userBookedTimes) {
         if (!bookedTime) continue;
@@ -1454,11 +1454,11 @@ app.post('/api/save-workout', authenticateToken, async (req, res) => {
     for (const booking of bookings) {
       const { starttime } = booking;
       
-      // חישוב רבע שעה לפני ואחרי
+      // חישוב לבנות אימון לפני ואחרי
       const [hours, minutes] = starttime.split(':');
       const startMinutes = parseInt(hours) * 60 + parseInt(minutes);
-      const beforeMinutes = startMinutes - 15; // רבע שעה לפני
-      const afterMinutes = startMinutes + 15;  // רבע שעה אחרי
+      const beforeMinutes = startMinutes - 15; // לבנות אימון לפני
+      const afterMinutes = startMinutes + 15;  // לבנות אימון אחרי
       
       // המרה חזרה לפורמט זמן
       const beforeHours = Math.floor(beforeMinutes / 60);
@@ -1488,7 +1488,7 @@ app.post('/api/save-workout', authenticateToken, async (req, res) => {
         const conflict = conflictCheck.rows[0];
         return res.json({
           success: false,
-          message: `יש לך כבר אימון מוזמן ב-${date} בשעה ${conflict.starttime}. לא ניתן להזמין אימון בטווח של רבע שעה לפני ואחרי (${beforeTime} - ${afterTime})`
+          message: `יש לך כבר אימון מוזמן ב-${date} בשעה ${conflict.starttime}. לא ניתן להזמין אימון בטווח של לבנות אימון לפני ואחרי (${beforeTime} - ${afterTime})`
         });
       }
     }
@@ -1533,7 +1533,7 @@ app.post('/api/save-workout', authenticateToken, async (req, res) => {
     if (!quarters || quarters <= 0) {
       return res.json({
         success: false,
-        message: 'מספר רבעי שעה חייב להיות חיובי'
+        message: 'מספר לבנות אימון חייב להיות חיובי'
       });
     }
 
@@ -1548,7 +1548,7 @@ app.post('/api/save-workout', authenticateToken, async (req, res) => {
     if (currentAvailable < quarters) {
       return res.json({
         success: false,
-        message: `אין מספיק שעות זמינות. יש ${currentAvailable} רבעי שעה, נדרשים ${quarters} רבעי שעה`
+        message: `אין מספיק שעות זמינות. יש ${currentAvailable} לבנות אימון, נדרשים ${quarters} לבנות אימון`
       });
     }
 
@@ -1745,11 +1745,11 @@ app.get('/api/future-workouts/:userId', authenticateToken, async (req, res) => {
     
     // עיבוד התוצאות לפורמט נוח
     const workouts = result.rows.map(row => {
-      // חישוב משך האימון (רבע שעה)
+      // חישוב משך האימון (לבנות אימון)
       const startTime = row.starttime;
       const [hours, minutes] = startTime.split(':');
       const startMinutes = parseInt(hours) * 60 + parseInt(minutes);
-      const endMinutes = startMinutes + 15; // רבע שעה
+      const endMinutes = startMinutes + 15; // לבנות אימון
       const endHours = Math.floor(endMinutes / 60);
       const endMins = endMinutes % 60;
       const endTime = `${endHours.toString().padStart(2, '0')}:${endMins.toString().padStart(2, '0')}`;
@@ -1768,7 +1768,7 @@ app.get('/api/future-workouts/:userId', authenticateToken, async (req, res) => {
         date: localDate,
         startTime: startTime,
         endTime: endTime,
-        duration: 15, // רבע שעה
+        duration: 15, // לבנות אימון
         fieldId: row.idfield,
         fieldName: row.fieldname,
         sportType: row.sportname,
@@ -1879,8 +1879,8 @@ app.delete('/api/cancel-workout/:userId/:date/:fieldId/:startTime', authenticate
       }
     }
     
-    // חישוב רבעי השעה שצריך להחזיר
-    const quarters = 1; // תמיד רבע שעה
+    // חישוב לבנות אימון שצריך להחזיר
+    const quarters = 1; // תמיד לבנות אימון
 
     // קבלת שעות נוכחיות
     const currentHours = await client.query(
@@ -1987,11 +1987,11 @@ app.get('/api/user-booked-times/:userId/:date', authenticateToken, async (req, r
     const bookedTimes = existingBookings.rows.map(row => row.starttime);
     console.log(`📅 משתמש הזמין ב-${date}:`, bookedTimes);
     
-    // יצירת רשימת שעות תפוסות כולל רבע שעה לפני ואחרי
+    // יצירת רשימת שעות תפוסות כולל לבנות אימון לפני ואחרי
     const blockedTimes = new Set();
     
     for (const bookedTime of bookedTimes) {
-      // חישוב רבע שעה לפני ואחרי הזמן הקיים
+      // חישוב לבנות אימון לפני ואחרי הזמן הקיים
       if (!bookedTime) {
         console.log('⚠️ bookedTime הוא undefined, מדלג...');
         continue;
@@ -2017,7 +2017,7 @@ app.get('/api/user-booked-times/:userId/:date', authenticateToken, async (req, r
     }
     
     const blockedTimesArray = Array.from(blockedTimes).sort();
-    console.log(`🚫 שעות תפוסות כולל רבע שעה לפני ואחרי:`, blockedTimesArray);
+    console.log(`🚫 שעות תפוסות כולל לבנות אימון לפני ואחרי:`, blockedTimesArray);
     
     res.json({
       success: true,

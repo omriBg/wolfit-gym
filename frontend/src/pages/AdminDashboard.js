@@ -238,7 +238,7 @@ function AdminDashboard() {
                   <td>{user.email}</td>
                   <td className="hours-cell">
                     <span className="hours-number">{user.availableHours !== null && user.availableHours !== undefined ? user.availableHours : 0}</span>
-                    <span className="hours-unit"> רבעי שעה</span>
+                    <span className="hours-unit"> לבנות אימון</span>
                   </td>
                   <td className="date-cell">
                     {user.lastUpdated && user.lastUpdated !== 'Invalid Date' 

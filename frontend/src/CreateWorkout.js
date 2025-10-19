@@ -62,7 +62,7 @@ function CreateWorkout({ selectedDate, startTime, endTime }) {
       console.log('📊 טוען נתוני משתמש...');
       await loadUserPreferences();
       
-      console.log('⏰ יוצר רבעי שעה...');
+      console.log('⏰ יוצר לבנות אימון...');
       const slots = createTimeSlots();
       setTimeSlots(slots);
       
@@ -126,7 +126,7 @@ function CreateWorkout({ selectedDate, startTime, endTime }) {
     const startTotalMinutes = startHour * 60 + startMinute;
     const endTotalMinutes = endHour * 60 + endMinute;
     
-    console.log(`⏰ יוצר רבעי שעה מ-${startTime} עד ${endTime}`);
+    console.log(`⏰ יוצר לבנות אימון מ-${startTime} עד ${endTime}`);
     
     for (let minutes = startTotalMinutes; minutes < endTotalMinutes; minutes += 15) {
       const hours = Math.floor(minutes / 60);
@@ -135,7 +135,7 @@ function CreateWorkout({ selectedDate, startTime, endTime }) {
       slots.push(timeStr);
     }
     
-    console.log(`📅 נוצרו ${slots.length} רבעי שעה:`, slots.join(', '));
+    console.log(`📅 נוצרו ${slots.length} לבנות אימון:`, slots.join(', '));
     return slots;
   };
 
@@ -256,7 +256,7 @@ function CreateWorkout({ selectedDate, startTime, endTime }) {
         return;
       }
 
-      // חישוב כמות רבעי השעה
+      // חישוב כמות לבנות אימון
       const [startHour, startMinute] = startTime.split(':').map(Number);
       const [endHour, endMinute] = endTime.split(':').map(Number);
       const startMinutes = startHour * 60 + startMinute;
@@ -267,7 +267,7 @@ function CreateWorkout({ selectedDate, startTime, endTime }) {
         bookings: bookings,
         userId: user.id,
         date: selectedDate,
-        quarters: requiredQuarters // מספר רבעי השעה שצריך להוריד
+        quarters: requiredQuarters // מספר לבנות אימון שצריך להוריד
       };
 
       console.log('💾 שומר אימון:', requestBody);

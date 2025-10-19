@@ -166,7 +166,7 @@ function OrderTrain(){
     // console.log(`🔍 בודק אם שעה ${timeString} חסומה`);
     // console.log(`📋 שעות תפוסות מהשרת:`, blockedTimes);
     
-    // השרת כבר מחזיר את כל השעות החסומות כולל רבע שעה לפני ואחרי
+    // השרת כבר מחזיר את כל השעות החסומות כולל לבנות אימון לפני ואחרי
     const isBlocked = blockedTimes.includes(timeString);
     
     // הסרת לוגים מיותרים
@@ -241,7 +241,7 @@ function OrderTrain(){
         
         const timeString = `${hour.toString().padStart(2, '0')}:${minute.toString().padStart(2, '0')}`;
         
-        // בדיקה אם השעה תפוסה (כולל רבע שעה לפני ואחרי)
+        // בדיקה אם השעה תפוסה (כולל לבנות אימון לפני ואחרי)
         if (!isTimeBlocked(timeString)) {
           times.push(timeString);
         } else {
@@ -272,7 +272,7 @@ function OrderTrain(){
       if (endHour <= 23 && !(endHour === 23 && endMinute > 30)) {
         const timeString = `${endHour.toString().padStart(2, '0')}:${endMinute.toString().padStart(2, '0')}`;
         
-        // בדיקה אם השעה תפוסה (כולל רבע שעה לפני ואחרי)
+        // בדיקה אם השעה תפוסה (כולל לבנות אימון לפני ואחרי)
         if (!isTimeBlocked(timeString)) {
           times.push(timeString);
         } else {
@@ -302,7 +302,7 @@ function OrderTrain(){
     const requiredQuarters = Math.ceil((endMinutes - startMinutes) / 15);
 
     if (requiredQuarters > availableHours) {
-      alert(`אין מספיק שעות זמינות. נדרשות ${requiredQuarters} רבעי שעה, יש לך ${availableHours} רבעי שעה.`);
+      alert(`אין מספיק שעות זמינות. נדרשות ${requiredQuarters} לבנות אימון, יש לך ${availableHours} לבנות אימון.`);
       return;
     }
     
@@ -340,7 +340,7 @@ function OrderTrain(){
           {loading ? (
             <span>טוען שעות זמינות...</span>
           ) : (
-            <span>שעות זמינות: {availableHours} רבעי שעה</span>
+            <span>שעות זמינות: {availableHours} לבנות אימון</span>
           )}
         </div>
         <div style={{marginTop: '50px'}}>
@@ -405,7 +405,7 @@ function OrderTrain(){
                     fontSize: '14px',
                     color: '#ff6b6b'
                   }}>
-                    ⚠️ שעות שכבר יש לך אימון בהן (כולל רבע שעה לפני ואחרי) לא זמינות לבחירה
+                    ⚠️ שעות שכבר יש לך אימון בהן (כולל לבנות אימון לפני ואחרי) לא זמינות לבחירה
                   </div>
                 )}
               </>

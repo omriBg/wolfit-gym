@@ -76,7 +76,7 @@ function MainMenu() {
             {loading ? (
               <span>טוען שעות זמינות...</span>
             ) : (
-              <span>שעות זמינות: {availableHours} רבעי שעה</span>
+              <span>שעות זמינות: {availableHours} לבנות אימון</span>
             )}
           </div>
         </div>

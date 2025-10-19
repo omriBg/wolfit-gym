@@ -2,7 +2,7 @@
 CREATE TABLE IF NOT EXISTS UserHours (
     id SERIAL PRIMARY KEY,
     userId INTEGER REFERENCES "User"(idUser) ON DELETE CASCADE,
-    availableHours INTEGER DEFAULT 0, -- כמה רבעי שעה זמינים עכשיו
+    availableHours INTEGER DEFAULT 0, -- כמה לבנות אימון זמינים עכשיו
     lastUpdated TIMESTAMP DEFAULT NOW(),
     notes TEXT,
     createdBy VARCHAR(50) DEFAULT 'admin'

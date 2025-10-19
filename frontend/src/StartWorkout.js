@@ -157,7 +157,7 @@ function StartWorkout() {
               
               console.log(`בדיקת רציפות: ${lastSlot.startTime} -> ${workout.startTime}, הפרש: ${timeDiff} דקות`);
               
-              // אם ההפרש הוא 15 דקות (רבע שעה), זה אותו אימון
+              // אם ההפרש הוא 15 דקות (לבנות אימון), זה אותו אימון
               if (timeDiff === 15) {
                 // המשך של האימון הקיים - רציף
                 console.log(`ממשיך אימון קיים (רציף - 15 דקות)`);
@@ -597,7 +597,7 @@ function StartWorkout() {
           <h1>האימונים שלך</h1>
           <div className="available-hours">
             <span className="hours-label">שעות זמינות:</span>
-            <span className="hours-value">{availableHours} רבעי שעה</span>
+            <span className="hours-value">{availableHours} לבנות אימון</span>
           </div>
         </div>
         
@@ -681,7 +681,7 @@ function StartWorkout() {
                             return (
                               <div key={index} className="time-slot">
                                 <span className="time">
-                                  {isValidTime ? `${formatTime(startTime)} - ${formatTime(endTime)}` : `${formatTime(startTime)} (15 דקות)`}
+                                  {isValidTime ? `${formatTime(startTime)} - ${formatTime(endTime)}` : `${formatTime(startTime)} (לבנות אימון)`}
                                 </span>
                                 <span className="field">{slot.fieldName}</span>
                                 <span className="sport">{slot.sportType}</span>
