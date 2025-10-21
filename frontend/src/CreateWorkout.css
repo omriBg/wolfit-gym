@@ -140,6 +140,68 @@
     0%, 100% { opacity: 1; }
     50% { opacity: 0.7; }
   }
+
+  /* מסך יצירת אימון */
+  .generating-workout {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    min-height: 50vh;
+    text-align: center;
+    padding: 40px 20px;
+  }
+
+  .generating-spinner {
+    display: flex;
+    gap: 8px;
+    margin-bottom: 30px;
+  }
+
+  .spinner-dot {
+    width: 12px;
+    height: 12px;
+    background: #8b5cf6;
+    border-radius: 50%;
+    animation: bounce 1.4s ease-in-out infinite both;
+  }
+
+  .spinner-dot:nth-child(1) {
+    animation-delay: -0.32s;
+  }
+
+  .spinner-dot:nth-child(2) {
+    animation-delay: -0.16s;
+  }
+
+  .spinner-dot:nth-child(3) {
+    animation-delay: 0s;
+  }
+
+  @keyframes bounce {
+    0%, 80%, 100% {
+      transform: scale(0);
+      opacity: 0.5;
+    }
+    40% {
+      transform: scale(1);
+      opacity: 1;
+    }
+  }
+
+  .generating-workout h2 {
+    font-size: 2rem;
+    margin-bottom: 15px;
+    color: #ffffff;
+    font-weight: 600;
+  }
+
+  .generating-workout p {
+    font-size: 1.1rem;
+    color: rgba(255, 255, 255, 0.8);
+    max-width: 400px;
+    line-height: 1.6;
+  }
   
   /* אזור מידע האימון */
   .workout-info {
@@ -406,6 +468,30 @@
     .loading-screen p {
       font-size: 1rem !important;
       padding: 0 20px !important;
+    }
+
+    .generating-workout {
+      min-height: 40vh !important;
+      padding: 30px 15px !important;
+    }
+
+    .generating-spinner {
+      margin-bottom: 25px !important;
+    }
+
+    .spinner-dot {
+      width: 10px !important;
+      height: 10px !important;
+    }
+
+    .generating-workout h2 {
+      font-size: 1.4rem !important;
+      margin-bottom: 12px !important;
+    }
+
+    .generating-workout p {
+      font-size: 1rem !important;
+      padding: 0 15px !important;
     }
 
     /* הסתרת המידע הלא רלוונטי */

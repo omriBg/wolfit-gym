@@ -401,22 +401,23 @@ function CreateWorkout({ selectedDate, startTime, endTime }) {
         )}
 
         {isGenerating && (
-          <div style={{ 
-            textAlign: 'center', 
-            margin: '40px 0',
-            padding: '20px',
-            fontSize: '18px'
-          }}>
-            🔄 יוצר אימון...
+          <div className="generating-workout">
+            <div className="generating-spinner">
+              <div className="spinner-dot"></div>
+              <div className="spinner-dot"></div>
+              <div className="spinner-dot"></div>
+            </div>
+            <h2>יוצר אימון</h2>
+            <p>אנא המתן בזמן שאנו יוצרים את האימון המושלם עבורך</p>
           </div>
         )}
 
         {workoutPlan && (
           <div className="workout-result" style={{ marginTop: '30px' }}>
-            <h2>🏆 האימון שלך</h2>
+            <h2>האימון שלך</h2>
             
             <div className="workout-timeline">
-              <h3>⏰ לוח זמנים:</h3>
+              <h3>לוח זמנים:</h3>
               {workoutPlan.slots.map((slot, index) => (
                                  <div key={index} className="time-slot" style={{
                    display: 'flex',
@@ -438,16 +439,16 @@ function CreateWorkout({ selectedDate, startTime, endTime }) {
                     {slot.field ? (
                       <>
                                                  <div style={{ fontWeight: 'bold', fontSize: '16px', color: '#8b5cf6' }}>
-                           ✅ {slot.field.name}
+                           {slot.field.name}
                          </div>
                          <div style={{ fontSize: '14px', color: '#666', marginTop: '5px' }}>
-                           🏃 ספורט: {slot.sportType}
+                           ספורט: {slot.sportType}
                          </div>
                       </>
                     ) : (
                       <>
                         <div style={{ fontWeight: 'bold', fontSize: '16px', color: '#000' }}>
-                          ❌ לא זמין
+                          לא זמין
                         </div>
                         <div style={{ fontSize: '14px', color: '#666', marginTop: '5px' }}>
                           לא נמצא מגרש מתאים
@@ -489,11 +490,11 @@ function CreateWorkout({ selectedDate, startTime, endTime }) {
                   animation: 'popup 0.3s ease-out',
                   maxWidth: '400px'
                 }}>
-                  <h3 style={{ margin: '0 0 15px 0', fontSize: '20px' }}>🎉 האימון נשמר בהצלחה!</h3>
-                  <p style={{ margin: '8px 0', fontSize: '16px' }}>✅ האימון שלך הוזמן בהצלחה</p>
-                  <p style={{ margin: '8px 0', fontSize: '16px' }}>📅 תאריך: {selectedDate}</p>
-                  <p style={{ margin: '8px 0', fontSize: '16px' }}>⏰ זמן: {startTime} - {endTime}</p>
-                  <p style={{ margin: '15px 0 0 0', fontSize: '14px', color: '#666' }}>🔄 מעביר אותך לתפריט הראשי בעוד רגעים...</p>
+                  <h3 style={{ margin: '0 0 15px 0', fontSize: '20px' }}>האימון נשמר בהצלחה!</h3>
+                  <p style={{ margin: '8px 0', fontSize: '16px' }}>האימון שלך הוזמן בהצלחה</p>
+                  <p style={{ margin: '8px 0', fontSize: '16px' }}>תאריך: {selectedDate}</p>
+                  <p style={{ margin: '8px 0', fontSize: '16px' }}>זמן: {startTime} - {endTime}</p>
+                  <p style={{ margin: '15px 0 0 0', fontSize: '14px', color: '#666' }}>מעביר אותך לתפריט הראשי בעוד רגעים...</p>
                 </div>
               </>
             ) : (
@@ -514,7 +515,7 @@ function CreateWorkout({ selectedDate, startTime, endTime }) {
                      transition: 'all 0.3s ease'
                    }}
                 >
-                  {isSaving ? '💾 שומר אימון...' : '✅ אישור ושמירת האימון'}
+                  {isSaving ? 'שומר אימון...' : 'אישור ושמירת האימון'}
                 </button>
               </div>
             )}
