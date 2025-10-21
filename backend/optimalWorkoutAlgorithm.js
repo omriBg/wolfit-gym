@@ -522,7 +522,7 @@ class CompleteOptimalWorkoutScheduler {
     // בונוס חזק להעדפות משתמש (סדר חשוב!)
     const preferenceIndex = this.userPreferences.indexOf(sportId);
     if (preferenceIndex !== -1) {
-      const preferenceBonus = (this.userPreferences.length - preferenceIndex) * 1200;
+      const preferenceBonus = (this.userPreferences.length - preferenceIndex) * 3000;
       score += preferenceBonus;
       console.log(`   ❤️ בונוס העדפה: +${preferenceBonus} (מיקום ${preferenceIndex + 1} מתוך ${this.userPreferences.length})`);
     } else {
