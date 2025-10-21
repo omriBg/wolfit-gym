@@ -522,7 +522,7 @@ class CompleteOptimalWorkoutScheduler {
     // בונוס חזק להעדפות משתמש (סדר חשוב!)
     const preferenceIndex = this.userPreferences.indexOf(sportId);
     if (preferenceIndex !== -1) {
-      const preferenceBonus = (this.userPreferences.length - preferenceIndex) * 1000;
+      const preferenceBonus = (this.userPreferences.length - preferenceIndex) * 1200;
       score += preferenceBonus;
       console.log(`   ❤️ בונוס העדפה: +${preferenceBonus} (מיקום ${preferenceIndex + 1} מתוך ${this.userPreferences.length})`);
     } else {
@@ -530,7 +530,7 @@ class CompleteOptimalWorkoutScheduler {
     }
     
     // עונש חזק על עדיפות נמוכה (גיוון חשוב!)
-    const priorityPenalty = (priority - 1) * 2000;
+    const priorityPenalty = (priority - 1) * 1800;
     score -= priorityPenalty;
     console.log(`   🎯 עונש עדיפות: -${priorityPenalty} (עדיפות ${priority})`);
     
