@@ -362,7 +362,6 @@ function CreateWorkout({ selectedDate, startTime, endTime }) {
       </button>
       
       <div className="content">
-        <h1>יוצר אימון</h1>
         
         {error && (
           <div style={{ 
