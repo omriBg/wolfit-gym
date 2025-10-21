@@ -522,7 +522,7 @@ class CompleteOptimalWorkoutScheduler {
     // בונוס חזק להעדפות משתמש (סדר חשוב!)
     const preferenceIndex = this.userPreferences.indexOf(sportId);
     if (preferenceIndex !== -1) {
-      const preferenceBonus = (this.userPreferences.length - preferenceIndex) * 500;
+      const preferenceBonus = (this.userPreferences.length - preferenceIndex) * 1000;
       score += preferenceBonus;
       console.log(`   ❤️ בונוס העדפה: +${preferenceBonus} (מיקום ${preferenceIndex + 1} מתוך ${this.userPreferences.length})`);
     } else {
@@ -573,42 +573,55 @@ class CompleteOptimalWorkoutScheduler {
     
     const numTimeSlots = this.timeSlots.length;
     
-    // יוצר "אפשרויות ספורט" - עם עדיפות לגיוון
+    // יוצר "אפשרויות ספורט" - עם עדיפות נכונה
     const sportOptions = [];
     
-    // קודם כל - כל ספורט פעם ראשונה (גיוון מקסימלי)
-    for (const sportId of this.availableSports) {
+    // קודם כל - ספורטים אהובים פעם ראשונה (הכי גבוה)
+    for (const sportId of this.userPreferences) {
       sportOptions.push({
         sportId,
         usage: 0,
         id: `${sportId}_1`,
-        name: `${SPORT_MAPPING[sportId]} (ראשון)`,
-        priority: 1 // עדיפות גבוהה
+        name: `${SPORT_MAPPING[sportId]} (אהוב ראשון)`,
+        priority: 1 // עדיפות הכי גבוהה
       });
     }
     
-    // אחר כך - ספורטים לא אהובים (אם אין ברירה)
+    // אחר כך - ספורטים לא אהובים פעם ראשונה
     for (const sportId of this.availableSports) {
       if (!this.userPreferences.includes(sportId)) {
         sportOptions.push({
           sportId,
-          usage: 1,
+          usage: 0,
           id: `${sportId}_2`,
-          name: `${SPORT_MAPPING[sportId]} (לא אהוב)`,
-          priority: 2 // עדיפות נמוכה
+          name: `${SPORT_MAPPING[sportId]} (לא אהוב ראשון)`,
+          priority: 2 // עדיפות גבוהה
         });
       }
     }
     
-    // לבסוף - חזרה על ספורטים אהובים (רק אם אין ברירה)
+    // אחר כך - ספורטים אהובים בפעם השנייה
     for (const sportId of this.userPreferences) {
       sportOptions.push({
         sportId,
         usage: 1,
         id: `${sportId}_3`,
-        name: `${SPORT_MAPPING[sportId]} (חוזר)`,
-        priority: 3 // עדיפות נמוכה ביותר
+        name: `${SPORT_MAPPING[sportId]} (אהוב חוזר)`,
+        priority: 3 // עדיפות בינונית
       });
+    }
+    
+    // לבסוף - ספורטים לא אהובים בפעם השנייה
+    for (const sportId of this.availableSports) {
+      if (!this.userPreferences.includes(sportId)) {
+        sportOptions.push({
+          sportId,
+          usage: 1,
+          id: `${sportId}_4`,
+          name: `${SPORT_MAPPING[sportId]} (לא אהוב חוזר)`,
+          priority: 4 // עדיפות נמוכה ביותר
+        });
+      }
     }
     
     const matrixSize = Math.max(numTimeSlots, sportOptions.length);
