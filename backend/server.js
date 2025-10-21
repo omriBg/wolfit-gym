@@ -15,6 +15,9 @@ const compression = require('compression');
 const { pool, testConnection, waitForPoolReady } = require('./utils/database');
 const { OptimalHungarianAlgorithm, CompleteOptimalWorkoutScheduler, SPORT_MAPPING } = require('./optimalWorkoutAlgorithm');
 
+// Import workout configuration
+const { WORKOUT_CONFIG } = require('./config');
+
 // Redis services
 const redisService = require('./utils/redis');
 const fieldCacheService = require('./utils/fieldCache');
@@ -1354,8 +1357,8 @@ app.post('/api/generate-optimal-workout', workoutLimiter, authenticateToken, asy
         
         const [hours, minutes] = bookedTime.split(':');
         const bookedMinutes = parseInt(hours) * 60 + parseInt(minutes);
-        const beforeMinutes = bookedMinutes - 15;
-        const afterMinutes = bookedMinutes + 15;
+        const beforeMinutes = bookedMinutes - WORKOUT_CONFIG.SLOT_DURATION;
+        const afterMinutes = bookedMinutes + WORKOUT_CONFIG.SLOT_DURATION;
         
         const beforeHours = Math.floor(beforeMinutes / 60);
         const beforeMins = beforeMinutes % 60;
@@ -1515,8 +1518,8 @@ app.post('/api/save-workout', authenticateToken, async (req, res) => {
       // חישוב לבנות אימון לפני ואחרי
       const [hours, minutes] = starttime.split(':');
       const startMinutes = parseInt(hours) * 60 + parseInt(minutes);
-      const beforeMinutes = startMinutes - 15; // לבנות אימון לפני
-      const afterMinutes = startMinutes + 15;  // לבנות אימון אחרי
+      const beforeMinutes = startMinutes - WORKOUT_CONFIG.SLOT_DURATION; // לבנות אימון לפני
+      const afterMinutes = startMinutes + WORKOUT_CONFIG.SLOT_DURATION;  // לבנות אימון אחרי
       
       // המרה חזרה לפורמט זמן
       const beforeHours = Math.floor(beforeMinutes / 60);
@@ -1816,7 +1819,7 @@ app.get('/api/future-workouts/:userId', authenticateToken, async (req, res) => {
       const startTime = row.starttime;
       const [hours, minutes] = startTime.split(':');
       const startMinutes = parseInt(hours) * 60 + parseInt(minutes);
-      const endMinutes = startMinutes + 15; // לבנות אימון
+      const endMinutes = startMinutes + WORKOUT_CONFIG.SLOT_DURATION; // לבנות אימון
       const endHours = Math.floor(endMinutes / 60);
       const endMins = endMinutes % 60;
       const endTime = `${endHours.toString().padStart(2, '0')}:${endMins.toString().padStart(2, '0')}`;
@@ -1835,7 +1838,7 @@ app.get('/api/future-workouts/:userId', authenticateToken, async (req, res) => {
         date: localDate,
         startTime: startTime,
         endTime: endTime,
-        duration: 15, // לבנות אימון
+        duration: WORKOUT_CONFIG.SLOT_DURATION, // לבנות אימון
         fieldId: row.idfield,
         fieldName: row.fieldname,
         sportType: row.sportname,
@@ -2081,8 +2084,8 @@ app.get('/api/user-booked-times/:userId/:date', authenticateToken, async (req, r
       }
       const [hours, minutes] = bookedTime.split(':');
       const bookedMinutes = parseInt(hours) * 60 + parseInt(minutes);
-      const beforeMinutes = bookedMinutes - 15;
-      const afterMinutes = bookedMinutes + 15;
+      const beforeMinutes = bookedMinutes - WORKOUT_CONFIG.SLOT_DURATION;
+      const afterMinutes = bookedMinutes + WORKOUT_CONFIG.SLOT_DURATION;
       
       // המרה חזרה לפורמט זמן
       const beforeHours = Math.floor(beforeMinutes / 60);

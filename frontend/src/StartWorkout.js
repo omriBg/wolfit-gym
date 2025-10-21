@@ -4,7 +4,7 @@ import { useAuth } from './contexts/AuthContext';
 import './StartWorkout.css';
 import './CountdownTimer.css';
 import CountdownTimer from './CountdownTimer';
-import { API_BASE_URL } from './config';
+import { API_BASE_URL, WORKOUT_CONFIG } from './config';
 
 function StartWorkout() {
   const { user } = useAuth();
@@ -157,10 +157,10 @@ function StartWorkout() {
               
               console.log(`בדיקת רציפות: ${lastSlot.startTime} -> ${workout.startTime}, הפרש: ${timeDiff} דקות`);
               
-              // אם ההפרש הוא 15 דקות (לבנות אימון), זה אותו אימון
-              if (timeDiff === 15) {
+              // אם ההפרש הוא SLOT_DURATION דקות (לבנות אימון), זה אותו אימון
+              if (timeDiff === WORKOUT_CONFIG.SLOT_DURATION) {
                 // המשך של האימון הקיים - רציף
-                console.log(`ממשיך אימון קיים (רציף - 15 דקות)`);
+                console.log(`ממשיך אימון קיים (רציף - ${WORKOUT_CONFIG.SLOT_DURATION} דקות)`);
                 lastWorkoutGroup.push(workout);
               } else {
                 // אימון חדש - יש פער אחר
@@ -217,7 +217,7 @@ function StartWorkout() {
                     const [wHours, wMinutes] = w.startTime.split(':');
                     const wStartTime = new Date(workoutDate);
                     wStartTime.setHours(parseInt(wHours), parseInt(wMinutes), 0, 0);
-                    const wEndTime = new Date(wStartTime.getTime() + 15 * 60000); // 15 דקות
+                    const wEndTime = new Date(wStartTime.getTime() + WORKOUT_CONFIG.SLOT_DURATION * 60000); // SLOT_DURATION דקות
                     return currentTime >= wStartTime && currentTime <= wEndTime;
                   })
                 };
@@ -660,7 +660,7 @@ function StartWorkout() {
                 {workoutGroups.map((workoutGroup, groupIndex) => {
                   const firstWorkout = workoutGroup[0];
                   const lastWorkout = workoutGroup[workoutGroup.length - 1];
-                  const totalDuration = workoutGroup.length * 15; // כל שיבוץ הוא 15 דקות
+                  const totalDuration = workoutGroup.length * WORKOUT_CONFIG.SLOT_DURATION; // כל שיבוץ הוא SLOT_DURATION דקות
                   
                   return (
                     <div key={groupIndex} className="workout-session">

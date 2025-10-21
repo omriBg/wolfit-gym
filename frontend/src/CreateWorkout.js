@@ -2,7 +2,7 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from './contexts/AuthContext';
-import { API_BASE_URL } from './config';
+import { API_BASE_URL, WORKOUT_CONFIG } from './config';
 import './CreateWorkout.css';
 
 // מיפוי ספורטים (תואם לשרת שלך)
@@ -128,7 +128,7 @@ function CreateWorkout({ selectedDate, startTime, endTime }) {
     
     console.log(`⏰ יוצר לבנות אימון מ-${startTime} עד ${endTime}`);
     
-    for (let minutes = startTotalMinutes; minutes < endTotalMinutes; minutes += 15) {
+    for (let minutes = startTotalMinutes; minutes < endTotalMinutes; minutes += WORKOUT_CONFIG.SLOT_DURATION) {
       const hours = Math.floor(minutes / 60);
       const mins = minutes % 60;
       const timeStr = `${hours.toString().padStart(2, '0')}:${mins.toString().padStart(2, '0')}`;
@@ -274,7 +274,7 @@ function CreateWorkout({ selectedDate, startTime, endTime }) {
       const [endHour, endMinute] = endTime.split(':').map(Number);
       const startMinutes = startHour * 60 + startMinute;
       const endMinutes = endHour * 60 + endMinute;
-      const requiredQuarters = Math.ceil((endMinutes - startMinutes) / 15);
+      const requiredQuarters = Math.ceil((endMinutes - startMinutes) / WORKOUT_CONFIG.SLOT_DURATION);
 
       const requestBody = {
         bookings: bookings,

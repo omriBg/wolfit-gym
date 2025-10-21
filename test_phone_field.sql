@@ -21,3 +21,4 @@ WHERE tablename = 'User' AND indexname LIKE '%phone%';
 -- זה רק בדיקה - לא נוסיף משתמש אמיתי
 SELECT 'phone_number field added successfully!' as status;
 
+

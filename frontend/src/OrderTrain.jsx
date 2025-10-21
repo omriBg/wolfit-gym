@@ -6,7 +6,7 @@ import './EditUser.css';
 import DatePicker from "react-datepicker";
 import "react-datepicker/dist/react-datepicker.css";
 import CreateWorkout from './CreateWorkout';
-import { API_BASE_URL } from './config';
+import { API_BASE_URL, WORKOUT_CONFIG } from './config';
 
 function OrderTrain(){
   const { user } = useAuth();
@@ -225,7 +225,7 @@ function OrderTrain(){
       selectDate.getFullYear() === now.getFullYear();
     
     for (let hour = 6; hour <= 23; hour++) {
-      for (let minute = 0; minute < 60; minute += 15) {
+      for (let minute = 0; minute < 60; minute += WORKOUT_CONFIG.SLOT_DURATION) {
         if (hour === 23 && minute > 0) break;
         
         if (isToday) {
@@ -264,7 +264,7 @@ function OrderTrain(){
     const startTimeInMinutes = startHour * 60 + startMinute;
     const times = [];
     
-    for (let duration = 30; duration <= 120; duration += 15) {
+    for (let duration = WORKOUT_CONFIG.MIN_WORKOUT_DURATION; duration <= WORKOUT_CONFIG.MAX_WORKOUT_DURATION; duration += WORKOUT_CONFIG.SLOT_DURATION) {
       const endTimeInMinutes = startTimeInMinutes + duration;
       const endHour = Math.floor(endTimeInMinutes / 60);
       const endMinute = endTimeInMinutes % 60;
@@ -299,7 +299,7 @@ function OrderTrain(){
     const [endHour, endMinute] = endTime.split(':').map(Number);
     const startMinutes = startHour * 60 + startMinute;
     const endMinutes = endHour * 60 + endMinute;
-    const requiredQuarters = Math.ceil((endMinutes - startMinutes) / 15);
+    const requiredQuarters = Math.ceil((endMinutes - startMinutes) / WORKOUT_CONFIG.SLOT_DURATION);
 
     if (requiredQuarters > availableHours) {
       alert(`אין מספיק שעות זמינות. נדרשות ${requiredQuarters} לבנות אימון, יש לך ${availableHours} לבנות אימון.`);
