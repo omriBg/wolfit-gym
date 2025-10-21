@@ -516,27 +516,27 @@ class CompleteOptimalWorkoutScheduler {
       return -1; // בלתי אפשרי
     }
     
-    let score = 1000; // ניקוד בסיס גבוה
+    let score = 10000; // ניקוד בסיס גבוה מאוד
     console.log(`   📊 ניקוד בסיס: ${score}`);
     
     // בונוס חזק להעדפות משתמש (סדר חשוב!)
     const preferenceIndex = this.userPreferences.indexOf(sportId);
     if (preferenceIndex !== -1) {
-      const preferenceBonus = (this.userPreferences.length - preferenceIndex) * 3000;
+      const preferenceBonus = (this.userPreferences.length - preferenceIndex) * 5000; // הגדלנו ל-5000
       score += preferenceBonus;
       console.log(`   ❤️ בונוס העדפה: +${preferenceBonus} (מיקום ${preferenceIndex + 1} מתוך ${this.userPreferences.length})`);
     } else {
       console.log(`   ⚠️ אין בונוס העדפה: ספורט לא נמצא בהעדפות`);
     }
     
-    // עונש חזק על עדיפות נמוכה (גיוון חשוב!)
-    const priorityPenalty = (priority - 1) * 1800;
+    // עונש קל על עדיפות נמוכה (גיוון חשוב!)
+    const priorityPenalty = (priority - 1) * 1000; // הקטנו ל-1000
     score -= priorityPenalty;
     console.log(`   🎯 עונש עדיפות: -${priorityPenalty} (עדיפות ${priority})`);
     
-    // עונש על שימוש חוזר (רק אם זה לא עדיפות ראשונה)
+    // עונש קל על שימוש חוזר (רק אם זה לא עדיפות ראשונה)
     if (priority > 1) {
-      const usagePenalty = currentUsage * currentUsage * 100;
+      const usagePenalty = currentUsage * currentUsage * 50; // הקטנו ל-50
       score -= usagePenalty;
       console.log(`   🔄 עונש שימוש חוזר: -${usagePenalty} (שימוש ${currentUsage})`);
     } else {
@@ -561,7 +561,7 @@ class CompleteOptimalWorkoutScheduler {
     score -= timePenalty;
     console.log(`   ⏰ עונש זמן מאוחר: -${timePenalty} (מיקום ${timeIndex + 1})`);
     
-    const finalScore = Math.max(0, score);
+    const finalScore = Math.max(1000, score); // ניקוד מינימלי של 1000
     console.log(`   🎯 ניקוד סופי: ${finalScore} (לפני: ${score})`);
     
     return finalScore;
@@ -647,8 +647,8 @@ class CompleteOptimalWorkoutScheduler {
           const sportOption = sportOptions[j];
           const score = this.calculatePreciseScore(timeSlot, sportOption.sportId, sportOption.usage, sportOption.priority);
           
-          // המרה לעלות: ניקוד גבוה = עלות נמוכה
-          costMatrix[i][j] = score === -1 ? 999999 : (10000 - score);
+          // המרה לעלות: ניקוד גבוה = עלות נמוכה (רק ערכים חיוביים!)
+          costMatrix[i][j] = score === -1 ? 999999 : Math.max(1, 50000 - score);
           
           if (score !== -1) {
             console.log(`  [${i},${j}] ${timeSlot} + ${sportOption.name}: ניקוד=${score}, עלות=${costMatrix[i][j]}`);
