@@ -341,8 +341,15 @@ function CreateWorkout({ selectedDate, startTime, endTime }) {
       <div className="create-workout-container">
         <button className="back-button" onClick={() => navigate('/main-menu')}>חזרה</button>
         <div className="content">
-          <h1>🔄 טוען נתונים...</h1>
-          <p>אנא המתן בזמן שאנו טוענים את המידע הדרוש ליצירת האימון</p>
+          <div className="loading-screen">
+            <div className="loading-spinner">
+              <div className="spinner-ring"></div>
+              <div className="spinner-ring"></div>
+              <div className="spinner-ring"></div>
+            </div>
+            <h1>טוען נתונים...</h1>
+            <p>אנא המתן בזמן שאנו טוענים את המידע הדרוש ליצירת האימון</p>
+          </div>
         </div>
       </div>
     );
@@ -355,7 +362,7 @@ function CreateWorkout({ selectedDate, startTime, endTime }) {
       </button>
       
       <div className="content">
-        <h1>🎯 יוצר אימון</h1>
+        <h1>יוצר אימון</h1>
         
         {error && (
           <div style={{ 
@@ -367,7 +374,7 @@ function CreateWorkout({ selectedDate, startTime, endTime }) {
             borderRadius: '8px',
             border: '1px solid #ccc'
           }}>
-            ❌ {error}
+            {error}
             {!error.includes('אימות') && !error.includes('יותר מדי בקשות') && (
               <div style={{ marginTop: '10px' }}>
                 <button

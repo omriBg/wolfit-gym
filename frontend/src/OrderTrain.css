@@ -55,8 +55,8 @@
 .create-workout-button-container {
   position: fixed;
   bottom: 50px;
-  left: 50%;
-  transform: translateX(-50%);
+  left: 0;
+  right: 0;
   z-index: 99999;
   text-align: center;
   width: 100%;
@@ -83,7 +83,10 @@
   z-index: 99999;
   font-family: Arial, sans-serif;
   margin: 0 auto;
-  display: block;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
 }
 
 .create-workout-button:hover {
@@ -176,7 +179,7 @@ select {
   
   .create-workout-button-container {
     position: fixed !important;
-    bottom: 80px !important;
+    bottom: 20px !important;
     left: 0 !important;
     right: 0 !important;
     z-index: 999 !important;
@@ -186,6 +189,7 @@ select {
     margin-bottom: env(safe-area-inset-bottom) !important; /* תמיכה באייפון עם notch */
     padding: 0 20px !important;
     width: 100% !important;
+    transform: none !important;
   }
   
   .create-workout-button {
@@ -276,7 +280,7 @@ select {
   
   .create-workout-button-container {
     position: fixed !important;
-    bottom: 60px !important;
+    bottom: 15px !important;
     left: 0 !important;
     right: 0 !important;
     z-index: 999 !important;
@@ -285,6 +289,7 @@ select {
     align-items: center !important;
     width: 100% !important;
     padding: 0 15px !important;
+    transform: none !important;
   }
   
   .create-workout-button {

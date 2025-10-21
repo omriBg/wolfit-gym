@@ -250,19 +250,20 @@ function LoginPage() {
               <div>
                 <button
                   onClick={() => setLoginMethod('sms')}
+                  className="sms-login-button"
                   style={{
                     width: '100%',
                     maxWidth: '280px',
                     height: '50px',
                     padding: '12px 20px',
-                    background: 'linear-gradient(135deg, #8b5cf6, #a855f7)',
-                    color: '#fff',
-                    border: 'none',
+                    background: '#ffffff',
+                    color: '#333333',
+                    border: '2px solid #e0e0e0',
                     borderRadius: '12px',
                     fontSize: '16px',
                     fontWeight: '600',
                     cursor: 'pointer',
-                    boxShadow: '0 4px 12px rgba(139, 92, 246, 0.3)',
+                    boxShadow: '0 4px 12px rgba(0, 0, 0, 0.1)',
                     transition: 'all 0.3s ease',
                     display: 'flex',
                     alignItems: 'center',
@@ -270,7 +271,7 @@ function LoginPage() {
                     gap: '8px'
                   }}
                 >
-                  📱 התחבר עם SMS
+                  התחבר עם SMS
                 </button>
                 
                 {/* SMS Form - מוסתר עד ללחיצה */}

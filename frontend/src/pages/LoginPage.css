@@ -296,6 +296,57 @@ button:disabled {
   }
 }
 
+/* עיצוב כפתור SMS */
+.sms-login-button {
+  width: 100% !important;
+  max-width: 280px !important;
+  height: 50px !important;
+  background: #ffffff !important;
+  color: #333333 !important;
+  border: 2px solid #e0e0e0 !important;
+  border-radius: 12px !important;
+  font-size: 16px !important;
+  font-weight: 600 !important;
+  cursor: pointer !important;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1) !important;
+  transition: all 0.3s ease !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  gap: 8px !important;
+}
+
+.sms-login-button:hover {
+  background: #f8f9fa !important;
+  border-color: #d0d0d0 !important;
+  transform: translateY(-2px) !important;
+  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.15) !important;
+}
+
+.sms-login-button:active {
+  transform: translateY(0) !important;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1) !important;
+}
+
+/* התאמה למובייל - כפתור SMS */
+@media (max-width: 768px) {
+  .sms-login-button {
+    height: 48px !important;
+    font-size: 15px !important;
+    max-width: 100% !important;
+    border-radius: 10px !important;
+  }
+}
+
+@media (max-width: 480px) {
+  .sms-login-button {
+    height: 46px !important;
+    font-size: 14px !important;
+    padding: 10px 16px !important;
+    border-radius: 8px !important;
+  }
+}
+
 /* התאמה למסכים גדולים */
 @media (min-width: 1200px) {
   .login-logo {
@@ -326,6 +377,12 @@ button:disabled {
   .google-icon svg {
     width: 22px;
     height: 22px;
+  }
+  
+  .sms-login-button {
+    height: 55px !important;
+    font-size: 18px !important;
+    max-width: 320px !important;
   }
   
   input {
