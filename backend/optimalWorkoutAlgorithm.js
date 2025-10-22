@@ -64,27 +64,13 @@ class OptimalHungarianAlgorithm {
 
   solve() {
     // Step 1: Reduce matrix by subtracting row and column minimums
-    console.log('📊 מטריצה מקורית:');
-    this.printMatrix(this.originalMatrix);
-    
     this.reduceMatrix();
-    
-    console.log('📊 מטריצה אחרי הפחתה:');
-    this.printMatrix(this.matrix);
     
     let step = 2;
     let iterations = 0;
     const maxIterations = this.n * this.n;
     
     while (step !== 6 && iterations < maxIterations) {
-      console.log(`🔄 שלב ${step}, איטרציה ${iterations}`);
-      console.log('📊 מטריצה נוכחית:');
-      this.printMatrix(this.matrix);
-      console.log('⭐ אפסים מסומנים:', Array.from(this.starredZeros));
-      console.log('🔸 אפסים מסומנים בגרש:', Array.from(this.primedZeros));
-      console.log('📋 שורות מכוסות:', this.rowCovered.map((covered, i) => covered ? i : null).filter(i => i !== null));
-      console.log('📋 עמודות מכוסות:', this.colCovered.map((covered, i) => covered ? i : null).filter(i => i !== null));
-      
       switch (step) {
         case 2: step = this.findInitialZeros(); break;
         case 3: step = this.coverStarredColumns(); break;
@@ -95,22 +81,16 @@ class OptimalHungarianAlgorithm {
     }
     
     if (step === 6) {
-      console.log('✅ אלגוריתם הונגרי הושלם בהצלחה');
-      console.log('מספר איטרציות:', iterations);
-      console.log('📊 מטריצה סופית:');
-      this.printMatrix(this.matrix);
-      console.log('⭐ אפסים מסומנים סופיים:', Array.from(this.starredZeros));
+      console.log(`✅ אלגוריתם הונגרי הושלם בהצלחה (${iterations} איטרציות)`);
       this.extractAssignment();
       return this.assignment;
     } else {
-      console.log('❌ אלגוריתם הונגרי לא התכנס');
+      console.log('❌ אלגוריתם הונגרי לא התכנס - משתמש בפתרון חלופי');
       return this.createFallbackAssignment();
     }
   }
 
   reduceMatrix() {
-    console.log('🔧 מפחית מטריצה...');
-    
     // Subtract row minimums
     for (let i = 0; i < this.n; i++) {
       const finiteValues = this.matrix[i].filter(val => val < Infinity);
@@ -405,68 +385,44 @@ class OptimalHungarianAlgorithm {
       }
     }
     
-    console.log(`🔢 חיסרתי ${minVal} מ-${subtractedCount} אלמנטים לא מכוסים`);
-    console.log(`🔢 הוספתי ${minVal} ל-${addedCount} אלמנטים מכוסים כפול`);
   }
 
   extractAssignment() {
-    console.log('📊 מחלץ השמה סופית...');
-    console.log(`⭐ אפסים מסומנים לחילוץ: [${Array.from(this.starredZeros).join(', ')}]`);
-    
     this.assignment.fill(-1);
     
     for (const zero of this.starredZeros) {
       const [row, col] = zero.split(',').map(Number);
       this.assignment[row] = col;
-      console.log(`📊 השמה: שורה ${row} ← עמודה ${col}`);
     }
     
     const assignedCount = this.assignment.filter(val => val !== -1).length;
     console.log(`✅ השמה סופית: ${assignedCount}/${this.n} מוקצים`);
-    console.log(`📋 השמה מלאה: [${this.assignment.join(', ')}]`);
   }
 
   createFallbackAssignment() {
-    console.log('🔄 יוצר השמה חלופית...');
-    console.log('📊 מטריצה מקורית לפתרון חלופי:');
-    this.printMatrix(this.originalMatrix);
-    
     const assignment = new Array(this.n).fill(-1);
     const usedCols = new Set();
-    
-    console.log('🔍 בודק כל שורה למציאת העמודה הטובה ביותר...');
     
     // Simple greedy assignment on original matrix
     for (let i = 0; i < this.n; i++) {
       let bestCol = -1;
       let bestValue = Infinity;
       
-      console.log(`\n🔍 בודק שורה ${i}:`);
-      
       for (let j = 0; j < this.n; j++) {
         if (!usedCols.has(j) && this.originalMatrix[i][j] < bestValue) {
           bestValue = this.originalMatrix[i][j];
           bestCol = j;
-          console.log(`   ✅ עמודה ${j}: ערך ${this.originalMatrix[i][j]} (טוב יותר מ-${bestValue})`);
-        } else if (usedCols.has(j)) {
-          console.log(`   ❌ עמודה ${j}: כבר שומשה`);
-        } else {
-          console.log(`   ⚠️ עמודה ${j}: ערך ${this.originalMatrix[i][j]} (לא טוב מ-${bestValue})`);
         }
       }
       
       if (bestCol !== -1 && bestValue < Infinity) {
         assignment[i] = bestCol;
         usedCols.add(bestCol);
-        console.log(`   🎯 בחרתי עמודה ${bestCol} עם ערך ${bestValue}`);
-      } else {
-        console.log(`   ❌ לא נמצא עמודה מתאימה לשורה ${i}`);
       }
     }
     
     const assignedCount = assignment.filter(val => val !== -1).length;
     console.log(`✅ השמה חלופית: ${assignedCount}/${this.n} מוקצים`);
-    console.log(`📋 השמה חלופית: [${assignment.join(', ')}]`);
     
     return assignment;
   }
@@ -481,10 +437,7 @@ class CompleteOptimalWorkoutScheduler {
     this.availableSports = this.extractAvailableSports();
     this.maxUsagePerSport = 2;
     
-    console.log('🚀 מערכת שיבוץ אופטימלית נוצרה:');
-    console.log('⏰ זמנים:', this.timeSlots.length);
-    console.log('🏃 ספורטים זמינים:', this.availableSports);
-    console.log('❤️ העדפות משתמש:', this.userPreferences);
+    console.log(`🚀 מערכת שיבוץ אופטימלית: ${this.timeSlots.length} זמנים, ${this.availableSports.length} ספורטים`);
   }
 
   extractAvailableSports() {
@@ -501,46 +454,32 @@ class CompleteOptimalWorkoutScheduler {
 
   // חישוב ניקוד מדויק לכל שילוב זמן-ספורט
   calculatePreciseScore(timeSlot, sportId, currentUsage = 0, priority = 1) {
-    console.log(`\n🧮 מחשב ניקוד: ${timeSlot} + ${SPORT_MAPPING[sportId]} (שימוש: ${currentUsage}, עדיפות: ${priority})`);
-    
     const availableFields = this.fieldsByTime[timeSlot] || [];
     const hasAvailableField = availableFields.some(field => 
       field.sportTypeId === sportId && field.isAvailable !== false
     );
     
-    console.log(`   🔍 מגרשים זמינים לזמן: ${availableFields.length}`);
-    console.log(`   🔍 מגרשים מתאימים לספורט: ${availableFields.filter(f => f.sportTypeId === sportId).length}`);
-    
     if (!hasAvailableField) {
-      console.log(`   ❌ בלתי אפשרי: אין מגרש זמין לספורט ${SPORT_MAPPING[sportId]} בזמן ${timeSlot}`);
       return -1; // בלתי אפשרי
     }
     
     let score = 10000; // ניקוד בסיס גבוה מאוד
-    console.log(`   📊 ניקוד בסיס: ${score}`);
     
     // בונוס חזק להעדפות משתמש (סדר חשוב!)
     const preferenceIndex = this.userPreferences.indexOf(sportId);
     if (preferenceIndex !== -1) {
-      const preferenceBonus = (this.userPreferences.length - preferenceIndex) * 5000; // הגדלנו ל-5000
+      const preferenceBonus = (this.userPreferences.length - preferenceIndex) * 5000;
       score += preferenceBonus;
-      console.log(`   ❤️ בונוס העדפה: +${preferenceBonus} (מיקום ${preferenceIndex + 1} מתוך ${this.userPreferences.length})`);
-    } else {
-      console.log(`   ⚠️ אין בונוס העדפה: ספורט לא נמצא בהעדפות`);
     }
     
     // עונש קל על עדיפות נמוכה (גיוון חשוב!)
-    const priorityPenalty = (priority - 1) * 1000; // הקטנו ל-1000
+    const priorityPenalty = (priority - 1) * 1000;
     score -= priorityPenalty;
-    console.log(`   🎯 עונש עדיפות: -${priorityPenalty} (עדיפות ${priority})`);
     
     // עונש קל על שימוש חוזר (רק אם זה לא עדיפות ראשונה)
     if (priority > 1) {
-      const usagePenalty = currentUsage * currentUsage * 50; // הקטנו ל-50
+      const usagePenalty = currentUsage * currentUsage * 50;
       score -= usagePenalty;
-      console.log(`   🔄 עונש שימוש חוזר: -${usagePenalty} (שימוש ${currentUsage})`);
-    } else {
-      console.log(`   ✅ אין עונש שימוש חוזר: עדיפות ראשונה`);
     }
     
     // בונוס לאיכות המגרש
@@ -550,27 +489,19 @@ class CompleteOptimalWorkoutScheduler {
     
     if (bestField && bestField.name && bestField.name.length > 10) {
       score += 50; // מגרש איכותי
-      console.log(`   🏆 בונוס איכות מגרש: +50 (${bestField.name})`);
-    } else {
-      console.log(`   ⚠️ אין בונוס איכות מגרש: שם קצר או לא קיים`);
     }
     
     // עונש קל על זמנים מאוחרים (העדפה לזמנים מוקדמים)
     const timeIndex = this.timeSlots.indexOf(timeSlot);
     const timePenalty = timeIndex * 2;
     score -= timePenalty;
-    console.log(`   ⏰ עונש זמן מאוחר: -${timePenalty} (מיקום ${timeIndex + 1})`);
     
     const finalScore = Math.max(1000, score); // ניקוד מינימלי של 1000
-    console.log(`   🎯 ניקוד סופי: ${finalScore} (לפני: ${score})`);
-    
     return finalScore;
   }
 
   // יצירת מטריצת עלויות מושלמת לאלגוריתם ההונגרי
   createOptimalCostMatrix() {
-    console.log('🏗️ יוצר מטריצת עלויות אופטימלית...');
-    
     const numTimeSlots = this.timeSlots.length;
     
     // יוצר "אפשרויות ספורט" - עם עדיפות נכונה
@@ -625,18 +556,7 @@ class CompleteOptimalWorkoutScheduler {
     }
     
     const matrixSize = Math.max(numTimeSlots, sportOptions.length);
-    console.log(`📐 גודל מטריצה: ${matrixSize}x${matrixSize}`);
-    console.log(`🏃 אפשרויות ספורט: ${sportOptions.length}`);
-    
-    // הדפסת אפשרויות הספורט
-    console.log('🏃 אפשרויות ספורט שנוצרו:');
-    sportOptions.forEach((option, index) => {
-      console.log(`  ${index}: ${option.name} (עדיפות ${option.priority}, שימוש ${option.usage})`);
-    });
-    
     const costMatrix = Array(matrixSize).fill().map(() => Array(matrixSize).fill(0));
-    
-    console.log('🧮 מחשב עלויות למטריצה...');
     
     // מילוי המטריצה
     for (let i = 0; i < matrixSize; i++) {
@@ -669,110 +589,50 @@ class CompleteOptimalWorkoutScheduler {
       }
     }
     
-    // הדפסת מטריצת העלויות
-    console.log('📊 מטריצת עלויות שנוצרה:');
-    this.printCostMatrix(costMatrix, numTimeSlots, sportOptions.length);
+    // this.printCostMatrix(costMatrix, numTimeSlots, sportOptions.length);
     
     // שמירת מידע על האפשרויות למטרות דיבוג
     this.sportOptions = sportOptions;
     this.matrixSize = matrixSize;
     
-    console.log('✅ מטריצת עלויות נוצרה בהצלחה');
     return costMatrix;
   }
 
   // פונקציה להדפסת מטריצת עלויות עם הסברים
   printCostMatrix(matrix, numTimeSlots, numSportOptions) {
-    console.log('┌' + '─'.repeat(matrix[0].length * 10) + '┐');
-    
-    // הדפסת כותרות עמודות
-    let header = '│     ';
-    for (let j = 0; j < matrix[0].length; j++) {
-      if (j < numSportOptions) {
-        header += `S${j}`.padStart(8) + ' ';
-      } else {
-        header += `D${j}`.padStart(8) + ' ';
-      }
-    }
-    header += '│';
-    console.log(header);
-    
-    // הדפסת המטריצה
-    for (let i = 0; i < matrix.length; i++) {
-      let row = '│';
-      if (i < numTimeSlots) {
-        row += `T${i}`.padStart(4) + ' ';
-      } else {
-        row += `D${i}`.padStart(4) + ' ';
-      }
-      
-      for (let j = 0; j < matrix[i].length; j++) {
-        const val = matrix[i][j];
-        let displayVal;
-        if (val === 999999) {
-          displayVal = '∞';
-        } else {
-          displayVal = val.toString();
-        }
-        row += ` ${displayVal.padStart(7)} `;
-      }
-      row += '│';
-      console.log(row);
-    }
-    console.log('└' + '─'.repeat(matrix[0].length * 10) + '┘');
-    console.log('T = זמן, S = ספורט, D = דמה');
+    // Function kept for debugging if needed, but no console output
   }
 
   // פתרון הבעיה באלגוריתם הונגרי
   solveOptimal() {
-    console.log('🎯 מתחיל פתרון אופטימלי מלא...');
-    
     const costMatrix = this.createOptimalCostMatrix();
     const hungarian = new OptimalHungarianAlgorithm(costMatrix);
     const assignment = hungarian.solve();
-    
-    console.log('📋 תוצאת האלגוריתם ההונגרי:', assignment);
     
     return this.parseOptimalAssignment(assignment);
   }
 
   // פירוק תוצאת האלגוריתם ההונגרי לתוכנית אימון
   parseOptimalAssignment(assignment) {
-    console.log('🔍 מנתח תוצאת השמה אופטימלית...');
-    console.log('📋 השמה מהאלגוריתם ההונגרי:', assignment);
-    
     const result = [];
     const sportsUsageCount = {};
     const usedSportOptions = new Set(); // מניעת כפילות
     let totalScore = 0;
     
-    console.log('🔄 מעבד כל זמן:');
-    
     for (let i = 0; i < this.timeSlots.length; i++) {
       const timeSlot = this.timeSlots[i];
       const assignedOptionIndex = assignment[i];
-      
-      console.log(`\n⏰ עובד על זמן ${i}: ${timeSlot}`);
-      console.log(`   השמה: ${assignedOptionIndex}`);
       
       if (assignedOptionIndex !== -1 && 
           assignedOptionIndex < this.sportOptions.length) {
         
         const sportOption = this.sportOptions[assignedOptionIndex];
-        console.log(`   אפשרות ספורט: ${sportOption.name}`);
-        
         const currentUsage = sportsUsageCount[sportOption.sportId] || 0;
-        console.log(`   שימוש נוכחי בספורט: ${currentUsage}`);
         
         // בדיקה אם השמה תקינה (לא כפילות באותה אופציה)
         if (!usedSportOptions.has(assignedOptionIndex)) {
-          console.log(`   ✅ אפשרות לא שומשה עדיין`);
-          
           const selectedField = this.findOptimalField(timeSlot, sportOption.sportId);
-          console.log(`   מגרש שנמצא: ${selectedField ? selectedField.name : 'לא נמצא'}`);
-          
           const score = this.calculatePreciseScore(timeSlot, sportOption.sportId, currentUsage);
-          console.log(`   ניקוד מחושב: ${score}`);
           
           if (selectedField && score > 0) {
             sportsUsageCount[sportOption.sportId] = currentUsage + 1;
@@ -789,7 +649,6 @@ class CompleteOptimalWorkoutScheduler {
               isOptimal: true
             });
             
-            console.log(`   ✅ הצלחה: ${SPORT_MAPPING[sportOption.sportId]} (${score} נק') במגרש ${selectedField.name}`);
           } else {
             result.push({
               time: timeSlot,
@@ -797,7 +656,6 @@ class CompleteOptimalWorkoutScheduler {
               reason: 'לא נמצא מגרש מתאים',
               isOptimal: false
             });
-            console.log(`   ❌ כישלון: לא נמצא מגרש ל-${SPORT_MAPPING[sportOption.sportId]}`);
           }
         } else {
           result.push({
@@ -806,7 +664,6 @@ class CompleteOptimalWorkoutScheduler {
             reason: 'ספורט זה כבר שומש',
             isOptimal: false
           });
-          console.log(`   ⚠️ כישלון: ספורט כבר שומש`);
         }
       } else {
         result.push({
@@ -815,26 +672,10 @@ class CompleteOptimalWorkoutScheduler {
           reason: 'לא נמצא שיבוץ אופטימלי',
           isOptimal: false
         });
-        console.log(`   ❌ כישלון: לא נמצא שיבוץ (השמה: ${assignedOptionIndex})`);
       }
     }
     
     const successfulSlots = result.filter(slot => slot.field !== null).length;
-    
-    console.log(`\n🏆 סיכום פתרון אופטימלי:`);
-    console.log(`   זמנים מוצלחים: ${successfulSlots}/${this.timeSlots.length}`);
-    console.log(`   ניקוד כולל: ${totalScore}`);
-    console.log(`   שימוש בספורטים:`, sportsUsageCount);
-    
-    // הדפסת תוכנית האימון הסופית
-    console.log(`\n📅 תוכנית אימון סופית:`);
-    result.forEach((slot, index) => {
-      if (slot.field) {
-        console.log(`   ${index + 1}. ${slot.time}: ${slot.sportType} במגרש ${slot.field.name} (${slot.score} נק')`);
-      } else {
-        console.log(`   ${index + 1}. ${slot.time}: ${slot.reason}`);
-      }
-    });
     
     return {
       slots: result,
@@ -869,8 +710,6 @@ class CompleteOptimalWorkoutScheduler {
 
   // בדיקת תקינות הנתונים לפני הפתרון
   validateInputData() {
-    console.log('🔍 בודק תקינות נתונים...');
-    
     const issues = [];
     
     if (!this.timeSlots || this.timeSlots.length === 0) {
@@ -892,18 +731,14 @@ class CompleteOptimalWorkoutScheduler {
     }
     
     if (issues.length > 0) {
-      console.log('❌ בעיות בנתונים:', issues);
       return { valid: false, issues };
     }
     
-    console.log('✅ נתונים תקינים');
     return { valid: true, issues: [] };
   }
 
   // פונקציה ראשית לפתרון
   solve() {
-    console.log('🚀 מתחיל פתרון בעיית שיבוץ אופטימלי מלא...');
-    
     // בדיקת תקינות
     const validation = this.validateInputData();
     if (!validation.valid) {
@@ -913,8 +748,6 @@ class CompleteOptimalWorkoutScheduler {
     try {
       // פתרון אופטימלי
       const result = this.solveOptimal();
-      
-      console.log('🏆 פתרון אופטימלי הושלם בהצלחה!');
       return result;
       
     } catch (error) {
