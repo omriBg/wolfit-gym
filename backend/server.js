@@ -344,10 +344,13 @@ const userPreferencesSchema = Joi.object({
     .optional(),
   
   selectedSports: Joi.array()
-    .items(Joi.object({
-      id: Joi.number().integer().min(1).max(9).required(),
-      rank: Joi.number().integer().min(1).max(9).optional()
-    }).or(Joi.number().integer().min(1).max(9)))
+    .items(Joi.alternatives().try(
+      Joi.object({
+        id: Joi.number().integer().min(1).max(9).required(),
+        rank: Joi.number().integer().min(1).max(9).optional()
+      }),
+      Joi.number().integer().min(1).max(9)
+    ))
     .max(9)
     .optional()
     .messages({
