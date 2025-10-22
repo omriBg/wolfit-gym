@@ -29,6 +29,10 @@ services:
         fromDatabase:
           name: wolfit-database
           property: password
+      - key: UPSTASH_REDIS_REST_URL
+        value: "https://diverse-redfish-15494.upstash.io"
+      - key: UPSTASH_REDIS_REST_TOKEN
+        value: "ATyGAAIncDJjYmIxZTRiZGYyNWE0OWI4OGZhYTYyNDhjM2U3NTVmN3AyMTU0OTQ"
 
 databases:
   - name: wolfit-database

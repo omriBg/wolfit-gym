@@ -24,54 +24,11 @@ const { WORKOUT_CONFIG } = require('./config');
 const redisService = require('./utils/redis');
 const fieldCacheService = require('./utils/fieldCache');
 
+// Distributed locking system - מונע בקשות מקבילות בין אינסטנסים
+const distributedLock = require('./utils/distributedLock');
+
 // SMS service
 const { sendSMSCode, validatePhoneNumber, cleanPhoneNumber } = require('./smsService');
-
-// Session-based locking system - מונע בקשות מקבילות מאותו משתמש
-const userLocks = new Map();
-const LOCK_TIMEOUT = 30000; // 30 שניות timeout לנעילה
-
-const acquireUserLock = (userId) => {
-  const lockKey = `user_${userId}`;
-  const now = Date.now();
-  
-  // בדיקה אם יש נעילה פעילה
-  if (userLocks.has(lockKey)) {
-    const lockInfo = userLocks.get(lockKey);
-    if (now - lockInfo.timestamp < LOCK_TIMEOUT) {
-      console.log(`🔒 משתמש ${userId} כבר בתהליך הזמנה - נעילה פעילה`);
-      return false; // נעילה פעילה
-    } else {
-      // נעילה פגה - נמחק אותה
-      userLocks.delete(lockKey);
-      console.log(`⏰ נעילה פגה עבור משתמש ${userId} - נמחקת`);
-    }
-  }
-  
-  // יצירת נעילה חדשה
-  userLocks.set(lockKey, { timestamp: now });
-  console.log(`✅ נעילה נוצרה עבור משתמש ${userId}`);
-  return true;
-};
-
-const releaseUserLock = (userId) => {
-  const lockKey = `user_${userId}`;
-  if (userLocks.has(lockKey)) {
-    userLocks.delete(lockKey);
-    console.log(`🔓 נעילה שוחררה עבור משתמש ${userId}`);
-  }
-};
-
-// ניקוי נעילות פגות כל 5 דקות
-setInterval(() => {
-  const now = Date.now();
-  for (const [lockKey, lockInfo] of userLocks.entries()) {
-    if (now - lockInfo.timestamp > LOCK_TIMEOUT) {
-      userLocks.delete(lockKey);
-      console.log(`🧹 ניקוי נעילה פגה: ${lockKey}`);
-    }
-  }
-}, 300000); // כל 5 דקות
 
 const app = express();
 const PORT = process.env.PORT || 10000;
@@ -1687,6 +1644,7 @@ app.post('/api/generate-optimal-workout', workoutLimiter, authenticateToken, asy
 // API לשמירת אימון
 app.post('/api/save-workout', authenticateToken, async (req, res) => {
   let lockAcquired = false;
+  let lockValue = null;
   try {
     const { bookings, userId, date } = req.body;
     
@@ -1697,8 +1655,9 @@ app.post('/api/save-workout', authenticateToken, async (req, res) => {
       firstBooking: bookings?.[0]
     });
     
-    // בדיקה וקבלת נעילה למשתמש - מונע בקשות מקבילות
-    if (!acquireUserLock(userId)) {
+    // בדיקה וקבלת נעילה מבוזרת למשתמש - מונע בקשות מקבילות בין אינסטנסים
+    const lockResult = await distributedLock.acquireUserLock(userId);
+    if (!lockResult.success) {
       return res.json({
         success: false,
         message: 'הזמנה בתהליך, אנא המתן לסיום ההזמנה הקודמת...',
@@ -1706,7 +1665,8 @@ app.post('/api/save-workout', authenticateToken, async (req, res) => {
       });
     }
     lockAcquired = true;
-    console.log(`🔒 נעילה נרכשה עבור משתמש ${userId}`);
+    lockValue = lockResult.lockValue;
+    console.log(`🔒 נעילה מבוזרת נרכשה עבור משתמש ${userId}`);
     
     if (!bookings || !Array.isArray(bookings) || bookings.length === 0) {
       return res.json({
@@ -1990,9 +1950,9 @@ app.post('/api/save-workout', authenticateToken, async (req, res) => {
       error: err.message
     });
   } finally {
-    // שחרור נעילה תמיד - גם במקרה של שגיאה
-    if (lockAcquired) {
-      releaseUserLock(req.body.userId);
+    // שחרור נעילה מבוזרת תמיד - גם במקרה של שגיאה
+    if (lockAcquired && lockValue) {
+      await distributedLock.releaseUserLock(req.body.userId, lockValue);
     }
   }
 });
@@ -2129,20 +2089,23 @@ app.get('/api/future-workouts/:userId', authenticateToken, authorizeUserAccess, 
 // API לביטול אימון
 app.delete('/api/cancel-workout/:userId/:date/:fieldId/:startTime', authenticateToken, authorizeUserAccess, async (req, res) => {
   let lockAcquired = false;
+  let lockValue = null;
   const client = await pool.connect();
   
   try {
     const { userId, date, fieldId, startTime } = req.params;
     
-    // בדיקה וקבלת נעילה למשתמש - מונע ביטולים מקבילים
-    if (!acquireUserLock(userId)) {
+    // בדיקה וקבלת נעילה מבוזרת למשתמש - מונע ביטולים מקבילים בין אינסטנסים
+    const lockResult = await distributedLock.acquireUserLock(userId);
+    if (!lockResult.success) {
       return res.json({
         success: false,
         message: 'ביטול אימון בתהליך, אנא המתן לסיום הביטול הקודם...'
       });
     }
     lockAcquired = true;
-    console.log(`🔒 נעילה נרכשה עבור ביטול אימון - משתמש ${userId}`);
+    lockValue = lockResult.lockValue;
+    console.log(`🔒 נעילה מבוזרת נרכשה עבור ביטול אימון - משתמש ${userId}`);
     
     // המרת השעה חזרה לפורמט המקורי (הוספת נקודותיים)
     const formattedTime = startTime.replace(/(\d{2})(\d{2})(\d{2})/, '$1:$2:$3');
@@ -2278,9 +2241,9 @@ app.delete('/api/cancel-workout/:userId/:date/:fieldId/:startTime', authenticate
       error: err.message
     });
   } finally {
-    // שחרור נעילה תמיד - גם במקרה של שגיאה
-    if (lockAcquired) {
-      releaseUserLock(req.params.userId);
+    // שחרור נעילה מבוזרת תמיד - גם במקרה של שגיאה
+    if (lockAcquired && lockValue) {
+      await distributedLock.releaseUserLock(req.params.userId, lockValue);
     }
     // שחרור ה-client
     client.release();
@@ -2378,16 +2341,76 @@ async function initRedis() {
     if (connected) {
       console.log('✅ Redis connected successfully');
       console.log('🚀 Redis caching is ENABLED');
+      console.log('🔒 Distributed locking is ENABLED');
     } else {
       console.log('⚠️ Redis connection failed - continuing without caching');
       console.log('🚫 Redis caching is DISABLED');
+      console.log('⚠️ Distributed locking will use fallback mode');
     }
   } catch (error) {
     console.error('❌ Redis connection failed:', error);
     console.log('⚠️ Server will continue without Redis caching');
     console.log('🚫 Redis caching is DISABLED');
+    console.log('⚠️ Distributed locking will use fallback mode');
   }
 }
+
+// API לבדיקת סטטוס Redis ו-Distributed Lock
+app.get('/api/system-status', async (req, res) => {
+  try {
+    const redisStatus = redisService.getConnectionStatus();
+    const redisHealthy = await distributedLock.isRedisHealthy();
+    const lockCleanup = await distributedLock.cleanupExpiredLocks();
+    
+    res.json({
+      success: true,
+      timestamp: new Date().toISOString(),
+      redis: {
+        connected: redisStatus.connected,
+        url: redisStatus.url,
+        token: redisStatus.token,
+        healthy: redisHealthy
+      },
+      distributedLock: {
+        enabled: redisStatus.connected,
+        fallbackMode: !redisStatus.connected,
+        cleanupCount: lockCleanup
+      },
+      server: {
+        uptime: process.uptime(),
+        memory: process.memoryUsage(),
+        nodeVersion: process.version
+      }
+    });
+  } catch (error) {
+    res.status(500).json({
+      success: false,
+      message: 'שגיאה בבדיקת סטטוס המערכת',
+      error: error.message
+    });
+  }
+});
+
+// API לבדיקת נעילה של משתמש ספציפי
+app.get('/api/lock-status/:userId', authenticateToken, authorizeUserAccess, async (req, res) => {
+  try {
+    const { userId } = req.params;
+    const lockInfo = await distributedLock.getLockInfo(userId);
+    
+    res.json({
+      success: true,
+      userId,
+      lockInfo,
+      timestamp: new Date().toISOString()
+    });
+  } catch (error) {
+    res.status(500).json({
+      success: false,
+      message: 'שגיאה בבדיקת סטטוס הנעילה',
+      error: error.message
+    });
+  }
+});
 
 // Start server
 app.listen(PORT, '0.0.0.0', async () => {
