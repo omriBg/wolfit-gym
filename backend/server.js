@@ -165,6 +165,67 @@ const authenticateToken = (req, res, next) => {
   });
 };
 
+// Authorization Middleware - בדיקת בעלות על משאב
+const authorizeUserAccess = (req, res, next) => {
+  const requestedUserId = parseInt(req.params.userId);
+  const tokenUserId = req.user.userId;
+
+  if (requestedUserId !== tokenUserId) {
+    console.log(`❌ ניסיון גישה לא מורש: משתמש ${tokenUserId} מנסה לגשת למשתמש ${requestedUserId}`);
+    return res.status(403).json({ 
+      success: false, 
+      message: 'Forbidden - אין הרשאה לגשת למשאב זה' 
+    });
+  }
+
+  console.log(`✅ הרשאה אושרה: משתמש ${tokenUserId} גישה למשאב שלו`);
+  next();
+};
+
+// Admin Authorization Middleware - בדיקת הרשאות מנהל
+const authorizeAdmin = async (req, res, next) => {
+  try {
+    const userId = req.user.userId;
+    
+    console.log(`🔍 בודק הרשאות מנהל עבור משתמש: ${userId}`);
+    
+    // בדיקה שהמשתמש קיים ובעל הרשאות מנהל
+    const userCheck = await pool.query(
+      'SELECT isadmin FROM "User" WHERE iduser = $1',
+      [userId]
+    );
+    
+    if (userCheck.rows.length === 0) {
+      console.log(`❌ משתמש ${userId} לא נמצא במערכת`);
+      return res.status(404).json({
+        success: false,
+        message: 'משתמש לא נמצא במערכת'
+      });
+    }
+    
+    const isAdmin = userCheck.rows[0].isadmin;
+    
+    if (!isAdmin) {
+      console.log(`❌ ניסיון גישה לא מורש: משתמש ${userId} אינו מנהל`);
+      return res.status(403).json({
+        success: false,
+        message: 'Forbidden - הרשאות מנהל נדרשות לגשת למשאב זה'
+      });
+    }
+    
+    console.log(`✅ הרשאות מנהל אושרו: משתמש ${userId} הוא מנהל`);
+    next();
+    
+  } catch (error) {
+    console.error('❌ שגיאה בבדיקת הרשאות מנהל:', error);
+    return res.status(500).json({
+      success: false,
+      message: 'שגיאה בבדיקת הרשאות מנהל',
+      error: error.message
+    });
+  }
+};
+
 console.log('🔍 יוצר middleware לאימות JWT...');
 console.log('✅ Middleware לאימות JWT נוצר בהצלחה');
 
@@ -445,6 +506,16 @@ app.post('/api/google-login', async (req, res) => {  // הסרנו את loginLim
             ADD COLUMN picture VARCHAR(500);
           `);
           console.log('✅ עמודת picture נוספה בהצלחה');
+        }
+
+        // הוספת עמודת isAdmin אם חסרה
+        if (!existingColumns.includes('isadmin')) {
+          console.log('⚠️ עמודת isAdmin חסרה, מוסיף אותה...');
+          await readyPool.query(`
+            ALTER TABLE "User"
+            ADD COLUMN isadmin BOOLEAN DEFAULT FALSE;
+          `);
+          console.log('✅ עמודת isAdmin נוספה בהצלחה');
         }
 
         // עדכון המשתמש הקיים עם ה-googleid אם צריך
@@ -850,7 +921,7 @@ app.post('/api/register', async (req, res) => {
 });
 
 // קבלת העדפות ספורט של משתמש
-app.get('/api/user-preferences/:userId', authenticateToken, async (req, res) => {
+app.get('/api/user-preferences/:userId', authenticateToken, authorizeUserAccess, async (req, res) => {
   try {
     console.log('=== התחלת בקשת העדפות משתמש ===');
     console.log('🔑 פרטי משתמש מהטוקן:', req.user);
@@ -1136,7 +1207,7 @@ app.get('/api/sports', async (req, res) => {
 });
 
 // שמירת העדפות משתמש
-app.put('/api/save-user-preferences/:userId', async (req, res) => {
+app.put('/api/save-user-preferences/:userId', authenticateToken, authorizeUserAccess, async (req, res) => {
   try {
     const { userId } = req.params;
     const { intensitylevel, intensityLevel, selectedSports } = req.body;
@@ -1748,7 +1819,7 @@ app.post('/api/save-workout', authenticateToken, async (req, res) => {
 });
 
 // API לקבלת אימונים עתידיים של משתמש
-app.get('/api/future-workouts/:userId', authenticateToken, async (req, res) => {
+app.get('/api/future-workouts/:userId', authenticateToken, authorizeUserAccess, async (req, res) => {
   try {
     const { userId } = req.params;
     
@@ -1877,7 +1948,7 @@ app.get('/api/future-workouts/:userId', authenticateToken, async (req, res) => {
 });
 
 // API לביטול אימון
-app.delete('/api/cancel-workout/:userId/:date/:fieldId/:startTime', authenticateToken, async (req, res) => {
+app.delete('/api/cancel-workout/:userId/:date/:fieldId/:startTime', authenticateToken, authorizeUserAccess, async (req, res) => {
   let lockAcquired = false;
   const client = await pool.connect();
   
@@ -2038,7 +2109,7 @@ app.delete('/api/cancel-workout/:userId/:date/:fieldId/:startTime', authenticate
 });
 
 // API לקבלת שעות תפוסות של משתמש לתאריך מסוים
-app.get('/api/user-booked-times/:userId/:date', authenticateToken, async (req, res) => {
+app.get('/api/user-booked-times/:userId/:date', authenticateToken, authorizeUserAccess, async (req, res) => {
   try {
     const { userId, date } = req.params;
     
@@ -2152,7 +2223,7 @@ console.log('✅ Health check ready');
 // ========================================
 
 // קבלת שעות זמינות של משתמש
-app.get('/api/user-hours/:userId', authenticateToken, async (req, res) => {
+app.get('/api/user-hours/:userId', authenticateToken, authorizeUserAccess, async (req, res) => {
   try {
     const { userId } = req.params;
     
@@ -2203,7 +2274,7 @@ app.get('/api/user-hours/:userId', authenticateToken, async (req, res) => {
 });
 
 // הוספת שעות למשתמש (למנהל בלבד)
-app.post('/api/admin/add-hours/:userId', authenticateToken, async (req, res) => {
+app.post('/api/admin/add-hours/:userId', authenticateToken, authorizeAdmin, async (req, res) => {
   try {
     const { userId } = req.params;
     const { hours, reason, notes } = req.body;
@@ -2279,7 +2350,7 @@ app.post('/api/admin/add-hours/:userId', authenticateToken, async (req, res) => 
 });
 
 // הפחתת שעות ממשתמש (למנהל בלבד)
-app.post('/api/admin/subtract-hours/:userId', authenticateToken, async (req, res) => {
+app.post('/api/admin/subtract-hours/:userId', authenticateToken, authorizeAdmin, async (req, res) => {
   try {
     const { userId } = req.params;
     const { hours, reason, notes } = req.body;
@@ -2362,7 +2433,7 @@ app.post('/api/admin/subtract-hours/:userId', authenticateToken, async (req, res
 });
 
 // שימוש בשעות (בהזמנת אימון)
-app.post('/api/use-hours/:userId', authenticateToken, async (req, res) => {
+app.post('/api/use-hours/:userId', authenticateToken, authorizeUserAccess, async (req, res) => {
   try {
     const { userId } = req.params;
     const { hours, bookingId, reason } = req.body;
@@ -2446,7 +2517,7 @@ app.post('/api/use-hours/:userId', authenticateToken, async (req, res) => {
 });
 
 // החזרת שעות (בביטול הזמנה)
-app.post('/api/refund-hours/:userId', authenticateToken, async (req, res) => {
+app.post('/api/refund-hours/:userId', authenticateToken, authorizeUserAccess, async (req, res) => {
   try {
     const { userId } = req.params;
     const { hours, bookingId, reason } = req.body;
@@ -2521,7 +2592,7 @@ app.post('/api/refund-hours/:userId', authenticateToken, async (req, res) => {
 });
 
 // קבלת רשימת כל המשתמשים עם השעות שלהם (למנהל)
-app.get('/api/admin/all-users-hours', authenticateToken, async (req, res) => {
+app.get('/api/admin/all-users-hours', authenticateToken, authorizeAdmin, async (req, res) => {
   console.log('=== התחלת קבלת רשימת משתמשים ===');
   console.log('🔑 מידע משתמש מהטוקן:', req.user);
   console.log('🔑 Headers:', req.headers);
@@ -2691,6 +2762,7 @@ app.get('/api/admin/all-users-hours', authenticateToken, async (req, res) => {
         u.iduser,
         u.name as username,
         u.email,
+        u.isadmin,
         COALESCE(uh.availablehours, 0) as "availableHours",
         uh.lastupdated as "lastUpdated",
         uh.notes
@@ -2742,7 +2814,7 @@ app.get('/api/admin/all-users-hours', authenticateToken, async (req, res) => {
 });
 
 // קבלת היסטוריית שעות של משתמש
-app.get('/api/user-hours-history/:userId', authenticateToken, async (req, res) => {
+app.get('/api/user-hours-history/:userId', authenticateToken, authorizeUserAccess, async (req, res) => {
   try {
     const { userId } = req.params;
     
@@ -2779,7 +2851,7 @@ app.get('/api/user-hours-history/:userId', authenticateToken, async (req, res) =
 });
 
 // חיפוש משתמש לפי אימייל (למנהל)
-app.get('/api/admin/search-user', authenticateToken, async (req, res) => {
+app.get('/api/admin/search-user', authenticateToken, authorizeAdmin, async (req, res) => {
   try {
     const { email } = req.query;
     
@@ -2797,6 +2869,7 @@ app.get('/api/admin/search-user', authenticateToken, async (req, res) => {
         u.iduser,
         u.name as username,
         u.email,
+        u.isadmin,
         COALESCE(uh.availablehours, 0) as availableHours,
         uh.lastupdated as lastUpdated,
         uh.notes
@@ -2817,6 +2890,64 @@ app.get('/api/admin/search-user', authenticateToken, async (req, res) => {
     
   } catch (err) {
     console.error('❌ שגיאה בחיפוש משתמש:', err);
+    res.status(500).json({
+      success: false,
+      message: 'שגיאה בשרת',
+      error: err.message
+    });
+  }
+});
+
+// ניהול הרשאות מנהל (למנהל בלבד)
+app.post('/api/admin/set-admin/:userId', authenticateToken, authorizeAdmin, async (req, res) => {
+  try {
+    const { userId } = req.params;
+    const { isAdmin, reason } = req.body;
+    
+    console.log(`🔧 מעדכן הרשאות מנהל עבור משתמש ${userId}: ${isAdmin}`);
+    
+    // בדיקה שהמשתמש קיים
+    const userCheck = await pool.query(
+      'SELECT iduser, name, email, isadmin FROM "User" WHERE iduser = $1',
+      [userId]
+    );
+    
+    if (userCheck.rows.length === 0) {
+      return res.json({
+        success: false,
+        message: 'משתמש לא נמצא במערכת'
+      });
+    }
+    
+    const user = userCheck.rows[0];
+    
+    // עדכון הרשאות מנהל
+    await pool.query(
+      'UPDATE "User" SET isadmin = $1 WHERE iduser = $2',
+      [isAdmin, userId]
+    );
+    
+    // הוספה להיסטוריה
+    await pool.query(
+      'INSERT INTO UserHoursHistory (userId, action, hours, reason, createdBy) VALUES ($1, $2, $3, $4, $5)',
+      [userId, 'ADMIN_UPDATE', 0, reason || `הרשאות מנהל עודכנו ל-${isAdmin}`, 'admin']
+    );
+    
+    console.log(`✅ הרשאות מנהל עודכנו עבור ${user.name} (${user.email}): ${isAdmin}`);
+    
+    res.json({
+      success: true,
+      message: `הרשאות מנהל עודכנו עבור ${user.name}`,
+      user: {
+        id: user.iduser,
+        name: user.name,
+        email: user.email,
+        isAdmin: isAdmin
+      }
+    });
+    
+  } catch (err) {
+    console.error('❌ שגיאה בעדכון הרשאות מנהל:', err);
     res.status(500).json({
       success: false,
       message: 'שגיאה בשרת',

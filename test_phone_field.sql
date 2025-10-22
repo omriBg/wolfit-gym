@@ -22,3 +22,4 @@ WHERE tablename = 'User' AND indexname LIKE '%phone%';
 SELECT 'phone_number field added successfully!' as status;
 
 
+
