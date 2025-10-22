@@ -10,6 +10,8 @@ const cors = require('cors');
 const jwt = require('jsonwebtoken');
 const rateLimit = require('express-rate-limit');
 const compression = require('compression');
+const helmet = require('helmet');
+const Joi = require('joi');
 
 // Database connection
 const { pool, testConnection, waitForPoolReady } = require('./utils/database');
@@ -79,6 +81,7 @@ app.set('trust proxy', 1);
 
 // Middleware
 app.use(compression()); // דחיסת תגובות לשיפור ביצועים
+app.use(helmet()); // הגנות אבטחה HTTP Headers
 app.use(express.json({ limit: '10mb' }));
 app.use(express.urlencoded({ extended: true, limit: '10mb' }));
 
@@ -228,6 +231,179 @@ const authorizeAdmin = async (req, res, next) => {
 
 console.log('🔍 יוצר middleware לאימות JWT...');
 console.log('✅ Middleware לאימות JWT נוצר בהצלחה');
+
+// ========================================
+// 🛡️ INPUT VALIDATION SCHEMAS
+// ========================================
+
+// Validation Schema for User Registration
+const registerSchema = Joi.object({
+  userName: Joi.string()
+    .min(2)
+    .max(50)
+    .pattern(/^[a-zA-Z\u0590-\u05FF\s]+$/)
+    .required()
+    .messages({
+      'string.min': 'שם המשתמש חייב להכיל לפחות 2 תווים',
+      'string.max': 'שם המשתמש לא יכול להכיל יותר מ-50 תווים',
+      'string.pattern.base': 'שם המשתמש יכול להכיל רק אותיות ורווחים',
+      'any.required': 'שם המשתמש נדרש'
+    }),
+  
+  email: Joi.string()
+    .email()
+    .max(100)
+    .required()
+    .messages({
+      'string.email': 'כתובת אימייל לא תקינה',
+      'string.max': 'כתובת אימייל ארוכה מדי',
+      'any.required': 'כתובת אימייל נדרשת'
+    }),
+  
+  height: Joi.number()
+    .integer()
+    .min(100)
+    .max(250)
+    .optional()
+    .messages({
+      'number.min': 'גובה חייב להיות לפחות 100 ס"מ',
+      'number.max': 'גובה לא יכול להיות יותר מ-250 ס"מ',
+      'number.integer': 'גובה חייב להיות מספר שלם'
+    }),
+  
+  weight: Joi.number()
+    .integer()
+    .min(30)
+    .max(300)
+    .optional()
+    .messages({
+      'number.min': 'משקל חייב להיות לפחות 30 ק"ג',
+      'number.max': 'משקל לא יכול להיות יותר מ-300 ק"ג',
+      'number.integer': 'משקל חייב להיות מספר שלם'
+    }),
+  
+  birthdate: Joi.string()
+    .pattern(/^\d{2}\/\d{2}\/\d{4}$/)
+    .optional()
+    .messages({
+      'string.pattern.base': 'תאריך לידה חייב להיות בפורמט DD/MM/YYYY'
+    }),
+  
+  intensityLevel: Joi.number()
+    .integer()
+    .min(1)
+    .max(5)
+    .required()
+    .messages({
+      'number.min': 'רמת עצימות חייבת להיות בין 1-5',
+      'number.max': 'רמת עצימות חייבת להיות בין 1-5',
+      'number.integer': 'רמת עצימות חייבת להיות מספר שלם',
+      'any.required': 'רמת עצימות נדרשת'
+    }),
+  
+  googleId: Joi.string()
+    .max(255)
+    .optional(),
+  
+  selectedSports: Joi.array()
+    .items(Joi.number().integer().min(1).max(9))
+    .max(9)
+    .optional()
+    .messages({
+      'array.max': 'לא ניתן לבחור יותר מ-9 סוגי ספורט',
+      'number.min': 'מזהה ספורט לא תקין',
+      'number.max': 'מזהה ספורט לא תקין'
+    }),
+  
+  preferenceMode: Joi.string()
+    .valid('simple', 'ranked')
+    .optional(),
+  
+  phoneData: Joi.object({
+    phoneNumber: Joi.string()
+      .pattern(/^\+972\d{9}$/)
+      .optional()
+      .messages({
+        'string.pattern.base': 'מספר טלפון חייב להיות בפורמט +972XXXXXXXXX'
+      })
+  }).optional()
+});
+
+// Validation Schema for User Preferences
+const userPreferencesSchema = Joi.object({
+  intensitylevel: Joi.number()
+    .integer()
+    .min(1)
+    .max(5)
+    .optional(),
+  
+  intensityLevel: Joi.number()
+    .integer()
+    .min(1)
+    .max(5)
+    .optional(),
+  
+  selectedSports: Joi.array()
+    .items(Joi.object({
+      id: Joi.number().integer().min(1).max(9).required(),
+      rank: Joi.number().integer().min(1).max(9).optional()
+    }).or(Joi.number().integer().min(1).max(9)))
+    .max(9)
+    .optional()
+    .messages({
+      'array.max': 'לא ניתן לבחור יותר מ-9 סוגי ספורט'
+    })
+});
+
+// Validation Schema for Admin Operations
+const adminAddHoursSchema = Joi.object({
+  hours: Joi.number()
+    .integer()
+    .min(1)
+    .max(1000)
+    .required()
+    .messages({
+      'number.min': 'מספר שעות חייב להיות לפחות 1',
+      'number.max': 'מספר שעות לא יכול להיות יותר מ-1000',
+      'number.integer': 'מספר שעות חייב להיות מספר שלם',
+      'any.required': 'מספר שעות נדרש'
+    }),
+  
+  reason: Joi.string()
+    .max(500)
+    .optional(),
+  
+  notes: Joi.string()
+    .max(1000)
+    .optional()
+});
+
+// Validation Middleware
+const validateRequest = (schema) => {
+  return (req, res, next) => {
+    const { error, value } = schema.validate(req.body, { 
+      abortEarly: false,
+      stripUnknown: true 
+    });
+    
+    if (error) {
+      const errorMessages = error.details.map(detail => detail.message);
+      console.log('❌ שגיאות אימות קלט:', errorMessages);
+      
+      return res.status(400).json({
+        success: false,
+        message: 'נתונים לא תקינים',
+        errors: errorMessages
+      });
+    }
+    
+    // החלפת הנתונים המקוריים בנתונים המאומתים
+    req.body = value;
+    next();
+  };
+};
+
+console.log('✅ Input validation schemas created');
 
 // Environment variables check
 console.log('🔍 מגיע לבדיקת משתני סביבה...');
@@ -803,7 +979,7 @@ app.post('/api/update-existing-users', async (req, res) => {
 });
 
 // הוספת משתמש חדש
-app.post('/api/register', async (req, res) => {
+app.post('/api/register', validateRequest(registerSchema), async (req, res) => {
   try {
     console.log('📝 מקבל בקשה לרישום:', req.body);
     
@@ -1207,7 +1383,7 @@ app.get('/api/sports', async (req, res) => {
 });
 
 // שמירת העדפות משתמש
-app.put('/api/save-user-preferences/:userId', authenticateToken, authorizeUserAccess, async (req, res) => {
+app.put('/api/save-user-preferences/:userId', authenticateToken, authorizeUserAccess, validateRequest(userPreferencesSchema), async (req, res) => {
   try {
     const { userId } = req.params;
     const { intensitylevel, intensityLevel, selectedSports } = req.body;
@@ -2274,7 +2450,7 @@ app.get('/api/user-hours/:userId', authenticateToken, authorizeUserAccess, async
 });
 
 // הוספת שעות למשתמש (למנהל בלבד)
-app.post('/api/admin/add-hours/:userId', authenticateToken, authorizeAdmin, async (req, res) => {
+app.post('/api/admin/add-hours/:userId', authenticateToken, authorizeAdmin, validateRequest(adminAddHoursSchema), async (req, res) => {
   try {
     const { userId } = req.params;
     const { hours, reason, notes } = req.body;
@@ -2350,7 +2526,7 @@ app.post('/api/admin/add-hours/:userId', authenticateToken, authorizeAdmin, asyn
 });
 
 // הפחתת שעות ממשתמש (למנהל בלבד)
-app.post('/api/admin/subtract-hours/:userId', authenticateToken, authorizeAdmin, async (req, res) => {
+app.post('/api/admin/subtract-hours/:userId', authenticateToken, authorizeAdmin, validateRequest(adminAddHoursSchema), async (req, res) => {
   try {
     const { userId } = req.params;
     const { hours, reason, notes } = req.body;
@@ -2899,7 +3075,12 @@ app.get('/api/admin/search-user', authenticateToken, authorizeAdmin, async (req,
 });
 
 // ניהול הרשאות מנהל (למנהל בלבד)
-app.post('/api/admin/set-admin/:userId', authenticateToken, authorizeAdmin, async (req, res) => {
+app.post('/api/admin/set-admin/:userId', authenticateToken, authorizeAdmin, validateRequest(Joi.object({
+  isAdmin: Joi.boolean().required().messages({
+    'any.required': 'שדה isAdmin נדרש'
+  }),
+  reason: Joi.string().max(500).optional()
+})), async (req, res) => {
   try {
     const { userId } = req.params;
     const { isAdmin, reason } = req.body;
