@@ -3,21 +3,21 @@
 /* עיצוב כפתור גרף מדדי הכושר */
 .fitness-chart-btn {
   position: absolute;
-  top: 8px;
-  left: 8px;
-  width: 28px;
-  height: 28px;
+  top: 4px;
+  left: 4px;
+  width: 20px;
+  height: 20px;
   background: rgba(255, 255, 255, 0.95);
   border: 1px solid #ddd;
-  border-radius: 4px;
+  border-radius: 3px;
   color: #333;
-  font-size: 12px;
+  font-size: 10px;
   cursor: pointer;
   display: flex;
   align-items: center;
   justify-content: center;
   transition: all 0.2s ease;
-  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.1);
   z-index: 10;
 }
 
@@ -34,22 +34,22 @@
 /* התאמה למובייל */
 @media (max-width: 768px) {
   .fitness-chart-btn {
-    top: 6px;
-    left: 6px;
-    width: 24px;
-    height: 24px;
-    font-size: 10px;
+    top: 3px;
+    left: 3px;
+    width: 18px;
+    height: 18px;
+    font-size: 8px;
   }
 }
 
 /* התאמה לדסקטופ */
 @media (min-width: 1200px) {
   .fitness-chart-btn {
-    top: 10px;
-    left: 10px;
-    width: 32px;
-    height: 32px;
-    font-size: 14px;
+    top: 6px;
+    left: 6px;
+    width: 24px;
+    height: 24px;
+    font-size: 12px;
   }
 }
 

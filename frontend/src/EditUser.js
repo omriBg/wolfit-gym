@@ -372,6 +372,14 @@ function EditUser() {
             <div className="ranking-instructions">
               <p>📋 לחץ על הספורט כדי להוסיף/להסיר מהרשימה</p>
               <p>⬆️⬇️ השתמש בחצים כדי לשנות את סדר הדירוג</p>
+              <p>📊 לחץ על כפתור הגרף בצד שמאל למעלה כדי לראות את מרכיבי הכושר של הספורט</p>
+            </div>
+          )}
+          
+          {preferenceMode === 'simple' && (
+            <div className="ranking-instructions">
+              <p>📋 לחץ על הספורט כדי להוסיף/להסיר מהרשימה</p>
+              <p>📊 לחץ על כפתור הגרף בצד שמאל למעלה כדי לראות את מרכיבי הכושר של הספורט</p>
             </div>
           )}
 
