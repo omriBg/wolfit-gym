@@ -29,7 +29,7 @@ function EditUser() {
     { id: 5, name: 'קורדינציה', icon: '🎯', image: '/images/sports/coordination.jpg' },
     { id: 6, name: 'טניס', icon: '🎾', image: '/images/sports/tennis.jpg' },
     { id: 7, name: 'פינגפונג', icon: '🏓', image: '/images/sports/pingpong.jpg' },
-    { id: 8, name: 'אגרוף', icon: '🥊', image: '/images/sports/boxing.jpg' },
+    { id: 8, name: 'אגרוף', icon: '🥊', image: '/images/sports/dance.jpg' },
     { id: 9, name: 'אופניים', icon: '🚴', image: '/images/sports/cycling.jpg' }
   ];
 
