@@ -18,7 +18,7 @@
     "gsap": "^3.12.5",
     "pg": "^8.16.3",
     "react": "^19.1.1",
-    "react-body-highlighter": "^2.0.5",
+    "react-body-map": "^1.1.0",
     "react-datepicker": "^8.4.0",
     "react-dom": "^19.1.1",
     "react-router-dom": "^7.9.1",
