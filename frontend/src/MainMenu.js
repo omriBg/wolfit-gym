@@ -105,7 +105,7 @@ function MainMenu() {
               className="menu-button workout-booking"
               onClick={() => handleButtonClick('workout-booking')}
             >
-              <span className="button-text">הזמנת אימון</span>
+              <span className="button-text">הזמנת אימוןן</span>
               <div className="button-line"></div>
             </button>
           </div>
