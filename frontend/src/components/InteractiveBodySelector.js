@@ -1,58 +1,29 @@
 import React, { useState } from 'react';
-import { Body } from 'react-body-map';
 import './InteractiveBodySelector.css';
 
 const InteractiveBodySelector = ({ selectedAreas = [], onAreasChange }) => {
   const [currentSide, setCurrentSide] = useState('front');
   
-  // מיפוי אזורי גוף שלנו לחלקי גוף בחבילה
-  const bodyAreaMapping = {
-    'back': ['upper-back-left', 'upper-back-right', 'lower-back-left', 'lower-back-right'],
-    'shoulders': ['deltoids-left-front', 'deltoids-right-front', 'deltoids-left-back', 'deltoids-right-back'],
-    'arms': ['biceps-left', 'biceps-right', 'triceps-left-front', 'triceps-right-front', 'triceps-left-back', 'triceps-right-back'],
-    'chest': ['chest-left', 'chest-right'],
-    'core': ['abs-upper', 'abs-lower', 'obliques-left', 'obliques-right'],
-    'legs': ['quadriceps-left', 'quadriceps-right', 'adductors-left-front', 'adductors-right-front', 'adductors-left-back', 'adductors-right-back', 'gluteal-left', 'gluteal-right']
-  };
+  // רשימת אזורי גוף
+  const BODY_AREAS = [
+    { id: 'back', name: 'גב', icon: '🦴' },
+    { id: 'shoulders', name: 'כתפיים', icon: '💪' },
+    { id: 'arms', name: 'ידיים', icon: '🦾' },
+    { id: 'chest', name: 'חזה', icon: '🫁' },
+    { id: 'core', name: 'ליבה/בטן', icon: '🎯' },
+    { id: 'legs', name: 'רגליים', icon: '🦵' }
+  ];
 
-  // המרת אזורי גוף נבחרים לחלקי גוף
-  const getSelectedBodyParts = () => {
-    const selectedParts = [];
-    selectedAreas.forEach(area => {
-      if (bodyAreaMapping[area]) {
-        bodyAreaMapping[area].forEach(part => {
-          selectedParts.push({ slug: part, intensity: 1 });
-        });
-      }
-    });
-    return selectedParts;
-  };
-
-  // טיפול בלחיצה על חלק גוף
-  const handleBodyPartClick = (bodyPart) => {
-    console.log('לחצו על חלק גוף:', bodyPart);
+  // טיפול בלחיצה על אזור גוף
+  const toggleBodyArea = (areaId) => {
+    console.log('לחצו על אזור:', areaId);
     
-    const { slug } = bodyPart;
+    const newSelectedAreas = selectedAreas.includes(areaId)
+      ? selectedAreas.filter(area => area !== areaId)
+      : [...selectedAreas, areaId];
     
-    // מצא איזה אזור גוף שייך לחלק הזה
-    let areaToToggle = null;
-    for (const [area, parts] of Object.entries(bodyAreaMapping)) {
-      if (parts.includes(slug)) {
-        areaToToggle = area;
-        break;
-      }
-    }
-    
-    console.log('אזור גוף שנמצא:', areaToToggle);
-    
-    if (areaToToggle) {
-      const newSelectedAreas = selectedAreas.includes(areaToToggle)
-        ? selectedAreas.filter(area => area !== areaToToggle)
-        : [...selectedAreas, areaToToggle];
-      
-      console.log('אזורים חדשים:', newSelectedAreas);
-      onAreasChange(newSelectedAreas);
-    }
+    console.log('אזורים חדשים:', newSelectedAreas);
+    onAreasChange(newSelectedAreas);
   };
 
   return (
@@ -89,14 +60,17 @@ const InteractiveBodySelector = ({ selectedAreas = [], onAreasChange }) => {
         </div>
       </div>
       
-      <div className="body-model-container">
-        <Body
-          data={getSelectedBodyParts()}
-          side={currentSide}
-          scale={1.2}
-          onBodyPartPress={handleBodyPartClick}
-          colors={['#8b5cf6', '#b38ed8', '#8762ab', '#6d4c7a']}
-        />
+      <div className="body-areas-grid">
+        {BODY_AREAS.map((area) => (
+          <button
+            key={area.id}
+            className={`body-area-btn ${selectedAreas.includes(area.id) ? 'selected' : ''}`}
+            onClick={() => toggleBodyArea(area.id)}
+          >
+            <span className="body-area-icon">{area.icon}</span>
+            <span className="body-area-name">{area.name}</span>
+          </button>
+        ))}
       </div>
       
       <div className="selected-areas-display">
