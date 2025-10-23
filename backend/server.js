@@ -314,15 +314,6 @@ const userPreferencesSchema = Joi.object({
       'array.max': 'לא ניתן לבחור יותר מ-9 סוגי ספורט'
     }),
   
-  wantsStrengthTraining: Joi.boolean().optional(),
-  
-  selectedBodyAreas: Joi.array()
-    .items(Joi.string().valid('back', 'shoulders', 'arms', 'chest', 'core', 'legs'))
-    .max(6)
-    .optional()
-    .messages({
-      'array.max': 'לא ניתן לבחור יותר מ-6 אזורי גוף'
-    })
 });
 
 // Validation Schema for Admin Operations
@@ -964,8 +955,6 @@ app.post('/api/register', validateRequest(registerSchema), async (req, res) => {
       selectedSports,
       preferenceMode,
       phoneData,
-      wantsStrengthTraining,
-      selectedBodyAreas
     } = req.body;
 
     console.log('📱 נתוני טלפון:', phoneData);
@@ -1013,8 +1002,8 @@ app.post('/api/register', validateRequest(registerSchema), async (req, res) => {
     const newUser = await pool.query(
       `INSERT INTO "User" (
         name, email, height, weight, birthdate,
-        intensitylevel, googleid, phone_number, wantsStrengthTraining, selectedBodyAreas
-      ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10) RETURNING *`,
+        intensitylevel, googleid, phone_number
+      ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8) RETURNING *`,
       [
         userName,
         email,
@@ -1023,9 +1012,7 @@ app.post('/api/register', validateRequest(registerSchema), async (req, res) => {
         formattedBirthdate,
         intensityLevel.toString() || 'medium',
         googleId || null,
-        phoneNumber,
-        wantsStrengthTraining || false,
-        selectedBodyAreas || []
+        phoneNumber
       ]
     );
 
@@ -1191,7 +1178,7 @@ app.get('/api/user-preferences/:userId', authenticateToken, authorizeUserAccess,
     let userResult;
     try {
       userResult = await pool.query(
-        'SELECT intensitylevel, height, weight, birthdate, wantsStrengthTraining, selectedBodyAreas FROM "User" WHERE iduser = $1',
+        'SELECT intensitylevel, height, weight, birthdate FROM "User" WHERE iduser = $1',
       [userId]
     );
     console.log('📊 נתוני משתמש:', userResult.rows[0]);
@@ -1311,8 +1298,6 @@ app.get('/api/user-preferences/:userId', authenticateToken, authorizeUserAccess,
         sports: allSportsWithSelection,
         selectedSports: selectedSports,
         preferenceMode: selectedSports.length > 0 ? 'ranked' : 'simple',
-        wantsStrengthTraining: userResult.rows[0].wantsstrengthtraining || false,
-        selectedBodyAreas: userResult.rows[0].selectedbodyareas || [],
         userDetails: {
           height: userResult.rows[0].height,
           weight: userResult.rows[0].weight,
@@ -1362,7 +1347,7 @@ app.get('/api/sports', async (req, res) => {
 app.put('/api/save-user-preferences/:userId', authenticateToken, authorizeUserAccess, validateRequest(userPreferencesSchema), async (req, res) => {
   try {
     const { userId } = req.params;
-    const { intensitylevel, intensityLevel, selectedSports, wantsStrengthTraining, selectedBodyAreas } = req.body;
+    const { intensitylevel, intensityLevel, selectedSports } = req.body;
     
     // Handle both camelCase and lowercase field names
     const intensity = intensitylevel || intensityLevel;
@@ -1373,8 +1358,6 @@ app.put('/api/save-user-preferences/:userId', authenticateToken, authorizeUserAc
       intensityLevel,
       intensity,
       selectedSports,
-      wantsStrengthTraining,
-      selectedBodyAreas,
       body: req.body 
     });
 
@@ -1385,10 +1368,10 @@ app.put('/api/save-user-preferences/:userId', authenticateToken, authorizeUserAc
     );
     console.log('🔍 נתוני משתמש לפני עדכון:', userCheck.rows[0]);
 
-    // עדכון רמת עצימות ושדות אימון כוח
+    // עדכון רמת עצימות
     await pool.query(
-      'UPDATE "User" SET intensitylevel = $1, wantsStrengthTraining = $2, selectedBodyAreas = $3 WHERE iduser = $4 RETURNING *',
-      [intensity.toString(), wantsStrengthTraining || false, selectedBodyAreas || [], userId]
+      'UPDATE "User" SET intensitylevel = $1 WHERE iduser = $2 RETURNING *',
+      [intensity.toString(), userId]
     );
 
     // בדיקה שהעדכון הצליח
