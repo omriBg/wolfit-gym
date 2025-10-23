@@ -3,32 +3,33 @@
 /* עיצוב כפתור גרף מדדי הכושר */
 .fitness-chart-btn {
   position: absolute;
-  top: 8px;
-  right: 8px;
-  width: 35px;
-  height: 35px;
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-  border: none;
+  top: 50%;
+  right: -45px;
+  transform: translateY(-50%);
+  width: 30px;
+  height: 30px;
+  background: rgba(255, 255, 255, 0.9);
+  border: 1px solid #ddd;
   border-radius: 50%;
-  color: white;
-  font-size: 16px;
+  color: #333;
+  font-size: 14px;
   cursor: pointer;
   display: flex;
   align-items: center;
   justify-content: center;
   transition: all 0.3s ease;
-  box-shadow: 0 4px 12px rgba(102, 126, 234, 0.4);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
   z-index: 10;
 }
 
 .fitness-chart-btn:hover {
-  transform: scale(1.1);
-  box-shadow: 0 6px 20px rgba(102, 126, 234, 0.6);
-  background: linear-gradient(135deg, #764ba2 0%, #667eea 100%);
+  background: rgba(255, 255, 255, 1);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+  transform: translateY(-50%) scale(1.05);
 }
 
 .fitness-chart-btn:active {
-  transform: scale(0.95);
+  transform: translateY(-50%) scale(0.95);
 }
 
 .signup-preferences-container {

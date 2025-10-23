@@ -156,11 +156,11 @@ const FitnessMetricsChart = ({ sportName, sportId, isOpen, onClose }) => {
   }, [isOpen, sportId]);
 
   const getMetricColor = (value) => {
-    if (value === 0) return '#e0e0e0'; // לא רלוונטי
-    if (value === 1) return '#ffcdd2'; // נמוך - אדום בהיר
-    if (value === 2) return '#fff3e0'; // בינוני - כתום
-    if (value === 3) return '#c8e6c9'; // גבוה - ירוק
-    return '#e0e0e0';
+    if (value === 0) return '#f5f5f5'; // לא רלוונטי - אפור בהיר
+    if (value === 1) return '#e0e0e0'; // נמוך - אפור
+    if (value === 2) return '#bdbdbd'; // בינוני - אפור בינוני
+    if (value === 3) return '#757575'; // גבוה - אפור כהה
+    return '#f5f5f5';
   };
 
   const getMetricLabel = (value) => {
@@ -172,11 +172,11 @@ const FitnessMetricsChart = ({ sportName, sportId, isOpen, onClose }) => {
   };
 
   const getMetricIcon = (value) => {
-    if (value === 0) return '⚪';
-    if (value === 1) return '🔴';
-    if (value === 2) return '🟡';
-    if (value === 3) return '🟢';
-    return '⚪';
+    if (value === 0) return '○';
+    if (value === 1) return '●';
+    if (value === 2) return '●';
+    if (value === 3) return '●';
+    return '○';
   };
 
   if (!isOpen) return null;
@@ -229,19 +229,19 @@ const FitnessMetricsChart = ({ sportName, sportId, isOpen, onClose }) => {
         <div className="fitness-chart-footer">
           <div className="legend">
             <div className="legend-item">
-              <span className="legend-icon">🟢</span>
+              <span className="legend-icon">●</span>
               <span>גבוה (3)</span>
             </div>
             <div className="legend-item">
-              <span className="legend-icon">🟡</span>
+              <span className="legend-icon">●</span>
               <span>בינוני (2)</span>
             </div>
             <div className="legend-item">
-              <span className="legend-icon">🔴</span>
+              <span className="legend-icon">●</span>
               <span>נמוך (1)</span>
             </div>
             <div className="legend-item">
-              <span className="legend-icon">⚪</span>
+              <span className="legend-icon">○</span>
               <span>לא רלוונטי (0)</span>
             </div>
           </div>
