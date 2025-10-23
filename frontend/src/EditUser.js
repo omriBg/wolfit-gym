@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { useAuth } from './contexts/AuthContext';
 import './EditUser.css';
 import { API_BASE_URL } from './config';
+import FitnessMetricsChart from './components/FitnessMetricsChart';
 
 
 function EditUser() {
@@ -15,6 +16,10 @@ function EditUser() {
 
   const [saveMessage, setSaveMessage] = useState('');
   const [isSaving, setIsSaving] = useState(false);
+  
+  // מצב לניהול גרף מדדי הכושר
+  const [chartOpen, setChartOpen] = useState(false);
+  const [selectedSportForChart, setSelectedSportForChart] = useState(null);
 
   const SPORTS_LIST = [
     { id: 1, name: 'כדורגל', icon: '⚽', image: '/images/sports/football.jpg' },
@@ -24,7 +29,7 @@ function EditUser() {
     { id: 5, name: 'קורדינציה', icon: '🎯', image: '/images/sports/coordination.jpg' },
     { id: 6, name: 'טניס', icon: '🎾', image: '/images/sports/tennis.jpg' },
     { id: 7, name: 'פינגפונג', icon: '🏓', image: '/images/sports/pingpong.jpg' },
-    { id: 8, name: 'ריקוד', icon: '💃', image: '/images/sports/dance.jpg' },
+    { id: 8, name: 'אגרוף', icon: '🥊', image: '/images/sports/boxing.jpg' },
     { id: 9, name: 'אופניים', icon: '🚴', image: '/images/sports/cycling.jpg' }
   ];
 
@@ -271,6 +276,18 @@ function EditUser() {
     return { preferred, others };
   };
 
+  // פונקציה לפתיחת גרף מדדי הכושר
+  const openFitnessChart = (sport) => {
+    setSelectedSportForChart(sport);
+    setChartOpen(true);
+  };
+
+  // פונקציה לסגירת גרף מדדי הכושר
+  const closeFitnessChart = () => {
+    setChartOpen(false);
+    setSelectedSportForChart(null);
+  };
+
   const getSortedPreferred = () => {
     const preferred = getSportsByPreference().preferred;
     
@@ -400,6 +417,13 @@ function EditUser() {
                           </button>
                         </div>
                       )}
+                      <button 
+                        className="fitness-chart-btn"
+                        onClick={() => openFitnessChart(sport)}
+                        title="צפה במדדי הכושר"
+                      >
+                        📊
+                      </button>
                     </div>
                   );
                 })}
@@ -418,7 +442,14 @@ function EditUser() {
                     >
                       <img src={sport.image} alt={sport.name} className="sport-image" />
                       <div className="sport-name-overlay">{sport.name}</div>
-                    </div> 
+                    </div>
+                    <button 
+                      className="fitness-chart-btn"
+                      onClick={() => openFitnessChart(sport)}
+                      title="צפה במדדי הכושר"
+                    >
+                      📊
+                    </button>
                   </div>
                 ))}
               </div>
@@ -524,6 +555,14 @@ function EditUser() {
           </div>
         </div>
       </div>
+      
+      {/* רכיב גרף מדדי הכושר */}
+      <FitnessMetricsChart
+        sportName={selectedSportForChart?.name}
+        sportId={selectedSportForChart?.id}
+        isOpen={chartOpen}
+        onClose={closeFitnessChart}
+      />
     </div>
   );
 }

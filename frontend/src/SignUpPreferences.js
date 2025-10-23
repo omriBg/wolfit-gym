@@ -3,6 +3,7 @@ import { useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from './contexts/AuthContext';
 import './SignUpPreferences.css';
 import { API_BASE_URL } from './config';
+import FitnessMetricsChart from './components/FitnessMetricsChart';
 
 
 async function sendRegistrationToServer(userData) {
@@ -34,7 +35,7 @@ async function sendRegistrationToServer(userData) {
     { id: 5, name: 'קורדינציה', icon: '🎯', image: '/images/sports/coordination.jpg' },    // Coordination
     { id: 6, name: 'טניס', icon: '🎾', image: '/images/sports/tennis.jpg' },         // Tennis
     { id: 7, name: 'פינגפונג', icon: '🏓', image: '/images/sports/pingpong.jpg' },     // Ping Pong
-    { id: 8, name: 'ריקוד', icon: '💃', image: '/images/sports/dance.jpg' },        // Dance
+    { id: 8, name: 'אגרוף', icon: '🥊', image: '/images/sports/boxing.jpg' },        // Boxing
     { id: 9, name: 'אופניים', icon: '🚴', image: '/images/sports/cycling.jpg' }       // Cycling
   ];
 
@@ -46,6 +47,10 @@ function SignUpPreferences() {
   const [selectedSports, setSelectedSports] = useState([]);
   const [preferenceMode, setPreferenceMode] = useState('simple');
   const [intensityLevel, setIntensityLevel] = useState(2);
+  
+  // מצב לניהול גרף מדדי הכושר
+  const [chartOpen, setChartOpen] = useState(false);
+  const [selectedSportForChart, setSelectedSportForChart] = useState(null);
 
 
   useEffect(() => {
@@ -194,6 +199,18 @@ function SignUpPreferences() {
     return [...selectedSportsData, ...unselectedSports];
   }
 
+  // פונקציה לפתיחת גרף מדדי הכושר
+  const openFitnessChart = (sport) => {
+    setSelectedSportForChart(sport);
+    setChartOpen(true);
+  };
+
+  // פונקציה לסגירת גרף מדדי הכושר
+  const closeFitnessChart = () => {
+    setChartOpen(false);
+    setSelectedSportForChart(null);
+  };
+
   async function handleCompleteSignUp() {
     if (selectedSports.length === 0) {
       alert('אנא בחר לפחות ספורט אחד');
@@ -316,6 +333,13 @@ function SignUpPreferences() {
                           </button>
                         </div>
                       )}
+                      <button 
+                        className="fitness-chart-btn"
+                        onClick={() => openFitnessChart(sport)}
+                        title="צפה במדדי הכושר"
+                      >
+                        📊
+                      </button>
                     </div>
                   );
                 })}
@@ -334,7 +358,14 @@ function SignUpPreferences() {
                       >
                         <img src={sport.image} alt={sport.name} className="sport-image" />
                         <div className="sport-name-overlay">{sport.name}</div>
-                      </div> 
+                      </div>
+                      <button 
+                        className="fitness-chart-btn"
+                        onClick={() => openFitnessChart(sport)}
+                        title="צפה במדדי הכושר"
+                      >
+                        📊
+                      </button>
                     </div>
                   );
                 })}
@@ -403,6 +434,14 @@ function SignUpPreferences() {
           </div>
         </div>
       </div>
+      
+      {/* רכיב גרף מדדי הכושר */}
+      <FitnessMetricsChart
+        sportName={selectedSportForChart?.name}
+        sportId={selectedSportForChart?.id}
+        isOpen={chartOpen}
+        onClose={closeFitnessChart}
+      />
     </div>
   );
 }

@@ -315,7 +315,7 @@ app.post('/api/google-login', async (req, res) => {  // הסרנו את loginLim
             ('קורדינציה'),
             ('טניס'),
             ('פינגפונג'),
-            ('ריקוד'),
+            ('אגרוף'),
             ('אופניים')
           ON CONFLICT DO NOTHING;
         `);
