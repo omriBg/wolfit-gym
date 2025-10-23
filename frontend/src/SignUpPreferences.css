@@ -4,7 +4,7 @@
 .fitness-chart-btn {
   position: absolute;
   top: 8px;
-  right: 8px;
+  left: 8px;
   width: 28px;
   height: 28px;
   background: rgba(255, 255, 255, 0.95);
@@ -35,7 +35,7 @@
 @media (max-width: 768px) {
   .fitness-chart-btn {
     top: 6px;
-    right: 6px;
+    left: 6px;
     width: 24px;
     height: 24px;
     font-size: 10px;
@@ -46,7 +46,7 @@
 @media (min-width: 1200px) {
   .fitness-chart-btn {
     top: 10px;
-    right: 10px;
+    left: 10px;
     width: 32px;
     height: 32px;
     font-size: 14px;

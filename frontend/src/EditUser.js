@@ -347,7 +347,7 @@ function EditUser() {
         <div className="fitness-metrics-instruction">
           <div className="instruction-icon">📊</div>
           <div className="instruction-text">
-            <strong>טיפ:</strong> לחץ על כפתור 📊 ליד כל ספורט כדי לראות את מדדי הכושר שלו
+            <strong>טיפ:</strong> לחץ על כפתור 📊 בצד שמאל למעלה של כל תמונה כדי לראות את מרכיבי הכושר של הספורט
           </div>
         </div>
 
