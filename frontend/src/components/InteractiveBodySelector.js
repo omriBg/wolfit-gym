@@ -1,43 +1,41 @@
 import React, { useState } from 'react';
-import { Body } from 'react-body-map';
+import Model, { ModelType, MuscleType } from 'react-body-highlighter';
 import './InteractiveBodySelector.css';
 
 const InteractiveBodySelector = ({ selectedAreas = [], onAreasChange }) => {
-  const [currentSide, setCurrentSide] = useState('front');
+  const [currentSide, setCurrentSide] = useState(ModelType.ANTERIOR);
   
-  // מיפוי אזורי גוף שלנו לחלקי גוף בחבילה
+  // מיפוי אזורי גוף שלנו לחלקי שריר בחבילה
   const bodyAreaMapping = {
-    'back': ['upper-back-left', 'upper-back-right', 'lower-back-left', 'lower-back-right'],
-    'shoulders': ['deltoids-left-front', 'deltoids-right-front', 'deltoids-left-back', 'deltoids-right-back'],
-    'arms': ['biceps-left', 'biceps-right', 'triceps-left-front', 'triceps-right-front', 'triceps-left-back', 'triceps-right-back'],
-    'chest': ['chest-left', 'chest-right'],
-    'core': ['abs-upper', 'abs-lower', 'obliques-left', 'obliques-right'],
-    'legs': ['quadriceps-left', 'quadriceps-right', 'adductors-left-front', 'adductors-right-front', 'adductors-left-back', 'adductors-right-back', 'gluteal-left', 'gluteal-right']
+    'back': [MuscleType.UPPER_BACK, MuscleType.LOWER_BACK, MuscleType.TRAPEZIUS],
+    'shoulders': [MuscleType.FRONT_DELTOIDS, MuscleType.BACK_DELTOIDS],
+    'arms': [MuscleType.BICEPS, MuscleType.TRICEPS, MuscleType.FOREARM],
+    'chest': [MuscleType.CHEST],
+    'core': [MuscleType.ABS, MuscleType.OBLIQUES],
+    'legs': [MuscleType.QUADRICEPS, MuscleType.HAMSTRING, MuscleType.GLUTEAL, MuscleType.CALVES]
   };
 
-  // המרת אזורי גוף נבחרים לחלקי גוף
-  const getSelectedBodyParts = () => {
-    const selectedParts = [];
+  // המרת אזורי גוף נבחרים לחלקי שריר
+  const getSelectedMuscles = () => {
+    const selectedMuscles = [];
     selectedAreas.forEach(area => {
       if (bodyAreaMapping[area]) {
-        bodyAreaMapping[area].forEach(part => {
-          selectedParts.push({ slug: part, intensity: 1 });
+        bodyAreaMapping[area].forEach(muscle => {
+          selectedMuscles.push(muscle);
         });
       }
     });
-    return selectedParts;
+    return selectedMuscles;
   };
 
-  // טיפול בלחיצה על חלק גוף
-  const handleBodyPartClick = (bodyPart) => {
-    console.log('לחצו על חלק גוף:', bodyPart);
+  // טיפול בלחיצה על שריר
+  const handleMuscleClick = (muscle) => {
+    console.log('לחצו על שריר:', muscle);
     
-    const { slug } = bodyPart;
-    
-    // מצא איזה אזור גוף שייך לחלק הזה
+    // מצא איזה אזור גוף שייך לשריר הזה
     let areaToToggle = null;
-    for (const [area, parts] of Object.entries(bodyAreaMapping)) {
-      if (parts.includes(slug)) {
+    for (const [area, muscles] of Object.entries(bodyAreaMapping)) {
+      if (muscles.includes(muscle)) {
         areaToToggle = area;
         break;
       }
@@ -75,14 +73,14 @@ const InteractiveBodySelector = ({ selectedAreas = [], onAreasChange }) => {
         
         <div className="body-side-toggle">
           <button 
-            className={currentSide === 'front' ? 'active' : ''}
-            onClick={() => setCurrentSide('front')}
+            className={currentSide === ModelType.ANTERIOR ? 'active' : ''}
+            onClick={() => setCurrentSide(ModelType.ANTERIOR)}
           >
             חזית
           </button>
           <button 
-            className={currentSide === 'back' ? 'active' : ''}
-            onClick={() => setCurrentSide('back')}
+            className={currentSide === ModelType.POSTERIOR ? 'active' : ''}
+            onClick={() => setCurrentSide(ModelType.POSTERIOR)}
           >
             גב
           </button>
@@ -90,12 +88,12 @@ const InteractiveBodySelector = ({ selectedAreas = [], onAreasChange }) => {
       </div>
       
       <div className="body-model-container">
-        <Body
-          data={getSelectedBodyParts()}
-          side={currentSide}
-          scale={1.0}
-          onBodyPartPress={handleBodyPartClick}
+        <Model
+          type={currentSide}
+          muscles={getSelectedMuscles()}
+          onMuscleClick={handleMuscleClick}
           colors={['#8b5cf6', '#b38ed8', '#8762ab', '#6d4c7a']}
+          style={{ width: '300px', height: '400px' }}
         />
       </div>
       
