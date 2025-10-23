@@ -1,27 +1,27 @@
 /* עיצוב כפתור גרף מדדי הכושר */
 .fitness-chart-btn {
-  position: absolute;
-  top: 1px;
-  left: 1px;
-  width: 2px;
-  height: 2px;
-  background: transparent;
-  border: none;
-  border-radius: 0;
-  color: rgba(255, 255, 255, 0.1);
-  font-size: 2px;
-  cursor: pointer;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  transition: all 0.2s ease;
-  box-shadow: none;
-  z-index: 10;
-  padding: 0;
-  margin: 0;
-  line-height: 1;
-  min-width: 2px;
-  min-height: 2px;
+  position: absolute !important;
+  top: 1px !important;
+  left: 1px !important;
+  width: 2px !important;
+  height: 2px !important;
+  background: transparent !important;
+  border: none !important;
+  border-radius: 0 !important;
+  color: rgba(255, 255, 255, 0.1) !important;
+  font-size: 2px !important;
+  cursor: pointer !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  transition: all 0.2s ease !important;
+  box-shadow: none !important;
+  z-index: 10 !important;
+  padding: 0 !important;
+  margin: 0 !important;
+  line-height: 1 !important;
+  min-width: 2px !important;
+  min-height: 2px !important;
 }
 
 .fitness-chart-btn:hover {
