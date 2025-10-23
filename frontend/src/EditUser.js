@@ -13,6 +13,10 @@ function EditUser() {
   const [preferenceMode, setPreferenceMode] = useState('simple');
   const [intensityLevel, setIntensityLevel] = useState(2);
   const [isLoading, setIsLoading] = useState(false);
+  
+  // שדות חדשים לבחירת אזורי גוף
+  const [wantsStrengthTraining, setWantsStrengthTraining] = useState(false);
+  const [selectedBodyAreas, setSelectedBodyAreas] = useState([]);
 
   const [saveMessage, setSaveMessage] = useState('');
   const [isSaving, setIsSaving] = useState(false);
@@ -31,6 +35,16 @@ function EditUser() {
     { id: 7, name: 'פינגפונג', icon: '🏓', image: '/images/sports/pingpong.jpg' },
     { id: 8, name: 'אגרוף', icon: '🥊', image: '/images/sports/dance.jpg' },
     { id: 9, name: 'אופניים', icon: '🚴', image: '/images/sports/cycling.jpg' }
+  ];
+
+  // רשימת אזורי גוף
+  const BODY_AREAS = [
+    { id: 'back', name: 'גב', icon: '🦴' },
+    { id: 'shoulders', name: 'כתפיים', icon: '💪' },
+    { id: 'arms', name: 'ידיים', icon: '🦾' },
+    { id: 'chest', name: 'חזה', icon: '🫁' },
+    { id: 'core', name: 'ליבה/בטן', icon: '🎯' },
+    { id: 'legs', name: 'רגליים', icon: '🦵' }
   ];
 
   const loadUserPreferences = async () => {
@@ -65,11 +79,13 @@ function EditUser() {
         
           if (result.success && result.data) {
             console.log('✅ התקבלו נתונים תקינים מהשרת');
-            const { intensityLevel, sports, preferenceMode } = result.data;
+            const { intensityLevel, sports, preferenceMode, wantsStrengthTraining, selectedBodyAreas } = result.data;
             
             console.log('💪 רמת עצימות:', intensityLevel);
             console.log('🎯 כל הספורטים:', sports);
             console.log('🔄 מצב העדפה:', preferenceMode);
+            console.log('💪 אימון כוח:', wantsStrengthTraining);
+            console.log('🎯 אזורי גוף:', selectedBodyAreas);
             
             console.log('📝 מתחיל לעבד את הנתונים...');
             
@@ -99,6 +115,8 @@ function EditUser() {
             setIntensityLevel(intensityLevel || 2);
             setSelectedSports(selectedIds);
             setPreferenceMode(preferenceMode || 'simple');
+            setWantsStrengthTraining(wantsStrengthTraining || false);
+            setSelectedBodyAreas(selectedBodyAreas || []);
           
           console.log('State עודכן בהצלחה');
         } else {
@@ -106,18 +124,24 @@ function EditUser() {
           setSelectedSports([]);
           setPreferenceMode('simple');
           setIntensityLevel(2);
+          setWantsStrengthTraining(false);
+          setSelectedBodyAreas([]);
         }
       } else {
         console.log('שגיאה בתגובה מהשרת:', response.status);
         setSelectedSports([]);
         setPreferenceMode('simple');
         setIntensityLevel(2);
+        setWantsStrengthTraining(false);
+        setSelectedBodyAreas([]);
       }
     } catch (error) {
       console.error('שגיאה בטעינת העדפות:', error);
       setSelectedSports([]);
       setPreferenceMode('simple');
       setIntensityLevel(2);
+      setWantsStrengthTraining(false);
+      setSelectedBodyAreas([]);
     } finally {
       setIsLoading(false);
     }
@@ -148,7 +172,9 @@ function EditUser() {
     try {
       const requestData = {
         intensityLevel: intensityLevel,
-        selectedSports: selectedSports
+        selectedSports: selectedSports,
+        wantsStrengthTraining: wantsStrengthTraining,
+        selectedBodyAreas: selectedBodyAreas
       };
 
       console.log('📤 נתונים לשליחה:', JSON.stringify(requestData, null, 2));
@@ -253,6 +279,20 @@ function EditUser() {
       currentSelected[index] = currentSelected[index + 1];
       currentSelected[index + 1] = temp;
       setSelectedSports(currentSelected);
+    }
+  };
+
+  // פונקציות לטיפול באזורי גוף
+  const toggleBodyArea = (areaId) => {
+    const currentSelected = selectedBodyAreas.slice();
+    const isCurrentlySelected = currentSelected.includes(areaId);
+    
+    if (isCurrentlySelected) {
+      const newSelected = currentSelected.filter(id => id !== areaId);
+      setSelectedBodyAreas(newSelected);
+    } else {
+      currentSelected.push(areaId);
+      setSelectedBodyAreas(currentSelected);
     }
   };
 
@@ -477,6 +517,39 @@ function EditUser() {
                   </button>
                 ))}
               </div>
+            </div>
+
+            {/* שדה חדש לבחירת אימון כוח */}
+            <div className="strength-training-section">
+              <h4>💪 אימון כוח:</h4>
+              <div className="strength-training-option">
+                <label className="strength-checkbox">
+                  <input
+                    type="checkbox"
+                    checked={wantsStrengthTraining}
+                    onChange={(e) => setWantsStrengthTraining(e.target.checked)}
+                  />
+                  <span className="checkbox-text">אני רוצה לשלב תרגילי כוח באימון</span>
+                </label>
+              </div>
+              
+              {wantsStrengthTraining && (
+                <div className="body-areas-section">
+                  <h5>🎯 בחר איזה אזור בגוף אתה רוצה לעבוד:</h5>
+                  <div className="body-areas-grid">
+                    {BODY_AREAS.map((area) => (
+                      <button
+                        key={area.id}
+                        className={`body-area-btn ${selectedBodyAreas.includes(area.id) ? 'selected' : ''}`}
+                        onClick={() => toggleBodyArea(area.id)}
+                      >
+                        <span className="body-area-icon">{area.icon}</span>
+                        <span className="body-area-name">{area.name}</span>
+                      </button>
+                    ))}
+                  </div>
+                </div>
+              )}
             </div>
             
             {preferenceMode === 'ranked' && selectedSports.length > 0 && (

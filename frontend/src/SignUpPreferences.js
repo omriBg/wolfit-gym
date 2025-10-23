@@ -39,6 +39,16 @@ async function sendRegistrationToServer(userData) {
     { id: 9, name: 'אופניים', icon: '🚴', image: '/images/sports/cycling.jpg' }       // Cycling
   ];
 
+  // רשימת אזורי גוף
+  const BODY_AREAS = [
+    { id: 'back', name: 'גב', icon: '🦴' },
+    { id: 'shoulders', name: 'כתפיים', icon: '💪' },
+    { id: 'arms', name: 'ידיים', icon: '🦾' },
+    { id: 'chest', name: 'חזה', icon: '🫁' },
+    { id: 'core', name: 'ליבה/בטן', icon: '🎯' },
+    { id: 'legs', name: 'רגליים', icon: '🦵' }
+  ];
+
 function SignUpPreferences() {
   const navigate = useNavigate();
   const location = useLocation();
@@ -47,6 +57,10 @@ function SignUpPreferences() {
   const [selectedSports, setSelectedSports] = useState([]);
   const [preferenceMode, setPreferenceMode] = useState('simple');
   const [intensityLevel, setIntensityLevel] = useState(2);
+  
+  // שדות חדשים לבחירת אזורי גוף
+  const [wantsStrengthTraining, setWantsStrengthTraining] = useState(false);
+  const [selectedBodyAreas, setSelectedBodyAreas] = useState([]);
   
   // מצב לניהול גרף מדדי הכושר
   const [chartOpen, setChartOpen] = useState(false);
@@ -98,6 +112,20 @@ function SignUpPreferences() {
       currentSelected[index] = currentSelected[index + 1];
       currentSelected[index + 1] = temp;
       setSelectedSports(currentSelected);
+    }
+  };
+
+  // פונקציות לטיפול באזורי גוף
+  const toggleBodyArea = (areaId) => {
+    const currentSelected = selectedBodyAreas.slice();
+    const isCurrentlySelected = currentSelected.includes(areaId);
+    
+    if (isCurrentlySelected) {
+      const newSelected = currentSelected.filter(id => id !== areaId);
+      setSelectedBodyAreas(newSelected);
+    } else {
+      currentSelected.push(areaId);
+      setSelectedBodyAreas(currentSelected);
     }
   };
 
@@ -221,7 +249,9 @@ function SignUpPreferences() {
       intensityLevel: intensityLevel,
       preferenceMode: preferenceMode,
       selectedSports: selectedSports,
-      sportsRanked: getSportsForAlgorithm() // המערך הממוין לאלגוריתם
+      sportsRanked: getSportsForAlgorithm(), // המערך הממוין לאלגוריתם
+      wantsStrengthTraining: wantsStrengthTraining,
+      selectedBodyAreas: selectedBodyAreas
     };
       const completeUserData = {
         ...userData,
@@ -394,6 +424,39 @@ function SignUpPreferences() {
                   </button>
                 ))}
               </div>
+            </div>
+
+            {/* שדה חדש לבחירת אימון כוח */}
+            <div className="strength-training-section">
+              <h4>💪 אימון כוח:</h4>
+              <div className="strength-training-option">
+                <label className="strength-checkbox">
+                  <input
+                    type="checkbox"
+                    checked={wantsStrengthTraining}
+                    onChange={(e) => setWantsStrengthTraining(e.target.checked)}
+                  />
+                  <span className="checkbox-text">אני רוצה לשלב תרגילי כוח באימון</span>
+                </label>
+              </div>
+              
+              {wantsStrengthTraining && (
+                <div className="body-areas-section">
+                  <h5>🎯 בחר איזה אזור בגוף אתה רוצה לעבוד:</h5>
+                  <div className="body-areas-grid">
+                    {BODY_AREAS.map((area) => (
+                      <button
+                        key={area.id}
+                        className={`body-area-btn ${selectedBodyAreas.includes(area.id) ? 'selected' : ''}`}
+                        onClick={() => toggleBodyArea(area.id)}
+                      >
+                        <span className="body-area-icon">{area.icon}</span>
+                        <span className="body-area-name">{area.name}</span>
+                      </button>
+                    ))}
+                  </div>
+                </div>
+              )}
             </div>
             
             {preferenceMode === 'ranked' && selectedSports.length > 0 && (

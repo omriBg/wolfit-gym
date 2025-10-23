@@ -12,7 +12,9 @@ CREATE TABLE IF NOT EXISTS "User" (
     intensityLevel VARCHAR(20) DEFAULT 'medium',
     googleId VARCHAR(255) UNIQUE,
     profilePicture VARCHAR(500),
-    authProvider VARCHAR(20) DEFAULT 'local'
+    authProvider VARCHAR(20) DEFAULT 'local',
+    wantsStrengthTraining BOOLEAN DEFAULT FALSE,
+    selectedBodyAreas TEXT[] DEFAULT '{}'
 );
 
 -- Create SportTypes table
