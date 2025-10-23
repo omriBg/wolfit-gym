@@ -1,11 +1,11 @@
 /* עיצוב כפתור גרף מדדי הכושר */
 .fitness-chart-btn {
   position: absolute;
-  top: 2px;
+  top: 6px;
   left: 2px;
   width: 24px;
   height: 24px;
-  background: rgba(0, 0, 0, 0.6);
+  background: rgba(0, 0, 0, 0.3);
   border: none;
   border-radius: 50%;
   color: white;
@@ -15,7 +15,7 @@
   align-items: center;
   justify-content: center;
   transition: all 0.2s ease;
-  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
   z-index: 10;
 }
 
@@ -32,7 +32,7 @@
 /* התאמה למובייל */
 @media (max-width: 768px) {
   .fitness-chart-btn {
-    top: 1px;
+    top: 4px;
     left: 1px;
     width: 20px;
     height: 20px;
@@ -43,7 +43,7 @@
 /* התאמה לדסקטופ */
 @media (min-width: 1200px) {
   .fitness-chart-btn {
-    top: 3px;
+    top: 8px;
     left: 3px;
     width: 28px;
     height: 28px;
