@@ -30,6 +30,8 @@ const InteractiveBodySelector = ({ selectedAreas = [], onAreasChange }) => {
 
   // טיפול בלחיצה על שריר
   const handleMuscleClick = (muscle) => {
+    console.log('לחצו על שריר:', muscle);
+    
     // מצא איזה אזור גוף שייך לשריר הזה
     let areaToToggle = null;
     for (const [area, muscles] of Object.entries(bodyAreaMapping)) {
@@ -39,11 +41,14 @@ const InteractiveBodySelector = ({ selectedAreas = [], onAreasChange }) => {
       }
     }
     
+    console.log('אזור גוף שנמצא:', areaToToggle);
+    
     if (areaToToggle) {
       const newSelectedAreas = selectedAreas.includes(areaToToggle)
         ? selectedAreas.filter(area => area !== areaToToggle)
         : [...selectedAreas, areaToToggle];
       
+      console.log('אזורים חדשים:', newSelectedAreas);
       onAreasChange(newSelectedAreas);
     }
   };
@@ -52,6 +57,20 @@ const InteractiveBodySelector = ({ selectedAreas = [], onAreasChange }) => {
     <div className="interactive-body-selector">
       <div className="body-selector-header">
         <h4>בחר איזה אזור בגוף אתה רוצה לעבוד:</h4>
+        
+        {/* רשימת אופציות למעלה */}
+        <div className="body-areas-options">
+          <h5>אפשרויות לבחירה:</h5>
+          <div className="areas-list">
+            <span className="area-option">🦴 גב</span>
+            <span className="area-option">💪 כתפיים</span>
+            <span className="area-option">🦾 ידיים</span>
+            <span className="area-option">🫁 חזה</span>
+            <span className="area-option">🎯 ליבה/בטן</span>
+            <span className="area-option">🦵 רגליים</span>
+          </div>
+        </div>
+        
         <div className="body-side-toggle">
           <button 
             className={currentSide === ModelType.ANTERIOR ? 'active' : ''}
