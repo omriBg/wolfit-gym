@@ -259,13 +259,6 @@ function SignUpPreferences() {
         <h1>העדפות ספורט</h1>
         <p>בחר את הספורטים והעצמיות המועדפת עליך</p>
         
-        {/* הדרכה על כפתור מדדי הכושר */}
-        <div className="fitness-metrics-instruction">
-          <div className="instruction-icon">📊</div>
-          <div className="instruction-text">
-            <strong>טיפ:</strong> לחץ על כפתור 📊 בצד שמאל למעלה של כל תמונה כדי לראות את מרכיבי הכושר של הספורט
-          </div>
-        </div>
 
         <div className="sports-section">
           <div className="preference-mode-selector">
@@ -284,20 +277,13 @@ function SignUpPreferences() {
             </button>
           </div>
                   
-          {preferenceMode === 'ranked' && (
-            <div className="ranking-instructions">
-              <p>📋 לחץ על הספורט כדי להוסיף/להסיר מהרשימה</p>
+          <div className="ranking-instructions">
+            <p>📋 לחץ על הספורט כדי להוסיף/להסיר מהרשימה</p>
+            {preferenceMode === 'ranked' && (
               <p>⬆️⬇️ השתמש בחצים כדי לשנות את סדר הדירוג</p>
-              <p>📊 לחץ על כפתור הגרף בצד שמאל למעלה כדי לראות את מרכיבי הכושר של הספורט</p>
-            </div>
-          )}
-          
-          {preferenceMode === 'simple' && (
-            <div className="ranking-instructions">
-              <p>📋 לחץ על הספורט כדי להוסיף/להסיר מהרשימה</p>
-              <p>📊 לחץ על כפתור הגרף בצד שמאל למעלה כדי לראות את מרכיבי הכושר של הספורט</p>
-            </div>
-          )}
+            )}
+            <p>📊 לחץ על כפתור הגרף בצד שמאל למעלה כדי לראות את מרכיבי הכושר של הספורט</p>
+          </div>
 
           <div className="sports-container">
             <div className="sports-column">
