@@ -258,6 +258,14 @@ function SignUpPreferences() {
       <div className="content">
         <h1>העדפות ספורט</h1>
         <p>בחר את הספורטים והעצמיות המועדפת עליך</p>
+        
+        {/* הדרכה על כפתור מדדי הכושר */}
+        <div className="fitness-metrics-instruction">
+          <div className="instruction-icon">📊</div>
+          <div className="instruction-text">
+            <strong>טיפ:</strong> לחץ על כפתור 📊 ליד כל ספורט כדי לראות את מדדי הכושר שלו
+          </div>
+        </div>
 
         <div className="sports-section">
           <div className="preference-mode-selector">

@@ -342,6 +342,14 @@ function EditUser() {
       <div className="content">
         <h1>עריכת משתמש</h1>
         <p>ערוך את העדפות הספורט והעצימות שלך</p>
+        
+        {/* הדרכה על כפתור מדדי הכושר */}
+        <div className="fitness-metrics-instruction">
+          <div className="instruction-icon">📊</div>
+          <div className="instruction-text">
+            <strong>טיפ:</strong> לחץ על כפתור 📊 ליד כל ספורט כדי לראות את מדדי הכושר שלו
+          </div>
+        </div>
 
         <div className="sports-section">
           <div className="preference-mode-selector">
