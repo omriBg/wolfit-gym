@@ -4,7 +4,7 @@ import { useAuth } from './contexts/AuthContext';
 import './EditUser.css';
 import { API_BASE_URL } from './config';
 import FitnessMetricsChart from './components/FitnessMetricsChart';
-import SimpleBodySelector from './components/SimpleBodySelector';
+import InteractiveBodySelector from './components/InteractiveBodySelector';
 
 
 function EditUser() {
@@ -506,7 +506,7 @@ function EditUser() {
               </div>
               
               {wantsStrengthTraining && (
-                <SimpleBodySelector
+                <InteractiveBodySelector
                   selectedAreas={selectedBodyAreas}
                   onAreasChange={setSelectedBodyAreas}
                 />

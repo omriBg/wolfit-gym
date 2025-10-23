@@ -4,7 +4,7 @@ import { useAuth } from './contexts/AuthContext';
 import './SignUpPreferences.css';
 import { API_BASE_URL } from './config';
 import FitnessMetricsChart from './components/FitnessMetricsChart';
-import SimpleBodySelector from './components/SimpleBodySelector';
+import InteractiveBodySelector from './components/InteractiveBodySelector';
 
 
 async function sendRegistrationToServer(userData) {
@@ -419,7 +419,7 @@ function SignUpPreferences() {
               </div>
               
               {wantsStrengthTraining && (
-                <SimpleBodySelector
+                <InteractiveBodySelector
                   selectedAreas={selectedBodyAreas}
                   onAreasChange={setSelectedBodyAreas}
                 />

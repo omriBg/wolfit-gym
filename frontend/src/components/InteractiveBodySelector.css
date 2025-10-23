@@ -1,0 +1,206 @@
+/* עיצוב לקומפוננטת גוף אדם אינטראקטיבית */
+.interactive-body-selector {
+  margin-top: 20px;
+  padding: 20px;
+  background: rgba(135, 98, 171, 0.1);
+  border-radius: 15px;
+  border: 1px solid rgba(135, 98, 171, 0.3);
+  text-align: center;
+}
+
+.body-selector-header {
+  margin-bottom: 20px;
+}
+
+.body-selector-header h4 {
+  margin-bottom: 15px;
+  color: #b38ed8;
+  font-size: 1.1rem;
+  font-weight: 600;
+}
+
+.body-side-toggle {
+  display: flex;
+  gap: 10px;
+  justify-content: center;
+  margin-bottom: 20px;
+}
+
+.body-side-toggle button {
+  padding: 8px 16px;
+  background: rgba(255, 255, 255, 0.1);
+  border: 2px solid rgba(255, 255, 255, 0.3);
+  border-radius: 8px;
+  color: white;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  font-size: 0.9rem;
+  font-weight: 500;
+}
+
+.body-side-toggle button:hover {
+  background: rgba(255, 255, 255, 0.2);
+  border-color: rgba(255, 255, 255, 0.5);
+  transform: translateY(-2px);
+}
+
+.body-side-toggle button.active {
+  background: linear-gradient(45deg, #8b5cf6, #b38ed8);
+  border-color: #8762ab;
+  box-shadow: 0 0 15px rgba(139, 92, 246, 0.3);
+  transform: scale(1.05);
+}
+
+.body-model-container {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  margin: 20px 0;
+  padding: 20px;
+  background: rgba(255, 255, 255, 0.05);
+  border-radius: 12px;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  min-height: 400px;
+}
+
+.body-model-container svg {
+  max-width: 100%;
+  height: auto;
+  cursor: pointer;
+}
+
+.body-model-container svg path {
+  transition: all 0.3s ease;
+}
+
+.body-model-container svg path:hover {
+  filter: brightness(1.2);
+  transform: scale(1.02);
+}
+
+.selected-areas-display {
+  margin-top: 20px;
+  padding: 15px;
+  background: rgba(255, 255, 255, 0.05);
+  border-radius: 10px;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.selected-areas-display h5 {
+  margin-bottom: 10px;
+  color: #b38ed8;
+  font-size: 1rem;
+  font-weight: 600;
+}
+
+.selected-areas-list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  justify-content: center;
+  align-items: center;
+}
+
+.selected-area-tag {
+  display: inline-block;
+  padding: 6px 12px;
+  background: linear-gradient(45deg, #8b5cf6, #b38ed8);
+  color: white;
+  border-radius: 20px;
+  font-size: 0.85rem;
+  font-weight: 600;
+  box-shadow: 0 2px 8px rgba(139, 92, 246, 0.3);
+  animation: tagPulse 0.3s ease-out;
+}
+
+.selected-areas-list p {
+  color: rgba(255, 255, 255, 0.7);
+  font-style: italic;
+  margin: 0;
+}
+
+@keyframes tagPulse {
+  0% {
+    transform: scale(0.8);
+    opacity: 0;
+  }
+  100% {
+    transform: scale(1);
+    opacity: 1;
+  }
+}
+
+/* התאמה למובייל */
+@media (max-width: 768px) {
+  .interactive-body-selector {
+    padding: 15px;
+    margin-top: 15px;
+  }
+  
+  .body-selector-header h4 {
+    font-size: 1rem;
+    margin-bottom: 12px;
+  }
+  
+  .body-side-toggle {
+    gap: 8px;
+    margin-bottom: 15px;
+  }
+  
+  .body-side-toggle button {
+    padding: 6px 12px;
+    font-size: 0.8rem;
+  }
+  
+  .body-model-container {
+    padding: 15px;
+    min-height: 300px;
+  }
+  
+  .selected-areas-display {
+    margin-top: 15px;
+    padding: 12px;
+  }
+  
+  .selected-areas-display h5 {
+    font-size: 0.9rem;
+  }
+  
+  .selected-area-tag {
+    padding: 4px 8px;
+    font-size: 0.8rem;
+  }
+}
+
+/* התאמה למסכים קטנים מאוד */
+@media (max-width: 480px) {
+  .interactive-body-selector {
+    padding: 12px;
+  }
+  
+  .body-model-container {
+    padding: 10px;
+    min-height: 250px;
+  }
+  
+  .body-side-toggle button {
+    padding: 5px 10px;
+    font-size: 0.75rem;
+  }
+}
+
+/* התאמה למסכים גדולים */
+@media (min-width: 1200px) {
+  .body-model-container {
+    min-height: 500px;
+  }
+  
+  .body-selector-header h4 {
+    font-size: 1.2rem;
+  }
+  
+  .body-side-toggle button {
+    padding: 10px 20px;
+    font-size: 1rem;
+  }
+}
