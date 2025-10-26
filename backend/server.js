@@ -314,6 +314,10 @@ const userPreferencesSchema = Joi.object({
       'array.max': 'לא ניתן לבחור יותר מ-9 סוגי ספורט'
     }),
   
+  wantsStrengthTraining: Joi.boolean().optional(),
+  selectedBodyAreas: Joi.array().items(Joi.string()).optional(),
+  selectedFitnessComponents: Joi.array().items(Joi.string()).optional()
+  
 });
 
 // Validation Schema for Admin Operations
@@ -1291,6 +1295,50 @@ app.get('/api/user-preferences/:userId', authenticateToken, authorizeUserAccess,
     });
     
     // הכנת התשובה
+    // קבלת נתוני אימון כוח
+    let strengthTrainingData = {
+      wantsStrengthTraining: false,
+      selectedBodyAreas: [],
+      selectedFitnessComponents: []
+    };
+
+    try {
+      // בדיקת העדפות אימון כוח
+      const strengthPrefs = await pool.query(
+        'SELECT wants_strength_training FROM strength_training_preferences WHERE user_id = $1',
+        [userId]
+      );
+
+      if (strengthPrefs.rows.length > 0) {
+        strengthTrainingData.wantsStrengthTraining = strengthPrefs.rows[0].wants_strength_training;
+      }
+
+      // קבלת אזורי גוף נבחרים
+      const bodyAreas = await pool.query(`
+        SELECT ba.name, ba.display_name_he 
+        FROM user_body_areas uba 
+        JOIN body_areas ba ON uba.body_area_id = ba.id 
+        WHERE uba.user_id = $1
+      `, [userId]);
+
+      strengthTrainingData.selectedBodyAreas = bodyAreas.rows.map(row => row.name);
+
+      // קבלת מרכיבי כשירות נבחרים
+      const fitnessComponents = await pool.query(`
+        SELECT fc.name, fc.display_name_he 
+        FROM user_fitness_components ufc 
+        JOIN fitness_components fc ON ufc.fitness_component_id = fc.id 
+        WHERE ufc.user_id = $1
+      `, [userId]);
+
+      strengthTrainingData.selectedFitnessComponents = fitnessComponents.rows.map(row => row.name);
+
+      console.log('💪 נתוני אימון כוח:', strengthTrainingData);
+    } catch (strengthError) {
+      console.warn('⚠️ שגיאה בקבלת נתוני אימון כוח:', strengthError.message);
+      // ממשיכים בלי נתוני אימון כוח
+    }
+
     const response = {
       success: true,
       data: {
@@ -1302,7 +1350,8 @@ app.get('/api/user-preferences/:userId', authenticateToken, authorizeUserAccess,
           height: userResult.rows[0].height,
           weight: userResult.rows[0].weight,
           birthdate: userResult.rows[0].birthdate
-        }
+        },
+        strengthTraining: strengthTrainingData
       }
     };
     
@@ -1347,7 +1396,14 @@ app.get('/api/sports', async (req, res) => {
 app.put('/api/save-user-preferences/:userId', authenticateToken, authorizeUserAccess, validateRequest(userPreferencesSchema), async (req, res) => {
   try {
     const { userId } = req.params;
-    const { intensitylevel, intensityLevel, selectedSports } = req.body;
+    const { 
+      intensitylevel, 
+      intensityLevel, 
+      selectedSports, 
+      wantsStrengthTraining, 
+      selectedBodyAreas, 
+      selectedFitnessComponents 
+    } = req.body;
     
     // Handle both camelCase and lowercase field names
     const intensity = intensitylevel || intensityLevel;
@@ -1358,6 +1414,9 @@ app.put('/api/save-user-preferences/:userId', authenticateToken, authorizeUserAc
       intensityLevel,
       intensity,
       selectedSports,
+      wantsStrengthTraining,
+      selectedBodyAreas,
+      selectedFitnessComponents,
       body: req.body 
     });
 
@@ -1433,6 +1492,73 @@ app.put('/api/save-user-preferences/:userId', authenticateToken, authorizeUserAc
       }
       
       console.log('✅ העדפות נשמרו בהצלחה');
+    }
+
+    // שמירת נתוני אימון כוח
+    if (wantsStrengthTraining !== undefined) {
+      console.log('💪 שומר נתוני אימון כוח...');
+      
+      // עדכון או יצירת רשומה בטבלת strength_training_preferences
+      await pool.query(`
+        INSERT INTO strength_training_preferences (user_id, wants_strength_training) 
+        VALUES ($1, $2)
+        ON CONFLICT (user_id) 
+        DO UPDATE SET wants_strength_training = $2, updated_at = CURRENT_TIMESTAMP
+      `, [userId, wantsStrengthTraining]);
+      
+      console.log('✅ נתוני אימון כוח נשמרו');
+    }
+    
+    // שמירת אזורי גוף נבחרים
+    if (selectedBodyAreas && selectedBodyAreas.length > 0) {
+      console.log('🏋️ שומר אזורי גוף נבחרים:', selectedBodyAreas);
+      
+      // מחיקת אזורי גוף קיימים
+      await pool.query('DELETE FROM user_body_areas WHERE user_id = $1', [userId]);
+      
+      // הוספת אזורי גוף חדשים
+      for (const bodyArea of selectedBodyAreas) {
+        // מציאת ה-ID של אזור הגוף
+        const bodyAreaResult = await pool.query(
+          'SELECT id FROM body_areas WHERE name = $1',
+          [bodyArea]
+        );
+        
+        if (bodyAreaResult.rows.length > 0) {
+          await pool.query(
+            'INSERT INTO user_body_areas (user_id, body_area_id) VALUES ($1, $2)',
+            [userId, bodyAreaResult.rows[0].id]
+          );
+        }
+      }
+      
+      console.log('✅ אזורי גוף נשמרו');
+    }
+    
+    // שמירת מרכיבי כשירות נבחרים
+    if (selectedFitnessComponents && selectedFitnessComponents.length > 0) {
+      console.log('🎯 שומר מרכיבי כשירות נבחרים:', selectedFitnessComponents);
+      
+      // מחיקת מרכיבי כשירות קיימים
+      await pool.query('DELETE FROM user_fitness_components WHERE user_id = $1', [userId]);
+      
+      // הוספת מרכיבי כשירות חדשים
+      for (const component of selectedFitnessComponents) {
+        // מציאת ה-ID של מרכיב הכשירות
+        const componentResult = await pool.query(
+          'SELECT id FROM fitness_components WHERE name = $1',
+          [component]
+        );
+        
+        if (componentResult.rows.length > 0) {
+          await pool.query(
+            'INSERT INTO user_fitness_components (user_id, fitness_component_id) VALUES ($1, $2)',
+            [userId, componentResult.rows[0].id]
+          );
+        }
+      }
+      
+      console.log('✅ מרכיבי כשירות נשמרו');
     }
 
     // בדיקה שהכל נשמר

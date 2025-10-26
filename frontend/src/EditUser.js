@@ -72,7 +72,7 @@ function EditUser() {
         
           if (result.success && result.data) {
             console.log('✅ התקבלו נתונים תקינים מהשרת');
-            const { intensityLevel, sports, preferenceMode } = result.data;
+            const { intensityLevel, sports, preferenceMode, strengthTraining } = result.data;
             
             console.log('רמת עצימות:', intensityLevel);
             console.log('כל הספורטים:', sports);
@@ -106,7 +106,14 @@ function EditUser() {
             setIntensityLevel(intensityLevel || 2);
             setSelectedSports(selectedIds);
             setPreferenceMode(preferenceMode || 'simple');
-            // שדות אימון כוח נשארים ברירת מחדל (לא נטענים מהשרת)
+            
+            // טעינת נתוני אימון כוח
+            if (strengthTraining) {
+              console.log('💪 טוען נתוני אימון כוח:', strengthTraining);
+              setWantsStrengthTraining(strengthTraining.wantsStrengthTraining || false);
+              setSelectedBodyAreas(strengthTraining.selectedBodyAreas || []);
+              setSelectedFitnessComponents(strengthTraining.selectedFitnessComponents || []);
+            }
           
           console.log('State עודכן בהצלחה');
         } else {
@@ -159,8 +166,10 @@ function EditUser() {
     try {
       const requestData = {
         intensityLevel: intensityLevel,
-        selectedSports: selectedSports
-        // שדות אימון כוח לא נשלחים לשרת (רק לממשק)
+        selectedSports: selectedSports,
+        wantsStrengthTraining: wantsStrengthTraining,
+        selectedBodyAreas: selectedBodyAreas,
+        selectedFitnessComponents: selectedFitnessComponents
       };
 
       console.log('📤 נתונים לשליחה:', JSON.stringify(requestData, null, 2));
