@@ -108,6 +108,7 @@ function EditUser() {
             setPreferenceMode(preferenceMode || 'simple');
             
             // טעינת נתוני אימון כוח
+            console.log('💪 בודק נתוני אימון כוח:', strengthTraining);
             if (strengthTraining) {
               console.log('💪 טוען נתוני אימון כוח:', strengthTraining);
               console.log('💪 wantsStrengthTraining:', strengthTraining.wantsStrengthTraining);

@@ -225,12 +225,20 @@ function SignUpPreferences() {
       return;
     }
 
+    // בדיקת תאריך לידה
+    if (!userData?.birthdate) {
+      alert('אנא בחר תאריך לידה');
+      return;
+    }
+
     const preferences = {
       intensityLevel: intensityLevel,
       preferenceMode: preferenceMode,
       selectedSports: selectedSports,
-      sportsRanked: getSportsForAlgorithm() // המערך הממוין לאלגוריתם
-      // שדות אימון כוח לא נשלחים לשרת (רק לממשק)
+      sportsRanked: getSportsForAlgorithm(), // המערך הממוין לאלגוריתם
+      wantsStrengthTraining: wantsStrengthTraining,
+      selectedBodyAreas: selectedBodyAreas,
+      selectedFitnessComponents: selectedFitnessComponents
     };
       const completeUserData = {
         ...userData,
@@ -453,15 +461,15 @@ function SignUpPreferences() {
                   height: '55px',
                   fontSize: '18px',
                   fontWeight: 'bold',
-                  background: selectedSports.length > 0 ? 'linear-gradient(45deg, #b38ed8, #9c7dc4)' : 'rgba(255, 255, 255, 0.2)',
-                  color: selectedSports.length > 0 ? '#ffffff' : 'rgba(255, 255, 255, 0.5)',
+                  background: (selectedSports.length > 0 && userData?.birthdate) ? 'linear-gradient(45deg, #b38ed8, #9c7dc4)' : 'rgba(255, 255, 255, 0.2)',
+                  color: (selectedSports.length > 0 && userData?.birthdate) ? '#ffffff' : 'rgba(255, 255, 255, 0.5)',
                   border: 'none',
                   borderRadius: '12px',
-                  cursor: selectedSports.length > 0 ? 'pointer' : 'not-allowed',
+                  cursor: (selectedSports.length > 0 && userData?.birthdate) ? 'pointer' : 'not-allowed',
                   transition: 'all 0.3s ease',
-                  opacity: selectedSports.length > 0 ? 1 : 0.6
+                  opacity: (selectedSports.length > 0 && userData?.birthdate) ? 1 : 0.6
                 }}
-                disabled={selectedSports.length === 0}
+                disabled={selectedSports.length === 0 || !userData?.birthdate}
               >
                 השלם הרשמה
               </button>
