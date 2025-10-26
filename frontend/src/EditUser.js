@@ -15,9 +15,10 @@ function EditUser() {
   const [intensityLevel, setIntensityLevel] = useState(2);
   const [isLoading, setIsLoading] = useState(false);
   
-  // שדות חדשים לבחירת אזורי גוף (לא נשמרים במסד נתונים)
+  // שדות חדשים לבחירת אזורי גוף ומרכיבי כשירות (לא נשמרים במסד נתונים)
   const [wantsStrengthTraining, setWantsStrengthTraining] = useState(false);
   const [selectedBodyAreas, setSelectedBodyAreas] = useState([]);
+  const [selectedFitnessComponents, setSelectedFitnessComponents] = useState([]);
 
   const [saveMessage, setSaveMessage] = useState('');
   const [isSaving, setIsSaving] = useState(false);
@@ -509,6 +510,8 @@ function EditUser() {
                 <InteractiveBodySelector
                   selectedAreas={selectedBodyAreas}
                   onAreasChange={setSelectedBodyAreas}
+                  selectedFitnessComponents={selectedFitnessComponents}
+                  onFitnessComponentsChange={setSelectedFitnessComponents}
                 />
               )}
             </div>

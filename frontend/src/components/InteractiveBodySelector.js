@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import Model, { ModelType, MuscleType } from 'react-body-highlighter';
 import './InteractiveBodySelector.css';
 
-const InteractiveBodySelector = ({ selectedAreas = [], onAreasChange }) => {
+const InteractiveBodySelector = ({ selectedAreas = [], onAreasChange, selectedFitnessComponents = [], onFitnessComponentsChange }) => {
   const [currentSide, setCurrentSide] = useState(ModelType.ANTERIOR);
   
   // מיפוי אזורי גוף שלנו לחלקי שריר בחבילה
@@ -14,6 +14,20 @@ const InteractiveBodySelector = ({ selectedAreas = [], onAreasChange }) => {
     'core': [MuscleType.ABS, MuscleType.OBLIQUES],
     'legs': [MuscleType.QUADRICEPS, MuscleType.HAMSTRING, MuscleType.GLUTEAL, MuscleType.CALVES]
   };
+
+  // רשימת מרכיבי כשירות
+  const fitnessComponents = [
+    { id: 'strength', name: 'כוח', color: '#8b5cf6' },
+    { id: 'speed', name: 'מהירות', color: '#b38ed8' },
+    { id: 'power', name: 'כוח מתפרץ', color: '#8762ab' },
+    { id: 'muscular_endurance', name: 'סיבולת שריר', color: '#6d4c7a' },
+    { id: 'cardio_endurance', name: 'סיבולת לב ריאה', color: '#8b5cf6' },
+    { id: 'flexibility', name: 'גמישות', color: '#b38ed8' },
+    { id: 'coordination', name: 'קואורדינציה', color: '#8762ab' },
+    { id: 'balance', name: 'שיווי משקל', color: '#6d4c7a' },
+    { id: 'agility', name: 'אגיליטי', color: '#8b5cf6' },
+    { id: 'motor_accuracy', name: 'דיוק מוטורי', color: '#b38ed8' }
+  ];
 
   // המרת אזורי גוף נבחרים לחלקי שריר
   const getSelectedMuscles = () => {
@@ -64,6 +78,17 @@ const InteractiveBodySelector = ({ selectedAreas = [], onAreasChange }) => {
     
     console.log('אזורים חדשים:', newSelectedAreas);
     onAreasChange(newSelectedAreas);
+  };
+
+  // טיפול בלחיצה על מרכיב כשירות
+  const handleFitnessComponentClick = (componentId) => {
+    console.log('לחצו על מרכיב כשירות:', componentId);
+    const newSelectedComponents = selectedFitnessComponents.includes(componentId)
+      ? selectedFitnessComponents.filter(component => component !== componentId)
+      : [...selectedFitnessComponents, componentId];
+    
+    console.log('מרכיבי כשירות חדשים:', newSelectedComponents);
+    onFitnessComponentsChange(newSelectedComponents);
   };
 
   return (
@@ -245,6 +270,71 @@ const InteractiveBodySelector = ({ selectedAreas = [], onAreasChange }) => {
                 {getAreaDisplayName(area)}
               </span>
             ))
+          )}
+        </div>
+      </div>
+
+      {/* בחירת מרכיבי כשירות */}
+      <div className="fitness-components-section">
+        <h4>בחר מרכיבי כשירות שאתה רוצה לעבוד עליהם:</h4>
+        <div className="fitness-components-grid">
+          {fitnessComponents.map(component => (
+            <button
+              key={component.id}
+              onClick={() => handleFitnessComponentClick(component.id)}
+              className={`fitness-component-btn ${selectedFitnessComponents.includes(component.id) ? 'selected' : ''}`}
+              style={{
+                background: selectedFitnessComponents.includes(component.id)
+                  ? `linear-gradient(45deg, ${component.color}, ${component.color}dd)`
+                  : 'rgba(255,255,255,0.1)',
+                border: selectedFitnessComponents.includes(component.id)
+                  ? `2px solid ${component.color}`
+                  : '2px solid rgba(255,255,255,0.3)',
+                color: 'white',
+                padding: '12px 16px',
+                borderRadius: '12px',
+                cursor: 'pointer',
+                fontSize: '14px',
+                fontWeight: '600',
+                transition: 'all 0.3s ease',
+                minWidth: '120px',
+                boxShadow: selectedFitnessComponents.includes(component.id)
+                  ? `0 0 15px ${component.color}40`
+                  : 'none'
+              }}
+              onMouseEnter={(e) => {
+                if (!selectedFitnessComponents.includes(component.id)) {
+                  e.target.style.background = 'rgba(255,255,255,0.2)';
+                  e.target.style.transform = 'translateY(-2px)';
+                }
+              }}
+              onMouseLeave={(e) => {
+                if (!selectedFitnessComponents.includes(component.id)) {
+                  e.target.style.background = 'rgba(255,255,255,0.1)';
+                  e.target.style.transform = 'translateY(0)';
+                }
+              }}
+            >
+              {component.name}
+            </button>
+          ))}
+        </div>
+      </div>
+
+      <div className="selected-fitness-components-display">
+        <h5>מרכיבי כשירות נבחרים:</h5>
+        <div className="selected-fitness-components-list">
+          {selectedFitnessComponents.length === 0 ? (
+            <p>לא נבחרו מרכיבי כשירות</p>
+          ) : (
+            selectedFitnessComponents.map(componentId => {
+              const component = fitnessComponents.find(c => c.id === componentId);
+              return (
+                <span key={componentId} className="selected-fitness-component-tag">
+                  {component?.name}
+                </span>
+              );
+            })
           )}
         </div>
       </div>

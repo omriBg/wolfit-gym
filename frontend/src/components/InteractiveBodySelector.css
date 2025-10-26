@@ -258,3 +258,113 @@
     font-size: 1rem;
   }
 }
+
+/* עיצוב למרכיבי כשירות */
+.fitness-components-section {
+  margin-top: 30px;
+  padding: 20px;
+  background: rgba(135, 98, 171, 0.1);
+  border-radius: 15px;
+  border: 1px solid rgba(135, 98, 171, 0.3);
+}
+
+.fitness-components-section h4 {
+  margin-bottom: 20px;
+  color: #b38ed8;
+  font-size: 1.1rem;
+  font-weight: 600;
+  text-align: center;
+}
+
+.fitness-components-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+  gap: 15px;
+  margin-bottom: 20px;
+}
+
+.fitness-component-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  min-height: 50px;
+}
+
+.fitness-component-btn:hover {
+  transform: translateY(-2px);
+}
+
+.fitness-component-btn.selected {
+  transform: scale(1.05);
+}
+
+.selected-fitness-components-display {
+  margin-top: 20px;
+  padding: 15px;
+  background: rgba(255, 255, 255, 0.05);
+  border-radius: 10px;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.selected-fitness-components-display h5 {
+  margin-bottom: 10px;
+  color: #b38ed8;
+  font-size: 1rem;
+  font-weight: 600;
+}
+
+.selected-fitness-components-list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  justify-content: center;
+  align-items: center;
+}
+
+.selected-fitness-component-tag {
+  display: inline-block;
+  padding: 6px 12px;
+  background: linear-gradient(45deg, #8b5cf6, #b38ed8);
+  color: white;
+  border-radius: 20px;
+  font-size: 0.85rem;
+  font-weight: 600;
+  box-shadow: 0 2px 8px rgba(139, 92, 246, 0.3);
+  animation: tagPulse 0.3s ease-out;
+}
+
+.selected-fitness-components-list p {
+  color: rgba(255, 255, 255, 0.7);
+  font-style: italic;
+  margin: 0;
+}
+
+/* התאמה למובייל למרכיבי כשירות */
+@media (max-width: 768px) {
+  .fitness-components-section {
+    padding: 15px;
+    margin-top: 20px;
+  }
+  
+  .fitness-components-grid {
+    grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+    gap: 10px;
+  }
+  
+  .fitness-component-btn {
+    min-height: 45px;
+    font-size: 13px;
+    padding: 10px 12px;
+  }
+  
+  .selected-fitness-components-display {
+    margin-top: 15px;
+    padding: 12px;
+  }
+  
+  .selected-fitness-component-tag {
+    padding: 4px 8px;
+    font-size: 0.8rem;
+  }
+}

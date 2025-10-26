@@ -50,9 +50,10 @@ function SignUpPreferences() {
   const [preferenceMode, setPreferenceMode] = useState('simple');
   const [intensityLevel, setIntensityLevel] = useState(2);
   
-  // שדות חדשים לבחירת אזורי גוף (לא נשמרים במסד נתונים)
+  // שדות חדשים לבחירת אזורי גוף ומרכיבי כשירות (לא נשמרים במסד נתונים)
   const [wantsStrengthTraining, setWantsStrengthTraining] = useState(false);
   const [selectedBodyAreas, setSelectedBodyAreas] = useState([]);
+  const [selectedFitnessComponents, setSelectedFitnessComponents] = useState([]);
   
   // מצב לניהול גרף מדדי הכושר
   const [chartOpen, setChartOpen] = useState(false);
@@ -422,6 +423,8 @@ function SignUpPreferences() {
                 <InteractiveBodySelector
                   selectedAreas={selectedBodyAreas}
                   onAreasChange={setSelectedBodyAreas}
+                  selectedFitnessComponents={selectedFitnessComponents}
+                  onFitnessComponentsChange={setSelectedFitnessComponents}
                 />
               )}
             </div>
