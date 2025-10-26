@@ -163,9 +163,13 @@ const InteractiveBodySelector = ({ selectedAreas = [], onAreasChange }) => {
               // מיפוי מיקומים לאזורי גוף (פשוט)
               let clickedArea = null;
               
-              // חזה (מרכז העליון)
-              if (x >= 150 && x <= 250 && y >= 100 && y <= 200) {
+              // חזה (מרכז העליון - רק בחזית)
+              if (currentSide === ModelType.ANTERIOR && x >= 150 && x <= 250 && y >= 100 && y <= 200) {
                 clickedArea = 'chest';
+              }
+              // גב (מרכז העליון - רק בצד האחורי)
+              else if (currentSide === ModelType.POSTERIOR && x >= 150 && x <= 250 && y >= 100 && y <= 200) {
+                clickedArea = 'back';
               }
               // בטן/ליבה (מרכז)
               else if (x >= 160 && x <= 240 && y >= 200 && y <= 280) {
@@ -185,11 +189,6 @@ const InteractiveBodySelector = ({ selectedAreas = [], onAreasChange }) => {
               else if ((x >= 150 && x <= 200 && y >= 300 && y <= 450) || 
                        (x >= 200 && x <= 250 && y >= 300 && y <= 450)) {
                 clickedArea = 'legs';
-              }
-              // גב (רק בצד האחורי)
-              else if (currentSide === ModelType.POSTERIOR && 
-                       x >= 150 && x <= 250 && y >= 100 && y <= 200) {
-                clickedArea = 'back';
               }
               
               if (clickedArea) {
