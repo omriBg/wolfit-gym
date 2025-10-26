@@ -1,58 +1,28 @@
 import React, { useState } from 'react';
-import Model, { ModelType, MuscleType } from 'react-body-highlighter';
 import './InteractiveBodySelector.css';
 
 const InteractiveBodySelector = ({ selectedAreas = [], onAreasChange }) => {
-  const [currentSide, setCurrentSide] = useState(ModelType.ANTERIOR);
+  const [currentSide, setCurrentSide] = useState('anterior');
   
-  // מיפוי אזורי גוף שלנו לחלקי שריר בחבילה
-  const bodyAreaMapping = {
-    'back': [MuscleType.UPPER_BACK, MuscleType.LOWER_BACK, MuscleType.TRAPEZIUS],
-    'shoulders': [MuscleType.FRONT_DELTOIDS, MuscleType.BACK_DELTOIDS],
-    'arms': [MuscleType.BICEPS, MuscleType.TRICEPS, MuscleType.FOREARM],
-    'chest': [MuscleType.CHEST],
-    'core': [MuscleType.ABS, MuscleType.OBLIQUES],
-    'legs': [MuscleType.QUADRICEPS, MuscleType.HAMSTRING, MuscleType.GLUTEAL, MuscleType.CALVES]
+  // מיפוי אזורי גוף
+  const bodyAreas = {
+    'back': { name: 'גב', color: '#8b5cf6' },
+    'shoulders': { name: 'כתפיים', color: '#b38ed8' },
+    'arms': { name: 'ידיים', color: '#8762ab' },
+    'chest': { name: 'חזה', color: '#6d4c7a' },
+    'core': { name: 'ליבה/בטן', color: '#8b5cf6' },
+    'legs': { name: 'רגליים', color: '#b38ed8' }
   };
 
-  // המרת אזורי גוף נבחרים לחלקי שריר
-  const getSelectedMuscles = () => {
-    const selectedMuscles = [];
-    selectedAreas.forEach(area => {
-      if (bodyAreaMapping[area]) {
-        bodyAreaMapping[area].forEach(muscle => {
-          selectedMuscles.push(muscle);
-        });
-      }
-    });
-    return selectedMuscles;
-  };
-
-  // טיפול בלחיצה על שריר
-  const handleMuscleClick = (muscle) => {
-    console.log('לחצו על שריר:', muscle);
+  // טיפול בלחיצה על אזור גוף
+  const handleBodyAreaClick = (area) => {
+    console.log('לחצו על אזור:', area);
+    const newSelectedAreas = selectedAreas.includes(area)
+      ? selectedAreas.filter(selectedArea => selectedArea !== area)
+      : [...selectedAreas, area];
     
-    // מצא איזה אזור גוף שייך לשריר הזה
-    let areaToToggle = null;
-    for (const [area, muscles] of Object.entries(bodyAreaMapping)) {
-      if (muscles.includes(muscle)) {
-        areaToToggle = area;
-        break;
-      }
-    }
-    
-    console.log('אזור גוף שנמצא:', areaToToggle);
-    
-    if (areaToToggle) {
-      const newSelectedAreas = selectedAreas.includes(areaToToggle)
-        ? selectedAreas.filter(area => area !== areaToToggle)
-        : [...selectedAreas, areaToToggle];
-      
-      console.log('אזורים חדשים:', newSelectedAreas);
-      onAreasChange(newSelectedAreas);
-    } else {
-      console.log('לא נמצא אזור גוף מתאים לשריר:', muscle);
-    }
+    console.log('אזורים חדשים:', newSelectedAreas);
+    onAreasChange(newSelectedAreas);
   };
 
   // טיפול בלחיצה על אזור ברשימה
@@ -116,14 +86,14 @@ const InteractiveBodySelector = ({ selectedAreas = [], onAreasChange }) => {
         
         <div className="body-side-toggle">
           <button 
-            className={currentSide === ModelType.ANTERIOR ? 'active' : ''}
-            onClick={() => setCurrentSide(ModelType.ANTERIOR)}
+            className={currentSide === 'anterior' ? 'active' : ''}
+            onClick={() => setCurrentSide('anterior')}
           >
             חזית
           </button>
           <button 
-            className={currentSide === ModelType.POSTERIOR ? 'active' : ''}
-            onClick={() => setCurrentSide(ModelType.POSTERIOR)}
+            className={currentSide === 'posterior' ? 'active' : ''}
+            onClick={() => setCurrentSide('posterior')}
           >
             גב
           </button>
@@ -132,13 +102,151 @@ const InteractiveBodySelector = ({ selectedAreas = [], onAreasChange }) => {
       
       <div className="body-model-container">
         <div style={{ position: 'relative', minHeight: '500px' }}>
-          <Model
-            type={currentSide}
-            muscles={getSelectedMuscles()}
-            onMuscleClick={handleMuscleClick}
-            colors={['#8b5cf6', '#b38ed8', '#8762ab', '#6d4c7a']}
-            style={{ width: '400px', height: '500px', cursor: 'pointer' }}
-          />
+          <svg
+            width="400"
+            height="500"
+            viewBox="0 0 400 500"
+            style={{ cursor: 'pointer' }}
+          >
+            {/* ראש */}
+            <circle
+              cx="200"
+              cy="50"
+              r="30"
+              fill={selectedAreas.includes('head') ? '#8b5cf6' : '#e0e0e0'}
+              stroke="#333"
+              strokeWidth="2"
+              onClick={() => handleBodyAreaClick('head')}
+              style={{ cursor: 'pointer' }}
+            />
+            
+            {/* צוואר */}
+            <rect
+              x="185"
+              y="80"
+              width="30"
+              height="20"
+              fill={selectedAreas.includes('neck') ? '#8b5cf6' : '#e0e0e0'}
+              stroke="#333"
+              strokeWidth="2"
+              onClick={() => handleBodyAreaClick('neck')}
+              style={{ cursor: 'pointer' }}
+            />
+            
+            {/* חזה */}
+            <ellipse
+              cx="200"
+              cy="150"
+              rx="60"
+              ry="40"
+              fill={selectedAreas.includes('chest') ? '#8b5cf6' : '#e0e0e0'}
+              stroke="#333"
+              strokeWidth="2"
+              onClick={() => handleBodyAreaClick('chest')}
+              style={{ cursor: 'pointer' }}
+            />
+            
+            {/* בטן/ליבה */}
+            <ellipse
+              cx="200"
+              cy="220"
+              rx="50"
+              ry="30"
+              fill={selectedAreas.includes('core') ? '#8b5cf6' : '#e0e0e0'}
+              stroke="#333"
+              strokeWidth="2"
+              onClick={() => handleBodyAreaClick('core')}
+              style={{ cursor: 'pointer' }}
+            />
+            
+            {/* כתפיים */}
+            <ellipse
+              cx="140"
+              cy="130"
+              rx="25"
+              ry="20"
+              fill={selectedAreas.includes('shoulders') ? '#8b5cf6' : '#e0e0e0'}
+              stroke="#333"
+              strokeWidth="2"
+              onClick={() => handleBodyAreaClick('shoulders')}
+              style={{ cursor: 'pointer' }}
+            />
+            <ellipse
+              cx="260"
+              cy="130"
+              rx="25"
+              ry="20"
+              fill={selectedAreas.includes('shoulders') ? '#8b5cf6' : '#e0e0e0'}
+              stroke="#333"
+              strokeWidth="2"
+              onClick={() => handleBodyAreaClick('shoulders')}
+              style={{ cursor: 'pointer' }}
+            />
+            
+            {/* ידיים */}
+            <ellipse
+              cx="100"
+              cy="180"
+              rx="20"
+              ry="60"
+              fill={selectedAreas.includes('arms') ? '#8b5cf6' : '#e0e0e0'}
+              stroke="#333"
+              strokeWidth="2"
+              onClick={() => handleBodyAreaClick('arms')}
+              style={{ cursor: 'pointer' }}
+            />
+            <ellipse
+              cx="300"
+              cy="180"
+              rx="20"
+              ry="60"
+              fill={selectedAreas.includes('arms') ? '#8b5cf6' : '#e0e0e0'}
+              stroke="#333"
+              strokeWidth="2"
+              onClick={() => handleBodyAreaClick('arms')}
+              style={{ cursor: 'pointer' }}
+            />
+            
+            {/* רגליים */}
+            <ellipse
+              cx="170"
+              cy="350"
+              rx="25"
+              ry="80"
+              fill={selectedAreas.includes('legs') ? '#8b5cf6' : '#e0e0e0'}
+              stroke="#333"
+              strokeWidth="2"
+              onClick={() => handleBodyAreaClick('legs')}
+              style={{ cursor: 'pointer' }}
+            />
+            <ellipse
+              cx="230"
+              cy="350"
+              rx="25"
+              ry="80"
+              fill={selectedAreas.includes('legs') ? '#8b5cf6' : '#e0e0e0'}
+              stroke="#333"
+              strokeWidth="2"
+              onClick={() => handleBodyAreaClick('legs')}
+              style={{ cursor: 'pointer' }}
+            />
+            
+            {/* גב (רק בצד האחורי) */}
+            {currentSide === 'posterior' && (
+              <ellipse
+                cx="200"
+                cy="150"
+                rx="60"
+                ry="40"
+                fill={selectedAreas.includes('back') ? '#8b5cf6' : '#e0e0e0'}
+                stroke="#333"
+                strokeWidth="2"
+                onClick={() => handleBodyAreaClick('back')}
+                style={{ cursor: 'pointer' }}
+              />
+            )}
+          </svg>
+          
           <div style={{
             position: 'absolute',
             top: '10px',
@@ -166,24 +274,6 @@ const InteractiveBodySelector = ({ selectedAreas = [], onAreasChange }) => {
             pointerEvents: 'none'
           }}>
             נבחרו: {selectedAreas.length} אזורים
-          </div>
-          <div style={{
-            position: 'absolute',
-            top: '50%',
-            left: '50%',
-            transform: 'translate(-50%, -50%)',
-            background: 'rgba(255,255,255,0.1)',
-            padding: '20px',
-            borderRadius: '10px',
-            textAlign: 'center',
-            color: 'white',
-            fontSize: '14px',
-            zIndex: 5,
-            border: '2px dashed rgba(255,255,255,0.3)',
-            pointerEvents: 'none'
-          }}>
-            <div>אם אתה רואה את זה, המודל לא נטען</div>
-            <div>נסה ללחוץ על הרשימה למעלה</div>
           </div>
         </div>
       </div>
