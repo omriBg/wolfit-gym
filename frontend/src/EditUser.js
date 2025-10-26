@@ -27,15 +27,15 @@ function EditUser() {
   const [selectedSportForChart, setSelectedSportForChart] = useState(null);
 
   const SPORTS_LIST = [
-    { id: 1, name: 'כדורגל', icon: '⚽', image: '/images/sports/football.jpg' },
-    { id: 2, name: 'כדורסל', icon: '🏀', image: '/images/sports/basketball.jpg' },
-    { id: 3, name: 'טיפוס', icon: '🧗', image: '/images/sports/climbing.jpg' },
-    { id: 4, name: 'חדר כושר', icon: '🏋️', image: '/images/sports/gym.jpg' },
-    { id: 5, name: 'קורדינציה', icon: '🎯', image: '/images/sports/coordination.jpg' },
-    { id: 6, name: 'טניס', icon: '🎾', image: '/images/sports/tennis.jpg' },
-    { id: 7, name: 'פינגפונג', icon: '🏓', image: '/images/sports/pingpong.jpg' },
-    { id: 8, name: 'אגרוף', icon: '🥊', image: '/images/sports/dance.jpg' },
-    { id: 9, name: 'אופניים', icon: '🚴', image: '/images/sports/cycling.jpg' }
+    { id: 1, name: 'כדורגל', icon: '', image: '/images/sports/football.jpg' },
+    { id: 2, name: 'כדורסל', icon: '', image: '/images/sports/basketball.jpg' },
+    { id: 3, name: 'טיפוס', icon: '', image: '/images/sports/climbing.jpg' },
+    { id: 4, name: 'חדר כושר', icon: '', image: '/images/sports/gym.jpg' },
+    { id: 5, name: 'קורדינציה', icon: '', image: '/images/sports/coordination.jpg' },
+    { id: 6, name: 'טניס', icon: '', image: '/images/sports/tennis.jpg' },
+    { id: 7, name: 'פינגפונג', icon: '', image: '/images/sports/pingpong.jpg' },
+    { id: 8, name: 'אגרוף', icon: '', image: '/images/sports/dance.jpg' },
+    { id: 9, name: 'אופניים', icon: '', image: '/images/sports/cycling.jpg' }
   ];
 
 
@@ -73,8 +73,8 @@ function EditUser() {
             console.log('✅ התקבלו נתונים תקינים מהשרת');
             const { intensityLevel, sports, preferenceMode } = result.data;
             
-            console.log('💪 רמת עצימות:', intensityLevel);
-            console.log('🎯 כל הספורטים:', sports);
+            console.log('רמת עצימות:', intensityLevel);
+            console.log('כל הספורטים:', sports);
             console.log('🔄 מצב העדפה:', preferenceMode);
             
             console.log('📝 מתחיל לעבד את הנתונים...');
@@ -472,7 +472,7 @@ function EditUser() {
 
           <div className="summary-section">
             <div className="intensity-section">
-              <h4>🔥 רמת עצימות מועדפת:</h4>
+              <h4>רמת עצימות מועדפת:</h4>
               <div className="intensity-selector">
                 {[1, 2, 3].map((level) => (
                   <button
@@ -493,7 +493,7 @@ function EditUser() {
 
             {/* שדה חדש לבחירת אימון כוח */}
             <div className="strength-training-section">
-              <h4>💪 אימון כוח:</h4>
+              <h4>אימון כוח:</h4>
               <div className="strength-training-option">
                 <label className="strength-checkbox">
                   <input

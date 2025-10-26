@@ -13,7 +13,7 @@ export const SERVER_CONFIG = {
 // הגדרות יחידת זמן אימון
 export const WORKOUT_CONFIG = {
   SLOT_DURATION: 10, // דקות - ניתן לשנות ל-10, 15, 20 וכו'
-  MIN_WORKOUT_DURATION: 30, // משך אימון מינימלי
+  MIN_WORKOUT_DURATION: 30, // משך אימון מיניימלי
   MAX_WORKOUT_DURATION: 180, // משך אימון מקסימלי
 };
 

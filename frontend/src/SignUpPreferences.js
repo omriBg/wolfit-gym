@@ -29,15 +29,15 @@ async function sendRegistrationToServer(userData) {
   }
 
   const SPORTS_LIST = [
-    { id: 1, name: 'כדורגל', icon: '⚽', image: '/images/sports/football.jpg' },        // Soccer
-    { id: 2, name: 'כדורסל', icon: '🏀', image: '/images/sports/basketball.jpg' },       // Basketball  
-    { id: 3, name: 'טיפוס', icon: '🧗', image: '/images/sports/climbing.jpg' },         // Climbing
-    { id: 4, name: 'חדר כושר', icon: '🏋️', image: '/images/sports/gym.jpg' },     // Strength Training
-    { id: 5, name: 'קורדינציה', icon: '🎯', image: '/images/sports/coordination.jpg' },    // Coordination
-    { id: 6, name: 'טניס', icon: '🎾', image: '/images/sports/tennis.jpg' },         // Tennis
-    { id: 7, name: 'פינגפונג', icon: '🏓', image: '/images/sports/pingpong.jpg' },     // Ping Pong
-    { id: 8, name: 'אגרוף', icon: '🥊', image: '/images/sports/dance.jpg' },        // Boxing
-    { id: 9, name: 'אופניים', icon: '🚴', image: '/images/sports/cycling.jpg' }       // Cycling
+    { id: 1, name: 'כדורגל', icon: '', image: '/images/sports/football.jpg' },        // Soccer
+    { id: 2, name: 'כדורסל', icon: '', image: '/images/sports/basketball.jpg' },       // Basketball  
+    { id: 3, name: 'טיפוס', icon: '', image: '/images/sports/climbing.jpg' },         // Climbing
+    { id: 4, name: 'חדר כושר', icon: '', image: '/images/sports/gym.jpg' },     // Strength Training
+    { id: 5, name: 'קורדינציה', icon: '', image: '/images/sports/coordination.jpg' },    // Coordination
+    { id: 6, name: 'טניס', icon: '', image: '/images/sports/tennis.jpg' },         // Tennis
+    { id: 7, name: 'פינגפונג', icon: '', image: '/images/sports/pingpong.jpg' },     // Ping Pong
+    { id: 8, name: 'אגרוף', icon: '', image: '/images/sports/dance.jpg' },        // Boxing
+    { id: 9, name: 'אופניים', icon: '', image: '/images/sports/cycling.jpg' }       // Cycling
   ];
 
 
@@ -385,7 +385,7 @@ function SignUpPreferences() {
 
           <div className="summary-section">
             <div className="intensity-section">
-              <h4>🔥 רמת עצמיות מועדפת:</h4>
+              <h4>רמת עצמיות מועדפת:</h4>
               <div className="intensity-selector">
                 {[1, 2, 3].map((level) => (
                   <button
@@ -406,7 +406,7 @@ function SignUpPreferences() {
 
             {/* שדה חדש לבחירת אימון כוח */}
             <div className="strength-training-section">
-              <h4>💪 אימון כוח:</h4>
+              <h4>אימון כוח:</h4>
               <div className="strength-training-option">
                 <label className="strength-checkbox">
                   <input

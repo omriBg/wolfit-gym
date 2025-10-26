@@ -142,7 +142,7 @@ function CreateWorkout({ selectedDate, startTime, endTime }) {
   // loadAvailableFields הוסרה - השרת מטפל בזה כעת
 
   const generateOptimalWorkout = async () => {
-    console.log('🎯 מתחיל יצירת תוכנית אימון אופטימלית...');
+    console.log('מתחיל יצירת תוכנית אימון אופטימלית...');
     
     // בדיקה אם כבר בתהליך יצירה - מונע לחיצות מרובות
     if (isGenerating) {

@@ -51,6 +51,21 @@
   color: white;
   font-size: 0.8rem;
   font-weight: 500;
+  cursor: pointer;
+  transition: all 0.3s ease;
+}
+
+.area-option:hover {
+  background: rgba(255, 255, 255, 0.2);
+  border-color: rgba(255, 255, 255, 0.4);
+  transform: translateY(-2px);
+}
+
+.area-option.selected {
+  background: linear-gradient(45deg, #8b5cf6, #b38ed8);
+  border-color: #8762ab;
+  box-shadow: 0 0 15px rgba(139, 92, 246, 0.3);
+  transform: scale(1.05);
 }
 
 .body-side-toggle {

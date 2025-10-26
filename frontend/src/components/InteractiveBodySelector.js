@@ -50,7 +50,20 @@ const InteractiveBodySelector = ({ selectedAreas = [], onAreasChange }) => {
       
       console.log('אזורים חדשים:', newSelectedAreas);
       onAreasChange(newSelectedAreas);
+    } else {
+      console.log('לא נמצא אזור גוף מתאים לשריר:', muscle);
     }
+  };
+
+  // טיפול בלחיצה על אזור ברשימה
+  const handleAreaClick = (area) => {
+    console.log('לחצו על אזור:', area);
+    const newSelectedAreas = selectedAreas.includes(area)
+      ? selectedAreas.filter(selectedArea => selectedArea !== area)
+      : [...selectedAreas, area];
+    
+    console.log('אזורים חדשים:', newSelectedAreas);
+    onAreasChange(newSelectedAreas);
   };
 
   return (
@@ -61,13 +74,46 @@ const InteractiveBodySelector = ({ selectedAreas = [], onAreasChange }) => {
         {/* רשימת אופציות למעלה */}
         <div className="body-areas-options">
           <h5>אפשרויות לבחירה:</h5>
+          <div style={{ fontSize: '12px', color: '#b38ed8', marginBottom: '10px' }}>
+            Debug: לחץ על אזור ברשימה או על המודל למטה
+          </div>
           <div className="areas-list">
-            <span className="area-option">🦴 גב</span>
-            <span className="area-option">💪 כתפיים</span>
-            <span className="area-option">🦾 ידיים</span>
-            <span className="area-option">🫁 חזה</span>
-            <span className="area-option">🎯 ליבה/בטן</span>
-            <span className="area-option">🦵 רגליים</span>
+            <span 
+              className={`area-option ${selectedAreas.includes('back') ? 'selected' : ''}`}
+              onClick={() => handleAreaClick('back')}
+            >
+              גב
+            </span>
+            <span 
+              className={`area-option ${selectedAreas.includes('shoulders') ? 'selected' : ''}`}
+              onClick={() => handleAreaClick('shoulders')}
+            >
+              כתפיים
+            </span>
+            <span 
+              className={`area-option ${selectedAreas.includes('arms') ? 'selected' : ''}`}
+              onClick={() => handleAreaClick('arms')}
+            >
+              ידיים
+            </span>
+            <span 
+              className={`area-option ${selectedAreas.includes('chest') ? 'selected' : ''}`}
+              onClick={() => handleAreaClick('chest')}
+            >
+              חזה
+            </span>
+            <span 
+              className={`area-option ${selectedAreas.includes('core') ? 'selected' : ''}`}
+              onClick={() => handleAreaClick('core')}
+            >
+              ליבה/בטן
+            </span>
+            <span 
+              className={`area-option ${selectedAreas.includes('legs') ? 'selected' : ''}`}
+              onClick={() => handleAreaClick('legs')}
+            >
+              רגליים
+            </span>
           </div>
         </div>
         
@@ -89,13 +135,55 @@ const InteractiveBodySelector = ({ selectedAreas = [], onAreasChange }) => {
       </div>
       
       <div className="body-model-container">
+        <div style={{ 
+          position: 'absolute', 
+          top: '10px', 
+          left: '10px', 
+          background: 'rgba(0,0,0,0.7)', 
+          color: 'white', 
+          padding: '5px', 
+          fontSize: '12px',
+          borderRadius: '3px',
+          zIndex: 10
+        }}>
+          Debug: לחץ על המודל או על הרשימה למעלה
+        </div>
         <Model
           type={currentSide}
           muscles={getSelectedMuscles()}
           onMuscleClick={handleMuscleClick}
           colors={['#8b5cf6', '#b38ed8', '#8762ab', '#6d4c7a']}
-          style={{ width: '300px', height: '400px' }}
+          style={{ width: '400px', height: '500px', cursor: 'pointer' }}
         />
+        <div style={{
+          position: 'absolute',
+          top: '50%',
+          left: '50%',
+          transform: 'translate(-50%, -50%)',
+          background: 'rgba(255,255,255,0.1)',
+          padding: '20px',
+          borderRadius: '10px',
+          textAlign: 'center',
+          color: 'white',
+          fontSize: '14px',
+          zIndex: 5
+        }}>
+          <div>אם אתה רואה את זה, המודל לא נטען</div>
+          <div>נסה ללחוץ על הרשימה למעלה</div>
+        </div>
+        <div style={{ 
+          position: 'absolute', 
+          bottom: '10px', 
+          left: '10px', 
+          background: 'rgba(0,0,0,0.7)', 
+          color: 'white', 
+          padding: '5px', 
+          fontSize: '12px',
+          borderRadius: '3px',
+          zIndex: 10
+        }}>
+          אזורים נבחרים: {selectedAreas.length}
+        </div>
       </div>
       
       <div className="selected-areas-display">
