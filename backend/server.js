@@ -1334,6 +1334,9 @@ app.get('/api/user-preferences/:userId', authenticateToken, authorizeUserAccess,
       strengthTrainingData.selectedFitnessComponents = fitnessComponents.rows.map(row => row.name);
 
       console.log('💪 נתוני אימון כוח:', strengthTrainingData);
+      console.log('💪 wantsStrengthTraining:', strengthTrainingData.wantsStrengthTraining);
+      console.log('💪 selectedBodyAreas:', strengthTrainingData.selectedBodyAreas);
+      console.log('💪 selectedFitnessComponents:', strengthTrainingData.selectedFitnessComponents);
     } catch (strengthError) {
       console.warn('⚠️ שגיאה בקבלת נתוני אימון כוח:', strengthError.message);
       // ממשיכים בלי נתוני אימון כוח

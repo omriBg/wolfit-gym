@@ -5,6 +5,10 @@ import './InteractiveBodySelector.css';
 const InteractiveBodySelector = ({ selectedAreas = [], onAreasChange, selectedFitnessComponents = [], onFitnessComponentsChange }) => {
   const [currentSide, setCurrentSide] = useState(ModelType.ANTERIOR);
   
+  // לוגים לדיבוג
+  console.log('🏋️ InteractiveBodySelector - selectedAreas:', selectedAreas);
+  console.log('🏋️ InteractiveBodySelector - selectedFitnessComponents:', selectedFitnessComponents);
+  
   // מיפוי אזורי גוף שלנו לחלקי שריר בחבילה
   const bodyAreaMapping = {
     'back': [MuscleType.UPPER_BACK, MuscleType.LOWER_BACK, MuscleType.TRAPEZIUS],

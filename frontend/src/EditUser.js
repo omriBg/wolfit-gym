@@ -110,9 +110,19 @@ function EditUser() {
             // טעינת נתוני אימון כוח
             if (strengthTraining) {
               console.log('💪 טוען נתוני אימון כוח:', strengthTraining);
+              console.log('💪 wantsStrengthTraining:', strengthTraining.wantsStrengthTraining);
+              console.log('💪 selectedBodyAreas:', strengthTraining.selectedBodyAreas);
+              console.log('💪 selectedFitnessComponents:', strengthTraining.selectedFitnessComponents);
+              
               setWantsStrengthTraining(strengthTraining.wantsStrengthTraining || false);
               setSelectedBodyAreas(strengthTraining.selectedBodyAreas || []);
               setSelectedFitnessComponents(strengthTraining.selectedFitnessComponents || []);
+              
+              console.log('💪 State עודכן - wantsStrengthTraining:', strengthTraining.wantsStrengthTraining);
+              console.log('💪 State עודכן - selectedBodyAreas:', strengthTraining.selectedBodyAreas);
+              console.log('💪 State עודכן - selectedFitnessComponents:', strengthTraining.selectedFitnessComponents);
+            } else {
+              console.log('💪 אין נתוני אימון כוח מהשרת');
             }
           
           console.log('State עודכן בהצלחה');
