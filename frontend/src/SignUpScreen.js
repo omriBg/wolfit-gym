@@ -169,7 +169,7 @@ function SignUpScreen() {
     // בדיקה אם יש שגיאות בטופס
     const hasErrors = () => {
         // בדיקת שדות חובה
-        if (!userName.trim() || !email.trim()) {
+        if (!userName.trim() || !email.trim() || !birthdate.trim()) {
             return true;
         }
         
@@ -186,6 +186,10 @@ function SignUpScreen() {
         }
         if (!email.trim()) {
             setErrors({ email: 'אימייל נדרש' });
+            return;
+        }
+        if (!birthdate.trim()) {
+            setErrors({ birthdate: 'תאריך לידה נדרש' });
             return;
         }
         
@@ -302,7 +306,7 @@ function SignUpScreen() {
               </div>
               
               <div className="form-group">
-                <label className="date-label">תאריך לידה - אופציונלי</label>
+                <label className="date-label">תאריך לידה *</label>
                 <div className="date-picker-container">
                   <select 
                     value={day}
