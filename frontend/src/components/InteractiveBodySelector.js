@@ -75,6 +75,7 @@ const InteractiveBodySelector = ({ selectedAreas = [], onAreasChange }) => {
           <button 
             className={currentSide === ModelType.ANTERIOR ? 'active' : ''}
             onClick={() => setCurrentSide(ModelType.ANTERIOR)}
+            
           >
             חזית
           </button>
