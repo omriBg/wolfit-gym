@@ -74,9 +74,6 @@ const InteractiveBodySelector = ({ selectedAreas = [], onAreasChange }) => {
         {/* רשימת אופציות למעלה */}
         <div className="body-areas-options">
           <h5>אפשרויות לבחירה:</h5>
-          <div style={{ fontSize: '12px', color: '#b38ed8', marginBottom: '10px' }}>
-            Debug: לחץ על אזור ברשימה או על המודל למטה
-          </div>
           <div className="areas-list">
             <span 
               className={`area-option ${selectedAreas.includes('back') ? 'selected' : ''}`}
@@ -121,7 +118,6 @@ const InteractiveBodySelector = ({ selectedAreas = [], onAreasChange }) => {
           <button 
             className={currentSide === ModelType.ANTERIOR ? 'active' : ''}
             onClick={() => setCurrentSide(ModelType.ANTERIOR)}
-            
           >
             חזית
           </button>
@@ -135,54 +131,60 @@ const InteractiveBodySelector = ({ selectedAreas = [], onAreasChange }) => {
       </div>
       
       <div className="body-model-container">
-        <div style={{ 
-          position: 'absolute', 
-          top: '10px', 
-          left: '10px', 
-          background: 'rgba(0,0,0,0.7)', 
-          color: 'white', 
-          padding: '5px', 
-          fontSize: '12px',
-          borderRadius: '3px',
-          zIndex: 10
-        }}>
-          Debug: לחץ על המודל או על הרשימה למעלה
-        </div>
-        <Model
-          type={currentSide}
-          muscles={getSelectedMuscles()}
-          onMuscleClick={handleMuscleClick}
-          colors={['#8b5cf6', '#b38ed8', '#8762ab', '#6d4c7a']}
-          style={{ width: '400px', height: '500px', cursor: 'pointer' }}
-        />
-        <div style={{
-          position: 'absolute',
-          top: '50%',
-          left: '50%',
-          transform: 'translate(-50%, -50%)',
-          background: 'rgba(255,255,255,0.1)',
-          padding: '20px',
-          borderRadius: '10px',
-          textAlign: 'center',
-          color: 'white',
-          fontSize: '14px',
-          zIndex: 5
-        }}>
-          <div>אם אתה רואה את זה, המודל לא נטען</div>
-          <div>נסה ללחוץ על הרשימה למעלה</div>
-        </div>
-        <div style={{ 
-          position: 'absolute', 
-          bottom: '10px', 
-          left: '10px', 
-          background: 'rgba(0,0,0,0.7)', 
-          color: 'white', 
-          padding: '5px', 
-          fontSize: '12px',
-          borderRadius: '3px',
-          zIndex: 10
-        }}>
-          אזורים נבחרים: {selectedAreas.length}
+        <div style={{ position: 'relative', minHeight: '500px' }}>
+          <Model
+            type={currentSide}
+            muscles={getSelectedMuscles()}
+            onMuscleClick={handleMuscleClick}
+            colors={['#8b5cf6', '#b38ed8', '#8762ab', '#6d4c7a']}
+            style={{ width: '400px', height: '500px', cursor: 'pointer' }}
+          />
+          <div style={{
+            position: 'absolute',
+            top: '10px',
+            left: '10px',
+            background: 'rgba(0,0,0,0.8)',
+            color: 'white',
+            padding: '8px 12px',
+            borderRadius: '5px',
+            fontSize: '12px',
+            zIndex: 1000,
+            pointerEvents: 'none'
+          }}>
+            לחץ על חלקי הגוף לבחירה
+          </div>
+          <div style={{
+            position: 'absolute',
+            bottom: '10px',
+            left: '10px',
+            background: 'rgba(0,0,0,0.8)',
+            color: 'white',
+            padding: '8px 12px',
+            borderRadius: '5px',
+            fontSize: '12px',
+            zIndex: 1000,
+            pointerEvents: 'none'
+          }}>
+            נבחרו: {selectedAreas.length} אזורים
+          </div>
+          <div style={{
+            position: 'absolute',
+            top: '50%',
+            left: '50%',
+            transform: 'translate(-50%, -50%)',
+            background: 'rgba(255,255,255,0.1)',
+            padding: '20px',
+            borderRadius: '10px',
+            textAlign: 'center',
+            color: 'white',
+            fontSize: '14px',
+            zIndex: 5,
+            border: '2px dashed rgba(255,255,255,0.3)',
+            pointerEvents: 'none'
+          }}>
+            <div>אם אתה רואה את זה, המודל לא נטען</div>
+            <div>נסה ללחוץ על הרשימה למעלה</div>
+          </div>
         </div>
       </div>
       
