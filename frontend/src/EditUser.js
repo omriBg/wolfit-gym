@@ -155,6 +155,12 @@ function EditUser() {
       return;
     }
     
+    if (!birthdate) {
+      console.log('❌ תאריך לידה חסר');
+      setSaveMessage('אנא בחר תאריך לידה');
+      return;
+    }
+    
     console.log('✅ משתמש:', currentUser.id);
     console.log('✅ ספורט נבחרים:', selectedSports);
     console.log('✅ מצב דירוג:', preferenceMode);
@@ -582,19 +588,19 @@ function EditUser() {
                   console.log('🔘 כפתור שמירה נלחץ!');
                   saveUserPreferences();
                 }}
-                disabled={isSaving}
+                disabled={isSaving || selectedSports.length === 0 || !birthdate}
                 style={{
                   width: '250px',
                   height: '55px',
                   fontSize: '18px',
                   fontWeight: 'bold',
-                  background: selectedSports.length > 0 ? 'linear-gradient(45deg, #b38ed8, #9c7dc4)' : 'rgba(255, 255, 255, 0.2)',
-                  color: selectedSports.length > 0 ? '#ffffff' : 'rgba(255, 255, 255, 0.5)',
+                  background: (selectedSports.length > 0 && birthdate) ? 'linear-gradient(45deg, #b38ed8, #9c7dc4)' : 'rgba(255, 255, 255, 0.2)',
+                  color: (selectedSports.length > 0 && birthdate) ? '#ffffff' : 'rgba(255, 255, 255, 0.5)',
                   border: 'none',
                   borderRadius: '12px',
-                  cursor: selectedSports.length > 0 && !isSaving ? 'pointer' : 'not-allowed',
+                  cursor: (selectedSports.length > 0 && birthdate && !isSaving) ? 'pointer' : 'not-allowed',
                   transition: 'all 0.3s ease',
-                  opacity: selectedSports.length > 0 && !isSaving ? 1 : 0.6
+                  opacity: (selectedSports.length > 0 && birthdate && !isSaving) ? 1 : 0.6
                 }}
               >
                 {isSaving ? 'שומר...' : 'שמור והמשך'}
