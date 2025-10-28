@@ -243,9 +243,13 @@ function SignUpPreferences() {
       const completeUserData = {
         ...userData,
         ...preferences,
-        googleId: googleData?.googleId,
-        phoneData: phoneData
+        googleId: googleData?.googleId
       };
+      
+      // הוספת phoneData רק אם הוא קיים
+      if (phoneData) {
+        completeUserData.phoneData = phoneData;
+      }
     console.log('נתונים בסיסיים:', userData);
     console.log('נתוני Google:', googleData);
     console.log('נתוני טלפון:', phoneData);

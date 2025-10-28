@@ -283,7 +283,7 @@ const registerSchema = Joi.object({
       .messages({
         'string.pattern.base': 'מספר טלפון חייב להיות בפורמט +972XXXXXXXXX'
       })
-  }).optional(),
+  }).optional().allow(null),
   
   wantsStrengthTraining: Joi.boolean().optional(),
   selectedBodyAreas: Joi.array().items(Joi.string()).optional(),
