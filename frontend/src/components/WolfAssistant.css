@@ -1,0 +1,357 @@
+.wolf-assistant-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: rgba(0, 0, 0, 0.7);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 1000;
+  animation: fadeIn 0.3s ease-out;
+}
+
+.wolf-assistant-container {
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  border-radius: 20px;
+  padding: 0;
+  max-width: 500px;
+  width: 90%;
+  max-height: 80vh;
+  overflow: hidden;
+  box-shadow: 0 20px 40px rgba(0, 0, 0, 0.3);
+  animation: slideUp 0.3s ease-out;
+}
+
+.wolf-assistant-header {
+  background: rgba(255, 255, 255, 0.1);
+  padding: 20px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.2);
+}
+
+.wolf-avatar {
+  font-size: 2.5rem;
+  margin-right: 15px;
+  animation: bounce 2s infinite;
+}
+
+.wolf-assistant-header h3 {
+  color: white;
+  margin: 0;
+  font-size: 1.5rem;
+  flex: 1;
+}
+
+.close-button {
+  background: rgba(255, 255, 255, 0.2);
+  border: none;
+  color: white;
+  font-size: 1.5rem;
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.3s ease;
+}
+
+.close-button:hover {
+  background: rgba(255, 255, 255, 0.3);
+  transform: scale(1.1);
+}
+
+.wolf-assistant-content {
+  padding: 30px;
+  background: white;
+  max-height: 60vh;
+  overflow-y: auto;
+}
+
+.question-container {
+  margin-bottom: 30px;
+}
+
+.wolf-message {
+  background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+  color: white;
+  padding: 20px;
+  border-radius: 15px;
+  margin-bottom: 20px;
+  font-size: 1.1rem;
+  line-height: 1.6;
+  white-space: pre-line;
+  box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
+}
+
+.typing-indicator {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  margin-top: 10px;
+}
+
+.typing-indicator span {
+  width: 8px;
+  height: 8px;
+  background: white;
+  border-radius: 50%;
+  animation: typing 1.4s infinite;
+}
+
+.typing-indicator span:nth-child(2) {
+  animation-delay: 0.2s;
+}
+
+.typing-indicator span:nth-child(3) {
+  animation-delay: 0.4s;
+}
+
+.answer-options {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.answer-button {
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  color: white;
+  border: none;
+  padding: 15px 20px;
+  border-radius: 10px;
+  font-size: 1rem;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  text-align: right;
+  box-shadow: 0 3px 10px rgba(0, 0, 0, 0.1);
+}
+
+.answer-button:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 5px 15px rgba(0, 0, 0, 0.2);
+  background: linear-gradient(135deg, #764ba2 0%, #667eea 100%);
+}
+
+.answer-button:active {
+  transform: translateY(0);
+}
+
+.progress-bar {
+  width: 100%;
+  height: 6px;
+  background: rgba(102, 126, 234, 0.2);
+  border-radius: 3px;
+  overflow: hidden;
+  margin: 20px 0 10px 0;
+}
+
+.progress-fill {
+  height: 100%;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  border-radius: 3px;
+  transition: width 0.5s ease;
+}
+
+.progress-text {
+  text-align: center;
+  color: #666;
+  font-size: 0.9rem;
+  margin-bottom: 10px;
+}
+
+.recommendation-container {
+  text-align: center;
+}
+
+.recommendation-container .wolf-message {
+  text-align: center;
+  margin-bottom: 30px;
+}
+
+.intensity-badge {
+  display: inline-block;
+  padding: 10px 20px;
+  border-radius: 25px;
+  font-weight: bold;
+  font-size: 1.2rem;
+  margin: 15px 0;
+  box-shadow: 0 3px 10px rgba(0, 0, 0, 0.2);
+}
+
+.intensity-high {
+  background: linear-gradient(135deg, #ff6b6b 0%, #ee5a24 100%);
+  color: white;
+}
+
+.intensity-medium {
+  background: linear-gradient(135deg, #feca57 0%, #ff9ff3 100%);
+  color: white;
+}
+
+.intensity-low {
+  background: linear-gradient(135deg, #48dbfb 0%, #0abde3 100%);
+  color: white;
+}
+
+.reasoning {
+  font-size: 1.1rem;
+  margin: 20px 0;
+  color: #333;
+  line-height: 1.6;
+}
+
+.recommendation-details {
+  background: #f8f9fa;
+  padding: 20px;
+  border-radius: 10px;
+  margin: 20px 0;
+  text-align: right;
+}
+
+.recommendation-details h5 {
+  color: #333;
+  margin-bottom: 15px;
+  font-size: 1.1rem;
+}
+
+.recommendation-details ul {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+}
+
+.recommendation-details li {
+  padding: 8px 0;
+  color: #555;
+  position: relative;
+  padding-right: 20px;
+}
+
+.recommendation-details li:before {
+  content: "✓";
+  position: absolute;
+  right: 0;
+  color: #667eea;
+  font-weight: bold;
+}
+
+.recommendation-actions {
+  display: flex;
+  gap: 15px;
+  justify-content: center;
+  margin-top: 30px;
+}
+
+.apply-button {
+  background: linear-gradient(135deg, #00b894 0%, #00a085 100%);
+  color: white;
+  border: none;
+  padding: 15px 30px;
+  border-radius: 25px;
+  font-size: 1.1rem;
+  font-weight: bold;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  box-shadow: 0 3px 10px rgba(0, 0, 0, 0.2);
+}
+
+.apply-button:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 5px 15px rgba(0, 0, 0, 0.3);
+}
+
+.restart-button {
+  background: linear-gradient(135deg, #6c5ce7 0%, #a29bfe 100%);
+  color: white;
+  border: none;
+  padding: 15px 30px;
+  border-radius: 25px;
+  font-size: 1.1rem;
+  font-weight: bold;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  box-shadow: 0 3px 10px rgba(0, 0, 0, 0.2);
+}
+
+.restart-button:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 5px 15px rgba(0, 0, 0, 0.3);
+}
+
+/* אנימציות */
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+@keyframes slideUp {
+  from { 
+    opacity: 0;
+    transform: translateY(50px);
+  }
+  to { 
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes bounce {
+  0%, 20%, 50%, 80%, 100% {
+    transform: translateY(0);
+  }
+  40% {
+    transform: translateY(-10px);
+  }
+  60% {
+    transform: translateY(-5px);
+  }
+}
+
+@keyframes typing {
+  0%, 60%, 100% {
+    transform: translateY(0);
+    opacity: 0.4;
+  }
+  30% {
+    transform: translateY(-10px);
+    opacity: 1;
+  }
+}
+
+/* רספונסיביות */
+@media (max-width: 768px) {
+  .wolf-assistant-container {
+    width: 95%;
+    max-height: 90vh;
+  }
+  
+  .wolf-assistant-content {
+    padding: 20px;
+  }
+  
+  .wolf-message {
+    font-size: 1rem;
+    padding: 15px;
+  }
+  
+  .answer-button {
+    padding: 12px 15px;
+    font-size: 0.9rem;
+  }
+  
+  .recommendation-actions {
+    flex-direction: column;
+    align-items: center;
+  }
+  
+  .apply-button,
+  .restart-button {
+    width: 100%;
+    max-width: 200px;
+  }
+}

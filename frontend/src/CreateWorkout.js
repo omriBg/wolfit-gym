@@ -4,6 +4,7 @@ import { useNavigate } from 'react-router-dom';
 import { useAuth } from './contexts/AuthContext';
 import { API_BASE_URL, WORKOUT_CONFIG } from './config';
 import './CreateWorkout.css';
+import WolfAssistant from './components/WolfAssistant';
 
 // מיפוי ספורטים (תואם לשרת שלך)
 const SPORT_MAPPING = {
@@ -33,6 +34,8 @@ function CreateWorkout({ selectedDate, startTime, endTime }) {
   const [isSaving, setIsSaving] = useState(false);
   const [saveSuccess, setSaveSuccess] = useState(false);
   const [hasAttemptedGeneration, setHasAttemptedGeneration] = useState(false);
+  const [showWolfAssistant, setShowWolfAssistant] = useState(false);
+  const [selectedIntensity, setSelectedIntensity] = useState(2); // ברירת מחדל: בינוני
 
   useEffect(() => {
     console.log(' CreateWorkout נטען עם פרמטרים:', {
@@ -336,6 +339,46 @@ function CreateWorkout({ selectedDate, startTime, endTime }) {
     return !loading && timeSlots.length > 0;
   };
 
+  const handleWolfRecommendation = (intensity) => {
+    // המרת המלצת העוזר לרמת עצימות מספרית
+    let intensityLevel;
+    switch(intensity) {
+      case 'low':
+        intensityLevel = 1;
+        break;
+      case 'medium':
+        intensityLevel = 2;
+        break;
+      case 'high':
+        intensityLevel = 3;
+        break;
+      default:
+        intensityLevel = 2;
+    }
+    
+    setSelectedIntensity(intensityLevel);
+    setShowWolfAssistant(false);
+    console.log('וולף המליץ על רמת עצימות:', intensityLevel);
+  };
+
+  const getIntensityLabel = (level) => {
+    const labels = {
+      1: 'קל',
+      2: 'בינוני', 
+      3: 'קשה'
+    };
+    return labels[level] || 'בינוני';
+  };
+
+  const getIntensityColor = (level) => {
+    const colors = {
+      1: '#4CAF50',
+      2: '#FF9800',
+      3: '#F44336'
+    };
+    return colors[level] || '#FF9800';
+  };
+
   if (loading) {
     return (
       <div className="create-workout-container">
@@ -362,6 +405,35 @@ function CreateWorkout({ selectedDate, startTime, endTime }) {
       </button>
       
       <div className="content">
+        {/* בחירת רמת עצימות */}
+        <div className="intensity-selection-section">
+          <h3>רמת עצימות מועדפת:</h3>
+          <div className="intensity-selector-container">
+            <div className="intensity-selector">
+              {[1, 2, 3].map((level) => (
+                <button
+                  key={level}
+                  className={`intensity-btn ${selectedIntensity === level ? 'active' : ''}`}
+                  onClick={() => setSelectedIntensity(level)}
+                  style={{
+                    backgroundColor: selectedIntensity === level ? getIntensityColor(level) : 'rgba(255, 255, 255, 0.1)',
+                    borderColor: getIntensityColor(level)
+                  }}
+                >
+                  <span className="intensity-number">{level}</span>
+                  <span className="intensity-label">{getIntensityLabel(level)}</span>
+                </button>
+              ))}
+            </div>
+            <button 
+              className="wolf-assistant-button"
+              onClick={() => setShowWolfAssistant(true)}
+              title="עוזר אישי - וולף"
+            >
+              🐺 עזרה בבחירה
+            </button>
+          </div>
+        </div>
         
         {error && (
           <div style={{ 
@@ -521,6 +593,13 @@ function CreateWorkout({ selectedDate, startTime, endTime }) {
           </div>
         )}
       </div>
+
+      {/* עוזר אישי וולף */}
+      <WolfAssistant
+        isOpen={showWolfAssistant}
+        onClose={() => setShowWolfAssistant(false)}
+        onRecommendation={handleWolfRecommendation}
+      />
     </div>
   );
 }
