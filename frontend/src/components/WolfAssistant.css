@@ -13,43 +13,53 @@
 }
 
 .wolf-assistant-container {
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-  border-radius: 20px;
+  background: #ffffff;
+  border-radius: 12px;
   padding: 0;
   max-width: 500px;
   width: 90%;
   max-height: 80vh;
   overflow: hidden;
-  box-shadow: 0 20px 40px rgba(0, 0, 0, 0.3);
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.15);
   animation: slideUp 0.3s ease-out;
+  border: 1px solid #e0e0e0;
 }
 
 .wolf-assistant-header {
-  background: rgba(255, 255, 255, 0.1);
+  background: #f8f9fa;
   padding: 20px;
   display: flex;
   align-items: center;
   justify-content: space-between;
-  border-bottom: 1px solid rgba(255, 255, 255, 0.2);
+  border-bottom: 1px solid #e0e0e0;
 }
 
 .wolf-avatar {
-  font-size: 2.5rem;
+  font-size: 2rem;
   margin-right: 15px;
-  animation: bounce 2s infinite;
+  font-weight: bold;
+  color: #495057;
+  background: #e9ecef;
+  width: 50px;
+  height: 50px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
 }
 
 .wolf-assistant-header h3 {
-  color: white;
+  color: #495057;
   margin: 0;
-  font-size: 1.5rem;
+  font-size: 1.3rem;
   flex: 1;
+  font-weight: 600;
 }
 
 .close-button {
-  background: rgba(255, 255, 255, 0.2);
+  background: #e9ecef;
   border: none;
-  color: white;
+  color: #6c757d;
   font-size: 1.5rem;
   width: 40px;
   height: 40px;
@@ -62,8 +72,9 @@
 }
 
 .close-button:hover {
-  background: rgba(255, 255, 255, 0.3);
-  transform: scale(1.1);
+  background: #dee2e6;
+  color: #495057;
+  transform: scale(1.05);
 }
 
 .wolf-assistant-content {
@@ -78,15 +89,15 @@
 }
 
 .wolf-message {
-  background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
-  color: white;
+  background: #f8f9fa;
+  color: #495057;
   padding: 20px;
-  border-radius: 15px;
+  border-radius: 8px;
   margin-bottom: 20px;
   font-size: 1.1rem;
   line-height: 1.6;
   white-space: pre-line;
-  box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
+  border: 1px solid #e9ecef;
 }
 
 .typing-indicator {
@@ -99,7 +110,7 @@
 .typing-indicator span {
   width: 8px;
   height: 8px;
-  background: white;
+  background: #6c757d;
   border-radius: 50%;
   animation: typing 1.4s infinite;
 }
@@ -119,22 +130,23 @@
 }
 
 .answer-button {
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-  color: white;
-  border: none;
+  background: #ffffff;
+  color: #495057;
+  border: 2px solid #e9ecef;
   padding: 15px 20px;
-  border-radius: 10px;
+  border-radius: 8px;
   font-size: 1rem;
   cursor: pointer;
   transition: all 0.3s ease;
   text-align: right;
-  box-shadow: 0 3px 10px rgba(0, 0, 0, 0.1);
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
 }
 
 .answer-button:hover {
-  transform: translateY(-2px);
-  box-shadow: 0 5px 15px rgba(0, 0, 0, 0.2);
-  background: linear-gradient(135deg, #764ba2 0%, #667eea 100%);
+  transform: translateY(-1px);
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+  border-color: #007bff;
+  color: #007bff;
 }
 
 .answer-button:active {
@@ -152,7 +164,7 @@
 
 .progress-fill {
   height: 100%;
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  background: #007bff;
   border-radius: 3px;
   transition: width 0.5s ease;
 }
@@ -184,17 +196,17 @@
 }
 
 .intensity-high {
-  background: linear-gradient(135deg, #ff6b6b 0%, #ee5a24 100%);
+  background: #dc3545;
   color: white;
 }
 
 .intensity-medium {
-  background: linear-gradient(135deg, #feca57 0%, #ff9ff3 100%);
-  color: white;
+  background: #ffc107;
+  color: #212529;
 }
 
 .intensity-low {
-  background: linear-gradient(135deg, #48dbfb 0%, #0abde3 100%);
+  background: #28a745;
   color: white;
 }
 
@@ -233,10 +245,10 @@
 }
 
 .recommendation-details li:before {
-  content: "✓";
+  content: "•";
   position: absolute;
   right: 0;
-  color: #667eea;
+  color: #007bff;
   font-weight: bold;
 }
 
@@ -248,39 +260,41 @@
 }
 
 .apply-button {
-  background: linear-gradient(135deg, #00b894 0%, #00a085 100%);
+  background: #007bff;
   color: white;
   border: none;
-  padding: 15px 30px;
-  border-radius: 25px;
-  font-size: 1.1rem;
-  font-weight: bold;
+  padding: 12px 24px;
+  border-radius: 6px;
+  font-size: 1rem;
+  font-weight: 500;
   cursor: pointer;
   transition: all 0.3s ease;
-  box-shadow: 0 3px 10px rgba(0, 0, 0, 0.2);
+  box-shadow: 0 2px 4px rgba(0, 123, 255, 0.2);
 }
 
 .apply-button:hover {
-  transform: translateY(-2px);
-  box-shadow: 0 5px 15px rgba(0, 0, 0, 0.3);
+  background: #0056b3;
+  transform: translateY(-1px);
+  box-shadow: 0 4px 8px rgba(0, 123, 255, 0.3);
 }
 
 .restart-button {
-  background: linear-gradient(135deg, #6c5ce7 0%, #a29bfe 100%);
+  background: #6c757d;
   color: white;
   border: none;
-  padding: 15px 30px;
-  border-radius: 25px;
-  font-size: 1.1rem;
-  font-weight: bold;
+  padding: 12px 24px;
+  border-radius: 6px;
+  font-size: 1rem;
+  font-weight: 500;
   cursor: pointer;
   transition: all 0.3s ease;
-  box-shadow: 0 3px 10px rgba(0, 0, 0, 0.2);
+  box-shadow: 0 2px 4px rgba(108, 117, 125, 0.2);
 }
 
 .restart-button:hover {
-  transform: translateY(-2px);
-  box-shadow: 0 5px 15px rgba(0, 0, 0, 0.3);
+  background: #545b62;
+  transform: translateY(-1px);
+  box-shadow: 0 4px 8px rgba(108, 117, 125, 0.3);
 }
 
 /* אנימציות */

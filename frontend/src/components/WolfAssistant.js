@@ -11,7 +11,7 @@ const WolfAssistant = ({ onRecommendation, isOpen, onClose }) => {
   const questions = [
     {
       id: 'age',
-      question: "שלום! אני וולף, העוזר האישי שלך! 🐺\n\nבואו נתחיל - מה הגיל שלך?",
+      question: "שלום! אני וולף, העוזר האישי שלך.\n\nבואו נתחיל - מה הגיל שלך?",
       type: 'select',
       options: [
         { value: 'teen', label: '15-18' },
@@ -134,7 +134,7 @@ const WolfAssistant = ({ onRecommendation, isOpen, onClose }) => {
     // קביעת רמת עצימות
     if (score >= 4) {
       intensity = 'high';
-      reasoning = 'תבסס על התשובות שלך, אתה מוכן לעצימות גבוהה! יש לך ניסיון, כושר טוב ותדירות אימונים גבוהה.';
+      reasoning = 'תבסס על התשובות שלך, אתה מוכן לעצימות גבוהה. יש לך ניסיון, כושר טוב ותדירות אימונים גבוהה.';
     } else if (score >= 1) {
       intensity = 'medium';
       reasoning = 'רמת עצימות בינונית תתאים לך בדיוק. זה יאפשר לך להתקדם בצורה בטוחה ויעילה.';
@@ -188,7 +188,7 @@ const WolfAssistant = ({ onRecommendation, isOpen, onClose }) => {
     <div className="wolf-assistant-overlay">
       <div className="wolf-assistant-container">
         <div className="wolf-assistant-header">
-          <div className="wolf-avatar">🐺</div>
+          <div className="wolf-avatar">W</div>
           <h3>וולף - העוזר האישי שלך</h3>
           <button className="close-button" onClick={onClose}>×</button>
         </div>
@@ -237,7 +237,7 @@ const WolfAssistant = ({ onRecommendation, isOpen, onClose }) => {
           ) : (
             <div className="recommendation-container">
               <div className="wolf-message">
-                <h4>המלצתי עבורך: 🎯</h4>
+                <h4>המלצתי עבורך:</h4>
                 <div className={`intensity-badge intensity-${recommendation.intensity}`}>
                   {recommendation.intensity === 'high' ? 'עצימות גבוהה' : 
                    recommendation.intensity === 'medium' ? 'עצימות בינונית' : 'עצימות נמוכה'}

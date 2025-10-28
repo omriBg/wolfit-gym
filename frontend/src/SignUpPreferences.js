@@ -5,6 +5,7 @@ import './SignUpPreferences.css';
 import { API_BASE_URL } from './config';
 import FitnessMetricsChart from './components/FitnessMetricsChart';
 import InteractiveBodySelector from './components/InteractiveBodySelector';
+import WolfAssistant from './components/WolfAssistant';
 
 
 async function sendRegistrationToServer(userData) {
@@ -58,6 +59,9 @@ function SignUpPreferences() {
   // מצב לניהול גרף מדדי הכושר
   const [chartOpen, setChartOpen] = useState(false);
   const [selectedSportForChart, setSelectedSportForChart] = useState(null);
+  
+  // מצב לעוזר אישי וולף
+  const [showWolfAssistant, setShowWolfAssistant] = useState(false);
 
 
   useEffect(() => {
@@ -198,6 +202,28 @@ function SignUpPreferences() {
     };
     return colors[level] || '#FF9800';
   }
+
+  const handleWolfRecommendation = (intensity) => {
+    // המרת המלצת העוזר לרמת עצימות מספרית
+    let intensityLevel;
+    switch(intensity) {
+      case 'low':
+        intensityLevel = 1;
+        break;
+      case 'medium':
+        intensityLevel = 2;
+        break;
+      case 'high':
+        intensityLevel = 3;
+        break;
+      default:
+        intensityLevel = 2;
+    }
+    
+    setIntensityLevel(intensityLevel);
+    setShowWolfAssistant(false);
+    console.log('וולף המליץ על רמת עצימות:', intensityLevel);
+  };
 
   function getSportsForAlgorithm() {
     const selectedSportsData = getSortedPreferred();
@@ -399,21 +425,30 @@ function SignUpPreferences() {
           <div className="summary-section">
             <div className="intensity-section">
               <h4>רמת עצמיות מועדפת:</h4>
-              <div className="intensity-selector">
-                {[1, 2, 3].map((level) => (
-                  <button
-                    key={level}
-                    className={`intensity-btn ${intensityLevel === level ? 'active' : ''}`}
-                    onClick={() => setIntensityLevel(level)}
-                    style={{
-                      backgroundColor: intensityLevel === level ? getIntensityColor(level) : 'rgba(255, 255, 255, 0.1)',
-                      borderColor: getIntensityColor(level)
-                    }}
-                  >
-                    <span className="intensity-number">{level}</span>
-                    <span className="intensity-label">{getIntensityLabel(level)}</span>
-                  </button>
-                ))}
+              <div className="intensity-selector-container">
+                <div className="intensity-selector">
+                  {[1, 2, 3].map((level) => (
+                    <button
+                      key={level}
+                      className={`intensity-btn ${intensityLevel === level ? 'active' : ''}`}
+                      onClick={() => setIntensityLevel(level)}
+                      style={{
+                        backgroundColor: intensityLevel === level ? getIntensityColor(level) : 'rgba(255, 255, 255, 0.1)',
+                        borderColor: getIntensityColor(level)
+                      }}
+                    >
+                      <span className="intensity-number">{level}</span>
+                      <span className="intensity-label">{getIntensityLabel(level)}</span>
+                    </button>
+                  ))}
+                </div>
+                <button 
+                  className="wolf-assistant-button"
+                  onClick={() => setShowWolfAssistant(true)}
+                  title="עוזר אישי - וולף"
+                >
+                  עזרה בבחירה
+                </button>
               </div>
             </div>
 
@@ -488,6 +523,13 @@ function SignUpPreferences() {
         sportId={selectedSportForChart?.id}
         isOpen={chartOpen}
         onClose={closeFitnessChart}
+      />
+
+      {/* עוזר אישי וולף */}
+      <WolfAssistant
+        isOpen={showWolfAssistant}
+        onClose={() => setShowWolfAssistant(false)}
+        onRecommendation={handleWolfRecommendation}
       />
     </div>
   );

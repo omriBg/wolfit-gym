@@ -425,13 +425,13 @@ function CreateWorkout({ selectedDate, startTime, endTime }) {
                 </button>
               ))}
             </div>
-            <button 
-              className="wolf-assistant-button"
-              onClick={() => setShowWolfAssistant(true)}
-              title="עוזר אישי - וולף"
-            >
-              🐺 עזרה בבחירה
-            </button>
+                <button 
+                  className="wolf-assistant-button"
+                  onClick={() => setShowWolfAssistant(true)}
+                  title="עוזר אישי - וולף"
+                >
+                  עזרה בבחירה
+                </button>
           </div>
         </div>
         

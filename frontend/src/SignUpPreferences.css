@@ -673,3 +673,53 @@
     font-size: 0.8rem;
   }
 }
+
+/* סטיילינג לעוזר אישי וולף */
+.intensity-selector-container {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 20px;
+  flex-wrap: wrap;
+}
+
+.wolf-assistant-button {
+  background: #f8f9fa;
+  color: #495057;
+  border: 2px solid #e9ecef;
+  padding: 10px 16px;
+  border-radius: 6px;
+  font-size: 0.9rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  white-space: nowrap;
+}
+
+.wolf-assistant-button:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+  border-color: #007bff;
+  color: #007bff;
+}
+
+.wolf-assistant-button:active {
+  transform: translateY(0);
+}
+
+/* רספונסיביות */
+@media (max-width: 768px) {
+  .intensity-selector-container {
+    flex-direction: column;
+    gap: 15px;
+  }
+
+  .wolf-assistant-button {
+    padding: 10px 16px;
+    font-size: 0.9rem;
+  }
+}
