@@ -217,10 +217,11 @@ const registerSchema = Joi.object({
       'any.required': 'כתובת אימייל נדרשת'
     }),
   
-  height: Joi.number()
-    .integer()
-    .min(100)
-    .max(250)
+  height: Joi.alternatives()
+    .try(
+      Joi.number().integer().min(100).max(250),
+      Joi.string().allow('').optional()
+    )
     .optional()
     .messages({
       'number.min': 'גובה חייב להיות לפחות 100 ס"מ',
@@ -228,10 +229,11 @@ const registerSchema = Joi.object({
       'number.integer': 'גובה חייב להיות מספר שלם'
     }),
   
-  weight: Joi.number()
-    .integer()
-    .min(30)
-    .max(300)
+  weight: Joi.alternatives()
+    .try(
+      Joi.number().integer().min(30).max(300),
+      Joi.string().allow('').optional()
+    )
     .optional()
     .messages({
       'number.min': 'משקל חייב להיות לפחות 30 ק"ג',
@@ -350,6 +352,14 @@ const adminAddHoursSchema = Joi.object({
 // Validation Middleware
 const validateRequest = (schema) => {
   return (req, res, next) => {
+    console.log('🔍 מתחיל אימות קלט:', {
+      body: req.body,
+      height: req.body.height,
+      weight: req.body.weight,
+      heightType: typeof req.body.height,
+      weightType: typeof req.body.weight
+    });
+    
     const { error, value } = schema.validate(req.body, { 
       abortEarly: false,
       stripUnknown: true 
@@ -358,6 +368,7 @@ const validateRequest = (schema) => {
     if (error) {
       const errorMessages = error.details.map(detail => detail.message);
       console.log('❌ שגיאות אימות קלט:', errorMessages);
+      console.log('❌ פרטי שגיאות:', error.details);
       
       return res.status(400).json({
         success: false,
@@ -366,6 +377,7 @@ const validateRequest = (schema) => {
       });
     }
     
+    console.log('✅ אימות קלט עבר בהצלחה');
     // החלפת הנתונים המקוריים בנתונים המאומתים
     req.body = value;
     next();
@@ -3188,11 +3200,18 @@ app.get('/api/admin/all-users-hours', authenticateToken, authorizeAdmin, async (
       console.log('⚠️ אין רשומות בטבלת userhours, יוצר רשומות ברירת מחדל...');
       const allUsers = await pool.query('SELECT iduser FROM "User"');
       for (const user of allUsers.rows) {
-        await pool.query(`
-          INSERT INTO userhours (userid, availablehours, createdby) 
-          VALUES ($1, 0, 'system')
-          ON CONFLICT (userid) DO NOTHING
-        `, [user.iduser]);
+        // בדיקה אם כבר יש רשומה למשתמש
+        const existingUser = await pool.query(
+          'SELECT id FROM userhours WHERE userid = $1',
+          [user.iduser]
+        );
+        
+        if (existingUser.rows.length === 0) {
+          await pool.query(`
+            INSERT INTO userhours (userid, availablehours, createdby) 
+            VALUES ($1, 0, 'system')
+          `, [user.iduser]);
+        }
       }
       console.log(`✅ נוצרו ${allUsers.rows.length} רשומות ברירת מחדל`);
     }

@@ -1,5 +1,14 @@
 {
+  "name": "wolfit-gym",
+  "version": "1.0.0",
+  "description": "Wolfit Gym Management System",
+  "scripts": {
+    "set-admin": "node set_admin.js",
+    "admin": "node set_admin.js"
+  },
   "dependencies": {
-    "k6": "^0.0.0"
+    "k6": "^0.0.0",
+    "pg": "^8.11.3",
+    "dotenv": "^16.3.1"
   }
 }
