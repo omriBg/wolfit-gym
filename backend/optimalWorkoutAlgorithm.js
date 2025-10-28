@@ -465,18 +465,31 @@ class CompleteOptimalWorkoutScheduler {
     
     let score = 10000; // ניקוד בסיס גבוה מאוד
     
-    // בונוס חזק להעדפות משתמש (סדר חשוב!)
-    const preferenceIndex = this.userPreferences.indexOf(sportId);
-    if (preferenceIndex !== -1) {
-      const preferenceBonus = (this.userPreferences.length - preferenceIndex) * 5000;
+    // ניקוד לפי סדר העדיפויות הנכון:
+    // priority 1: ספורטים אהובים פעם ראשונה - הכי גבוה
+    // priority 2: ספורטים לא אהובים פעם ראשונה - גבוה
+    // priority 3: ספורטים אהובים פעם שנייה - בינוני
+    // priority 4: ספורטים לא אהובים פעם שנייה - נמוך
+    
+    if (priority === 1) {
+      // ספורטים אהובים פעם ראשונה - בונוס הכי גבוה
+      const preferenceIndex = this.userPreferences.indexOf(sportId);
+      const preferenceBonus = (this.userPreferences.length - preferenceIndex) * 10000;
       score += preferenceBonus;
+    } else if (priority === 2) {
+      // ספורטים לא אהובים פעם ראשונה - בונוס בינוני
+      score += 5000;
+    } else if (priority === 3) {
+      // ספורטים אהובים פעם שנייה - בונוס נמוך יותר
+      const preferenceIndex = this.userPreferences.indexOf(sportId);
+      const preferenceBonus = (this.userPreferences.length - preferenceIndex) * 2000;
+      score += preferenceBonus;
+    } else if (priority === 4) {
+      // ספורטים לא אהובים פעם שנייה - בונוס הכי נמוך
+      score += 1000;
     }
     
-    // עונש קל על עדיפות נמוכה (גיוון חשוב!)
-    const priorityPenalty = (priority - 1) * 1000;
-    score -= priorityPenalty;
-    
-    // עונש קל על שימוש חוזר (רק אם זה לא עדיפות ראשונה)
+    // עונש על שימוש חוזר (רק אם זה לא עדיפות ראשונה)
     if (priority > 1) {
       const usagePenalty = currentUsage * currentUsage * 50;
       score -= usagePenalty;
