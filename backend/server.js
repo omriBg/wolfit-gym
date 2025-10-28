@@ -951,6 +951,14 @@ app.post('/api/update-existing-users', async (req, res) => {
 app.post('/api/register', validateRequest(registerSchema), async (req, res) => {
   try {
     console.log('📝 מקבל בקשה לרישום:', req.body);
+    console.log('🔍 פרטי בקשה מפורטים:', {
+      userName: req.body.userName,
+      email: req.body.email,
+      selectedBodyAreas: req.body.selectedBodyAreas,
+      selectedFitnessComponents: req.body.selectedFitnessComponents,
+      wantsStrengthTraining: req.body.wantsStrengthTraining,
+      selectedSports: req.body.selectedSports
+    });
     
     const {
       userName,
@@ -1027,19 +1035,24 @@ app.post('/api/register', validateRequest(registerSchema), async (req, res) => {
       ]
     );
 
+    console.log('✅ משתמש נוצר בהצלחה:', newUser.rows[0]);
+    console.log('🆔 ID המשתמש החדש:', newUser.rows[0].iduser);
+
     // הוספת העדפות ספורט
     if (selectedSports && selectedSports.length > 0) {
+      console.log('🏃 שומר העדפות ספורט:', selectedSports);
       for (let i = 0; i < selectedSports.length; i++) {
         await pool.query(
           'INSERT INTO userpreferences (iduser, sporttype, preferencerank) VALUES ($1, $2, $3)',
           [newUser.rows[0].iduser, selectedSports[i], i + 1]
         );
       }
+      console.log('✅ העדפות ספורט נשמרו');
     }
 
     // שמירת נתוני אימון כוח
     if (wantsStrengthTraining !== undefined) {
-      console.log('💪 שומר נתוני אימון כוח בהרשמה...');
+      console.log('💪 שומר נתוני אימון כוח בהרשמה:', wantsStrengthTraining);
       
       // יצירת רשומה בטבלת strength_training_preferences
       await pool.query(`
@@ -1055,17 +1068,23 @@ app.post('/api/register', validateRequest(registerSchema), async (req, res) => {
       console.log('🏋️ שומר אזורי גוף נבחרים בהרשמה:', selectedBodyAreas);
       
       for (const bodyArea of selectedBodyAreas) {
+        console.log('🔍 מחפש אזור גוף:', bodyArea);
         // מציאת ה-ID של אזור הגוף
         const bodyAreaResult = await pool.query(
           'SELECT id FROM body_areas WHERE name = $1',
           [bodyArea]
         );
         
+        console.log('🔍 תוצאות חיפוש אזור גוף:', bodyAreaResult.rows);
+        
         if (bodyAreaResult.rows.length > 0) {
           await pool.query(
             'INSERT INTO user_body_areas (user_id, body_area_id) VALUES ($1, $2)',
             [newUser.rows[0].iduser, bodyAreaResult.rows[0].id]
           );
+          console.log('✅ אזור גוף נשמר:', bodyArea);
+        } else {
+          console.log('⚠️ אזור גוף לא נמצא:', bodyArea);
         }
       }
       
@@ -1077,17 +1096,23 @@ app.post('/api/register', validateRequest(registerSchema), async (req, res) => {
       console.log('🎯 שומר מרכיבי כשירות נבחרים בהרשמה:', selectedFitnessComponents);
       
       for (const component of selectedFitnessComponents) {
+        console.log('🔍 מחפש מרכיב כשירות:', component);
         // מציאת ה-ID של מרכיב הכשירות
         const componentResult = await pool.query(
           'SELECT id FROM fitness_components WHERE name = $1',
           [component]
         );
         
+        console.log('🔍 תוצאות חיפוש מרכיב כשירות:', componentResult.rows);
+        
         if (componentResult.rows.length > 0) {
           await pool.query(
             'INSERT INTO user_fitness_components (user_id, fitness_component_id) VALUES ($1, $2)',
             [newUser.rows[0].iduser, componentResult.rows[0].id]
           );
+          console.log('✅ מרכיב כשירות נשמר:', component);
+        } else {
+          console.log('⚠️ מרכיב כשירות לא נמצא:', component);
         }
       }
       
@@ -1105,6 +1130,7 @@ app.post('/api/register', validateRequest(registerSchema), async (req, res) => {
       { expiresIn: '7d' }
     );
 
+    console.log('🎉 רישום הושלם בהצלחה!');
     res.json({
       success: true,
       token,
@@ -1118,9 +1144,17 @@ app.post('/api/register', validateRequest(registerSchema), async (req, res) => {
 
   } catch (error) {
     console.error('❌ שגיאה ברישום:', error);
+    console.error('❌ פרטי השגיאה:', {
+      message: error.message,
+      code: error.code,
+      detail: error.detail,
+      constraint: error.constraint,
+      stack: error.stack
+    });
     res.status(500).json({
       success: false,
-      message: 'שגיאה ברישום המשתמש'
+      message: 'שגיאה ברישום המשתמש',
+      error: process.env.NODE_ENV === 'development' ? error.message : undefined
     });
   }
 });
