@@ -29,6 +29,7 @@ const distributedLock = require('./utils/distributedLock');
 
 // SMS service
 const { sendSMSCode, validatePhoneNumber, cleanPhoneNumber } = require('./smsService');
+// 
 
 const app = express();
 const PORT = process.env.PORT || 10000;
@@ -69,6 +70,9 @@ app.use((req, res, next) => {
 });
 
 // הערה: כבר הגדרנו את זה למעלה
+
+// Mount analytics routes
+ 
 
 // Rate limiting
 const loginLimiter = rateLimit({
@@ -3420,3 +3424,6 @@ app.post('/api/admin/set-admin/:userId', authenticateToken, authorizeAdmin, vali
     });
   }
 });
+
+// סיכום אנליטיקות בסיסי (למנהל בלבד)
+ 
