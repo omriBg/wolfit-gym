@@ -30,6 +30,8 @@ const distributedLock = require('./utils/distributedLock');
 // SMS service
 const { sendSMSCode, validatePhoneNumber, cleanPhoneNumber } = require('./smsService');
 // 
+// Logger and error utilities
+const { logger } = require('./utils/errorHandler');
 
 const app = express();
 const PORT = process.env.PORT || 10000;
@@ -42,6 +44,29 @@ app.use(compression()); // דחיסת תגובות לשיפור ביצועים
 app.use(helmet()); // הגנות אבטחה HTTP Headers
 app.use(express.json({ limit: '10mb' }));
 app.use(express.urlencoded({ extended: true, limit: '10mb' }));
+
+// Centralized 500+ response logging
+app.use((req, res, next) => {
+  const originalStatus = res.status;
+  res.status = function(code) {
+    res.__statusCode = code;
+    return originalStatus.call(this, code);
+  };
+  res.on('finish', () => {
+    const status = res.__statusCode || res.statusCode;
+    if (status >= 500) {
+      logger.error('Server responded with 5xx error', {
+        status,
+        url: req.originalUrl,
+        method: req.method,
+        ip: req.ip,
+        userAgent: req.get('User-Agent'),
+        userId: req.user?.userId || 'anonymous'
+      });
+    }
+  });
+  next();
+});
 
 // CORS configuration
 // CORS configuration
@@ -1884,9 +1909,16 @@ app.post('/api/generate-optimal-workout', workoutLimiter, authenticateToken, asy
     });
     
   } catch (err) {
-    console.error('❌ שגיאה ביצירת אימון אופטימלי:', err);
-    console.error('❌ Stack trace:', err.stack);
-    console.error('❌ נתוני הבקשה:', { userId: req.body.userId, date: req.body.date, timeSlots: req.body.timeSlots?.length, userPreferences: req.body.userPreferences });
+    logger.error('שגיאה ביצירת אימון אופטימלי', {
+      message: err.message,
+      stack: err.stack,
+      url: req.originalUrl,
+      method: req.method,
+      ip: req.ip,
+      userAgent: req.get('User-Agent'),
+      userId: req.user?.userId || 'anonymous',
+      requestData: { userId: req.body.userId, date: req.body.date, timeSlots: req.body.timeSlots?.length, userPreferences: req.body.userPreferences }
+    });
     res.json({
       success: false,
       message: 'שגיאה ביצירת האימון האופטימלי',
@@ -2191,13 +2223,20 @@ app.post('/api/save-workout', authenticateToken, async (req, res) => {
     });
     
   } catch (err) {
-    console.error('❌ שגיאה בשמירת האימון:', err);
-    console.error('❌ Stack trace:', err.stack);
-    console.error('❌ נתוני הבקשה:', { 
-      bookings: req.body.bookings?.length, 
-      userId: req.body.userId, 
-      date: req.body.date,
-      firstBooking: req.body.bookings?.[0]
+    logger.error('שגיאה בשמירת האימון', {
+      message: err.message,
+      stack: err.stack,
+      url: req.originalUrl,
+      method: req.method,
+      ip: req.ip,
+      userAgent: req.get('User-Agent'),
+      userId: req.user?.userId || 'anonymous',
+      requestData: {
+        bookingsCount: req.body.bookings?.length,
+        userId: req.body.userId,
+        date: req.body.date,
+        firstBooking: req.body.bookings?.[0]
+      }
     });
     res.status(500).json({
       success: false,
