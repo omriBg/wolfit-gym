@@ -172,21 +172,20 @@ const InteractiveBodySelector = ({ selectedAreas = [], onAreasChange, selectedFi
             style={{ width: '400px', height: '500px', position: 'relative', zIndex: 1 }}
           />
           
-          {/* כפתורים שקופים על חלקי הגוף */}
+          {/* כפתורים שקופים לחלוטין על חלקי הגוף - מדויקים ומדויקים */}
           {/* גב - רק בצד האחורי */}
           {currentSide === ModelType.POSTERIOR && (
             <button
               className={`body-area-button ${selectedAreas.includes('back') ? 'selected' : ''}`}
               onClick={() => handleAreaClick('back')}
-              title="גב"
               style={{
                 position: 'absolute',
-                top: '70px',
-                left: '110px',
-                width: '180px',
+                top: '85px',
+                left: '115px',
+                width: '170px',
                 height: '200px',
                 zIndex: 10,
-                borderRadius: '30%'
+                borderRadius: '40% 40% 30% 30%'
               }}
             />
           )}
@@ -196,15 +195,14 @@ const InteractiveBodySelector = ({ selectedAreas = [], onAreasChange, selectedFi
             <button
               className={`body-area-button ${selectedAreas.includes('chest') ? 'selected' : ''}`}
               onClick={() => handleAreaClick('chest')}
-              title="חזה"
               style={{
                 position: 'absolute',
-                top: '70px',
-                left: '110px',
-                width: '180px',
-                height: '170px',
+                top: '85px',
+                left: '115px',
+                width: '170px',
+                height: '160px',
                 zIndex: 10,
-                borderRadius: '30%'
+                borderRadius: '35% 35% 30% 30%'
               }}
             />
           )}
@@ -213,13 +211,12 @@ const InteractiveBodySelector = ({ selectedAreas = [], onAreasChange, selectedFi
           <button
             className={`body-area-button ${selectedAreas.includes('shoulders') ? 'selected' : ''}`}
             onClick={() => handleAreaClick('shoulders')}
-            title="כתפיים"
             style={{
               position: 'absolute',
-              top: '50px',
-              left: '90px',
-              width: '220px',
-              height: '90px',
+              top: '55px',
+              left: '95px',
+              width: '210px',
+              height: '95px',
               zIndex: 10,
               borderRadius: '50%'
             }}
@@ -229,30 +226,28 @@ const InteractiveBodySelector = ({ selectedAreas = [], onAreasChange, selectedFi
           <button
             className={`body-area-button ${selectedAreas.includes('arms') ? 'selected' : ''}`}
             onClick={() => handleAreaClick('arms')}
-            title="יד שמאל"
             style={{
               position: 'absolute',
-              top: '90px',
-              left: currentSide === ModelType.ANTERIOR ? '30px' : '50px',
-              width: '110px',
-              height: '230px',
+              top: '95px',
+              left: currentSide === ModelType.ANTERIOR ? '25px' : '45px',
+              width: '105px',
+              height: '235px',
               zIndex: 10,
-              borderRadius: '50%'
+              borderRadius: '45%'
             }}
           />
           {/* יד ימין */}
           <button
             className={`body-area-button ${selectedAreas.includes('arms') ? 'selected' : ''}`}
             onClick={() => handleAreaClick('arms')}
-            title="יד ימין"
             style={{
               position: 'absolute',
-              top: '90px',
-              right: currentSide === ModelType.ANTERIOR ? '30px' : '50px',
-              width: '110px',
-              height: '230px',
+              top: '95px',
+              right: currentSide === ModelType.ANTERIOR ? '25px' : '45px',
+              width: '105px',
+              height: '235px',
               zIndex: 10,
-              borderRadius: '50%'
+              borderRadius: '45%'
             }}
           />
           
@@ -260,15 +255,14 @@ const InteractiveBodySelector = ({ selectedAreas = [], onAreasChange, selectedFi
           <button
             className={`body-area-button ${selectedAreas.includes('core') ? 'selected' : ''}`}
             onClick={() => handleAreaClick('core')}
-            title="ליבה/בטן"
             style={{
               position: 'absolute',
-              top: '220px',
-              left: '140px',
-              width: '120px',
-              height: '110px',
+              top: '235px',
+              left: '145px',
+              width: '110px',
+              height: '105px',
               zIndex: 10,
-              borderRadius: '40%'
+              borderRadius: '50%'
             }}
           />
           
@@ -276,30 +270,28 @@ const InteractiveBodySelector = ({ selectedAreas = [], onAreasChange, selectedFi
           <button
             className={`body-area-button ${selectedAreas.includes('legs') ? 'selected' : ''}`}
             onClick={() => handleAreaClick('legs')}
-            title="רגל שמאל"
             style={{
               position: 'absolute',
-              top: '310px',
-              left: '120px',
-              width: '75px',
-              height: '190px',
+              top: '325px',
+              left: '125px',
+              width: '70px',
+              height: '175px',
               zIndex: 10,
-              borderRadius: '50%'
+              borderRadius: '35%'
             }}
           />
           {/* רגל ימין */}
           <button
             className={`body-area-button ${selectedAreas.includes('legs') ? 'selected' : ''}`}
             onClick={() => handleAreaClick('legs')}
-            title="רגל ימין"
             style={{
               position: 'absolute',
-              top: '310px',
-              right: '120px',
-              width: '75px',
-              height: '190px',
+              top: '325px',
+              right: '125px',
+              width: '70px',
+              height: '175px',
               zIndex: 10,
-              borderRadius: '50%'
+              borderRadius: '35%'
             }}
           />
           
