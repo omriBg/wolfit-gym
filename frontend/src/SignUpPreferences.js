@@ -423,35 +423,6 @@ function SignUpPreferences() {
           </div>
 
           <div className="summary-section">
-            <div className="intensity-section">
-              <h4>רמת עצמיות מועדפת:</h4>
-              <div className="intensity-selector-container">
-                <div className="intensity-selector">
-                  {[1, 2, 3].map((level) => (
-                    <button
-                      key={level}
-                      className={`intensity-btn ${intensityLevel === level ? 'active' : ''}`}
-                      onClick={() => setIntensityLevel(level)}
-                      style={{
-                        backgroundColor: intensityLevel === level ? getIntensityColor(level) : 'rgba(255, 255, 255, 0.1)',
-                        borderColor: getIntensityColor(level)
-                      }}
-                    >
-                      <span className="intensity-number">{level}</span>
-                      <span className="intensity-label">{getIntensityLabel(level)}</span>
-                    </button>
-                  ))}
-                </div>
-                <button 
-                  className="wolf-assistant-button"
-                  onClick={() => setShowWolfAssistant(true)}
-                  title="עוזר אישי - וולף"
-                >
-                  עזרה בבחירה
-                </button>
-              </div>
-            </div>
-
             {/* שדה חדש לבחירת אימון כוח */}
             <div className="strength-training-section">
               <h4>אימון כוח:</h4>
@@ -467,12 +438,43 @@ function SignUpPreferences() {
               </div>
               
               {wantsStrengthTraining && (
-                <InteractiveBodySelector
-                  selectedAreas={selectedBodyAreas}
-                  onAreasChange={setSelectedBodyAreas}
-                  selectedFitnessComponents={selectedFitnessComponents}
-                  onFitnessComponentsChange={setSelectedFitnessComponents}
-                />
+                <>
+                  <div className="intensity-section">
+                    <h4>רמת עצמיות מועדפת:</h4>
+                    <div className="intensity-selector-container">
+                      <div className="intensity-selector">
+                        {[1, 2, 3].map((level) => (
+                          <button
+                            key={level}
+                            className={`intensity-btn ${intensityLevel === level ? 'active' : ''}`}
+                            onClick={() => setIntensityLevel(level)}
+                            style={{
+                              backgroundColor: intensityLevel === level ? getIntensityColor(level) : 'rgba(255, 255, 255, 0.1)',
+                              borderColor: getIntensityColor(level)
+                            }}
+                          >
+                            <span className="intensity-number">{level}</span>
+                            <span className="intensity-label">{getIntensityLabel(level)}</span>
+                          </button>
+                        ))}
+                      </div>
+                      <button 
+                        className="wolf-assistant-button"
+                        onClick={() => setShowWolfAssistant(true)}
+                        title="עוזר אישי - וולף"
+                      >
+                        עזרה בבחירה
+                      </button>
+                    </div>
+                  </div>
+                  
+                  <InteractiveBodySelector
+                    selectedAreas={selectedBodyAreas}
+                    onAreasChange={setSelectedBodyAreas}
+                    selectedFitnessComponents={selectedFitnessComponents}
+                    onFitnessComponentsChange={setSelectedFitnessComponents}
+                  />
+                </>
               )}
             </div>
             

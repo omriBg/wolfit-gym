@@ -407,7 +407,6 @@ function CreateWorkout({ selectedDate, startTime, endTime }) {
       <div className="content">
         {/* בחירת רמת עצימות */}
         <div className="intensity-selection-section">
-          <h3>רמת עצימות מועדפת:</h3>
           <div className="intensity-selector-container">
             <div className="intensity-selector">
               {[1, 2, 3].map((level) => (

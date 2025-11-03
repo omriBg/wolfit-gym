@@ -39,10 +39,14 @@ const InteractiveBodySelector = ({ selectedAreas = [], onAreasChange, selectedFi
     selectedAreas.forEach(area => {
       if (bodyAreaMapping[area]) {
         bodyAreaMapping[area].forEach(muscle => {
-          selectedMuscles.push(muscle);
+          if (!selectedMuscles.includes(muscle)) {
+            selectedMuscles.push(muscle);
+          }
         });
       }
     });
+    console.log('🔍 אזורים נבחרים:', selectedAreas);
+    console.log('💪 שרירים נבחרים:', selectedMuscles);
     return selectedMuscles;
   };
 
@@ -165,71 +169,8 @@ const InteractiveBodySelector = ({ selectedAreas = [], onAreasChange, selectedFi
             type={currentSide}
             muscles={getSelectedMuscles()}
             onMuscleClick={handleMuscleClick}
-            colors={['#8b5cf6', '#b38ed8', '#8762ab', '#6d4c7a']}
+            colors={['#8b5cf6', '#b38ed8', '#8762ab', '#6d4c7a', '#8b5cf6', '#b38ed8']}
             style={{ width: '400px', height: '500px', cursor: 'pointer' }}
-          />
-          
-          {/* שכבה שקופה מעל המודל לטיפול בלחיצות */}
-          <div
-            style={{
-              position: 'absolute',
-              top: 0,
-              left: 0,
-              width: '400px',
-              height: '500px',
-              background: 'transparent',
-              cursor: 'pointer',
-              zIndex: 10
-            }}
-            onClick={(e) => {
-              // קבל את המיקום של הלחיצה
-              const rect = e.currentTarget.getBoundingClientRect();
-              const x = e.clientX - rect.left;
-              const y = e.clientY - rect.top;
-              
-              console.log('לחצו על המודל במיקום:', x, y);
-              
-              // מיפוי מיקומים לאזורי גוף (פשוט)
-              let clickedArea = null;
-              
-              // חזה (מרכז העליון - רק בחזית)
-              if (currentSide === ModelType.ANTERIOR && x >= 150 && x <= 250 && y >= 100 && y <= 200) {
-                clickedArea = 'chest';
-              }
-              // גב (מרכז העליון - רק בצד האחורי)
-              else if (currentSide === ModelType.POSTERIOR && x >= 150 && x <= 250 && y >= 100 && y <= 200) {
-                clickedArea = 'back';
-              }
-              // בטן/ליבה (מרכז)
-              else if (x >= 160 && x <= 240 && y >= 200 && y <= 280) {
-                clickedArea = 'core';
-              }
-              // כתפיים (צדדים עליונים)
-              else if ((x >= 120 && x <= 180 && y >= 80 && y <= 140) || 
-                       (x >= 220 && x <= 280 && y >= 80 && y <= 140)) {
-                clickedArea = 'shoulders';
-              }
-              // ידיים (צדדים)
-              else if ((x >= 80 && x <= 140 && y >= 120 && y <= 300) || 
-                       (x >= 260 && x <= 320 && y >= 120 && y <= 300)) {
-                clickedArea = 'arms';
-              }
-              // רגליים (תחתון)
-              else if ((x >= 150 && x <= 200 && y >= 300 && y <= 450) || 
-                       (x >= 200 && x <= 250 && y >= 300 && y <= 450)) {
-                clickedArea = 'legs';
-              }
-              
-              if (clickedArea) {
-                console.log('נבחר אזור:', clickedArea);
-                const newSelectedAreas = selectedAreas.includes(clickedArea)
-                  ? selectedAreas.filter(area => area !== clickedArea)
-                  : [...selectedAreas, clickedArea];
-                
-                console.log('אזורים חדשים:', newSelectedAreas);
-                onAreasChange(newSelectedAreas);
-              }
-            }}
           />
           
           <div style={{
