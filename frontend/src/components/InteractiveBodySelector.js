@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useMemo } from 'react';
 import Model, { ModelType, MuscleType } from 'react-body-highlighter';
 import './InteractiveBodySelector.css';
 
@@ -33,22 +33,22 @@ const InteractiveBodySelector = ({ selectedAreas = [], onAreasChange, selectedFi
     { id: 'motor_accuracy', name: 'דיוק מוטורי', color: '#b38ed8' }
   ];
 
-  // המרת אזורי גוף נבחרים לחלקי שריר
-  const getSelectedMuscles = () => {
-    const selectedMuscles = [];
+  // המרת אזורי גוף נבחרים לחלקי שריר - עם useMemo כדי לעדכן אוטומטית
+  const selectedMuscles = useMemo(() => {
+    const muscles = [];
     selectedAreas.forEach(area => {
       if (bodyAreaMapping[area]) {
         bodyAreaMapping[area].forEach(muscle => {
-          if (!selectedMuscles.includes(muscle)) {
-            selectedMuscles.push(muscle);
+          if (!muscles.includes(muscle)) {
+            muscles.push(muscle);
           }
         });
       }
     });
     console.log('🔍 אזורים נבחרים:', selectedAreas);
-    console.log('💪 שרירים נבחרים:', selectedMuscles);
-    return selectedMuscles;
-  };
+    console.log('💪 שרירים נבחרים:', muscles);
+    return muscles;
+  }, [selectedAreas]);
 
   // טיפול בלחיצה על שריר
   const handleMuscleClick = (muscle) => {
@@ -164,12 +164,12 @@ const InteractiveBodySelector = ({ selectedAreas = [], onAreasChange, selectedFi
       </div>
       
       <div className="body-model-container">
-        <div style={{ position: 'relative', minHeight: '500px' }}>
+        <div style={{ position: 'relative', minHeight: '500px', display: 'flex', justifyContent: 'center', alignItems: 'center' }}>
           <Model
             type={currentSide}
-            muscles={getSelectedMuscles()}
+            muscles={selectedMuscles}
             onMuscleClick={handleMuscleClick}
-            colors={['#8b5cf6', '#b38ed8', '#8762ab', '#6d4c7a', '#8b5cf6', '#b38ed8']}
+            colors={['#8b5cf6', '#b38ed8', '#8762ab', '#6d4c7a']}
             style={{ width: '400px', height: '500px', cursor: 'pointer' }}
           />
           
