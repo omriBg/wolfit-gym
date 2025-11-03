@@ -164,13 +164,143 @@ const InteractiveBodySelector = ({ selectedAreas = [], onAreasChange, selectedFi
       </div>
       
       <div className="body-model-container">
-        <div style={{ position: 'relative', minHeight: '500px', display: 'flex', justifyContent: 'center', alignItems: 'center' }}>
+        <div style={{ position: 'relative', width: '400px', height: '500px', margin: '0 auto' }}>
           <Model
             type={currentSide}
             muscles={selectedMuscles}
-            onMuscleClick={handleMuscleClick}
             colors={['#8b5cf6', '#b38ed8', '#8762ab', '#6d4c7a']}
-            style={{ width: '400px', height: '500px', cursor: 'pointer' }}
+            style={{ width: '400px', height: '500px', position: 'relative', zIndex: 1 }}
+          />
+          
+          {/* כפתורים שקופים על חלקי הגוף */}
+          {/* גב - רק בצד האחורי */}
+          {currentSide === ModelType.POSTERIOR && (
+            <button
+              className={`body-area-button ${selectedAreas.includes('back') ? 'selected' : ''}`}
+              onClick={() => handleAreaClick('back')}
+              title="גב"
+              style={{
+                position: 'absolute',
+                top: '70px',
+                left: '110px',
+                width: '180px',
+                height: '200px',
+                zIndex: 10,
+                borderRadius: '30%'
+              }}
+            />
+          )}
+          
+          {/* חזה - רק בצד הקדמי */}
+          {currentSide === ModelType.ANTERIOR && (
+            <button
+              className={`body-area-button ${selectedAreas.includes('chest') ? 'selected' : ''}`}
+              onClick={() => handleAreaClick('chest')}
+              title="חזה"
+              style={{
+                position: 'absolute',
+                top: '70px',
+                left: '110px',
+                width: '180px',
+                height: '170px',
+                zIndex: 10,
+                borderRadius: '30%'
+              }}
+            />
+          )}
+          
+          {/* כתפיים */}
+          <button
+            className={`body-area-button ${selectedAreas.includes('shoulders') ? 'selected' : ''}`}
+            onClick={() => handleAreaClick('shoulders')}
+            title="כתפיים"
+            style={{
+              position: 'absolute',
+              top: '50px',
+              left: '90px',
+              width: '220px',
+              height: '90px',
+              zIndex: 10,
+              borderRadius: '50%'
+            }}
+          />
+          
+          {/* יד שמאל */}
+          <button
+            className={`body-area-button ${selectedAreas.includes('arms') ? 'selected' : ''}`}
+            onClick={() => handleAreaClick('arms')}
+            title="יד שמאל"
+            style={{
+              position: 'absolute',
+              top: '90px',
+              left: currentSide === ModelType.ANTERIOR ? '30px' : '50px',
+              width: '110px',
+              height: '230px',
+              zIndex: 10,
+              borderRadius: '50%'
+            }}
+          />
+          {/* יד ימין */}
+          <button
+            className={`body-area-button ${selectedAreas.includes('arms') ? 'selected' : ''}`}
+            onClick={() => handleAreaClick('arms')}
+            title="יד ימין"
+            style={{
+              position: 'absolute',
+              top: '90px',
+              right: currentSide === ModelType.ANTERIOR ? '30px' : '50px',
+              width: '110px',
+              height: '230px',
+              zIndex: 10,
+              borderRadius: '50%'
+            }}
+          />
+          
+          {/* ליבה/בטן */}
+          <button
+            className={`body-area-button ${selectedAreas.includes('core') ? 'selected' : ''}`}
+            onClick={() => handleAreaClick('core')}
+            title="ליבה/בטן"
+            style={{
+              position: 'absolute',
+              top: '220px',
+              left: '140px',
+              width: '120px',
+              height: '110px',
+              zIndex: 10,
+              borderRadius: '40%'
+            }}
+          />
+          
+          {/* רגל שמאל */}
+          <button
+            className={`body-area-button ${selectedAreas.includes('legs') ? 'selected' : ''}`}
+            onClick={() => handleAreaClick('legs')}
+            title="רגל שמאל"
+            style={{
+              position: 'absolute',
+              top: '310px',
+              left: '120px',
+              width: '75px',
+              height: '190px',
+              zIndex: 10,
+              borderRadius: '50%'
+            }}
+          />
+          {/* רגל ימין */}
+          <button
+            className={`body-area-button ${selectedAreas.includes('legs') ? 'selected' : ''}`}
+            onClick={() => handleAreaClick('legs')}
+            title="רגל ימין"
+            style={{
+              position: 'absolute',
+              top: '310px',
+              right: '120px',
+              width: '75px',
+              height: '190px',
+              zIndex: 10,
+              borderRadius: '50%'
+            }}
           />
           
           <div style={{
