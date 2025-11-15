@@ -178,125 +178,253 @@ const InteractiveBodySelector = ({ selectedAreas = [], onAreasChange, selectedFi
           {/* כפתורים שקופים לחלוטין על חלקי הגוף - מדויקים ומדויקים */}
           {/* גב - רק בצד האחורי */}
           {currentSide === ModelType.POSTERIOR && (
-            <button
-              className={`body-area-button ${selectedAreas.includes('back') ? 'selected' : ''}`}
-              onClick={() => handleAreaClick('back')}
-              style={{
-                position: 'absolute',
-                top: '85px',
-                left: '115px',
-                width: '170px',
-                height: '200px',
-                zIndex: 10,
-                borderRadius: '40% 40% 30% 30%'
-              }}
-            />
+            <>
+              <button
+                className="body-area-button"
+                onClick={() => handleAreaClick('back')}
+                style={{
+                  position: 'absolute',
+                  top: '85px',
+                  left: '115px',
+                  width: '170px',
+                  height: '200px',
+                  zIndex: 10,
+                  borderRadius: '40% 40% 30% 30%'
+                }}
+              />
+              {selectedAreas.includes('back') && (
+                <div
+                  className="body-area-glow"
+                  style={{
+                    position: 'absolute',
+                    top: '85px',
+                    left: '115px',
+                    width: '170px',
+                    height: '200px',
+                    borderRadius: '40% 40% 30% 30%',
+                    zIndex: 12
+                  }}
+                />
+              )}
+            </>
           )}
           
           {/* חזה - רק בצד הקדמי */}
           {currentSide === ModelType.ANTERIOR && (
-            <button
-              className={`body-area-button ${selectedAreas.includes('chest') ? 'selected' : ''}`}
-              onClick={() => handleAreaClick('chest')}
-              style={{
-                position: 'absolute',
-                top: '85px',
-                left: '115px',
-                width: '170px',
-                height: '160px',
-                zIndex: 10,
-                borderRadius: '35% 35% 30% 30%'
-              }}
-            />
+            <>
+              <button
+                className="body-area-button"
+                onClick={() => handleAreaClick('chest')}
+                style={{
+                  position: 'absolute',
+                  top: '85px',
+                  left: '115px',
+                  width: '170px',
+                  height: '160px',
+                  zIndex: 10,
+                  borderRadius: '35% 35% 30% 30%'
+                }}
+              />
+              {selectedAreas.includes('chest') && (
+                <div
+                  className="body-area-glow"
+                  style={{
+                    position: 'absolute',
+                    top: '85px',
+                    left: '115px',
+                    width: '170px',
+                    height: '160px',
+                    borderRadius: '35% 35% 30% 30%',
+                    zIndex: 12
+                  }}
+                />
+              )}
+            </>
           )}
           
           {/* כתפיים */}
-          <button
-            className={`body-area-button ${selectedAreas.includes('shoulders') ? 'selected' : ''}`}
-            onClick={() => handleAreaClick('shoulders')}
-            style={{
-              position: 'absolute',
-              top: '55px',
-              left: '95px',
-              width: '210px',
-              height: '95px',
-              zIndex: 10,
-              borderRadius: '50%'
-            }}
-          />
+          <>
+            <button
+              className="body-area-button"
+              onClick={() => handleAreaClick('shoulders')}
+              style={{
+                position: 'absolute',
+                top: '55px',
+                left: '95px',
+                width: '210px',
+                height: '95px',
+                zIndex: 10,
+                borderRadius: '50%'
+              }}
+            />
+            {selectedAreas.includes('shoulders') && (
+              <div
+                className="body-area-glow"
+                style={{
+                  position: 'absolute',
+                  top: '55px',
+                  left: '95px',
+                  width: '210px',
+                  height: '95px',
+                  borderRadius: '50%',
+                  zIndex: 12
+                }}
+              />
+            )}
+          </>
           
           {/* יד שמאל */}
-          <button
-            className={`body-area-button ${selectedAreas.includes('arms') ? 'selected' : ''}`}
-            onClick={() => handleAreaClick('arms')}
-            style={{
-              position: 'absolute',
-              top: '95px',
-              left: currentSide === ModelType.ANTERIOR ? '25px' : '45px',
-              width: '105px',
-              height: '235px',
-              zIndex: 10,
-              borderRadius: '45%'
-            }}
-          />
+          <>
+            <button
+              className="body-area-button"
+              onClick={() => handleAreaClick('arms')}
+              style={{
+                position: 'absolute',
+                top: '95px',
+                left: currentSide === ModelType.ANTERIOR ? '25px' : '45px',
+                width: '105px',
+                height: '235px',
+                zIndex: 10,
+                borderRadius: '45%'
+              }}
+            />
+            {selectedAreas.includes('arms') && (
+              <div
+                className="body-area-glow"
+                style={{
+                  position: 'absolute',
+                  top: '95px',
+                  left: currentSide === ModelType.ANTERIOR ? '25px' : '45px',
+                  width: '105px',
+                  height: '235px',
+                  borderRadius: '45%',
+                  zIndex: 12
+                }}
+              />
+            )}
+          </>
           {/* יד ימין */}
-          <button
-            className={`body-area-button ${selectedAreas.includes('arms') ? 'selected' : ''}`}
-            onClick={() => handleAreaClick('arms')}
-            style={{
-              position: 'absolute',
-              top: '95px',
-              right: currentSide === ModelType.ANTERIOR ? '25px' : '45px',
-              width: '105px',
-              height: '235px',
-              zIndex: 10,
-              borderRadius: '45%'
-            }}
-          />
+          <>
+            <button
+              className="body-area-button"
+              onClick={() => handleAreaClick('arms')}
+              style={{
+                position: 'absolute',
+                top: '95px',
+                right: currentSide === ModelType.ANTERIOR ? '25px' : '45px',
+                width: '105px',
+                height: '235px',
+                zIndex: 10,
+                borderRadius: '45%'
+              }}
+            />
+            {selectedAreas.includes('arms') && (
+              <div
+                className="body-area-glow"
+                style={{
+                  position: 'absolute',
+                  top: '95px',
+                  right: currentSide === ModelType.ANTERIOR ? '25px' : '45px',
+                  width: '105px',
+                  height: '235px',
+                  borderRadius: '45%',
+                  zIndex: 12
+                }}
+              />
+            )}
+          </>
           
           {/* ליבה/בטן */}
-          <button
-            className={`body-area-button ${selectedAreas.includes('core') ? 'selected' : ''}`}
-            onClick={() => handleAreaClick('core')}
-            style={{
-              position: 'absolute',
-              top: '235px',
-              left: '145px',
-              width: '110px',
-              height: '105px',
-              zIndex: 10,
-              borderRadius: '50%'
-            }}
-          />
+          <>
+            <button
+              className="body-area-button"
+              onClick={() => handleAreaClick('core')}
+              style={{
+                position: 'absolute',
+                top: '235px',
+                left: '145px',
+                width: '110px',
+                height: '105px',
+                zIndex: 10,
+                borderRadius: '50%'
+              }}
+            />
+            {selectedAreas.includes('core') && (
+              <div
+                className="body-area-glow"
+                style={{
+                  position: 'absolute',
+                  top: '235px',
+                  left: '145px',
+                  width: '110px',
+                  height: '105px',
+                  borderRadius: '50%',
+                  zIndex: 12
+                }}
+              />
+            )}
+          </>
           
           {/* רגל שמאל */}
-          <button
-            className={`body-area-button ${selectedAreas.includes('legs') ? 'selected' : ''}`}
-            onClick={() => handleAreaClick('legs')}
-            style={{
-              position: 'absolute',
-              top: '325px',
-              left: '125px',
-              width: '70px',
-              height: '175px',
-              zIndex: 10,
-              borderRadius: '35%'
-            }}
-          />
+          <>
+            <button
+              className="body-area-button"
+              onClick={() => handleAreaClick('legs')}
+              style={{
+                position: 'absolute',
+                top: '325px',
+                left: '125px',
+                width: '70px',
+                height: '175px',
+                zIndex: 10,
+                borderRadius: '35%'
+              }}
+            />
+            {selectedAreas.includes('legs') && (
+              <div
+                className="body-area-glow"
+                style={{
+                  position: 'absolute',
+                  top: '325px',
+                  left: '125px',
+                  width: '70px',
+                  height: '175px',
+                  borderRadius: '35%',
+                  zIndex: 12
+                }}
+              />
+            )}
+          </>
           {/* רגל ימין */}
-          <button
-            className={`body-area-button ${selectedAreas.includes('legs') ? 'selected' : ''}`}
-            onClick={() => handleAreaClick('legs')}
-            style={{
-              position: 'absolute',
-              top: '325px',
-              right: '125px',
-              width: '70px',
-              height: '175px',
-              zIndex: 10,
-              borderRadius: '35%'
-            }}
-          />
+          <>
+            <button
+              className="body-area-button"
+              onClick={() => handleAreaClick('legs')}
+              style={{
+                position: 'absolute',
+                top: '325px',
+                right: '125px',
+                width: '70px',
+                height: '175px',
+                zIndex: 10,
+                borderRadius: '35%'
+              }}
+            />
+            {selectedAreas.includes('legs') && (
+              <div
+                className="body-area-glow"
+                style={{
+                  position: 'absolute',
+                  top: '325px',
+                  right: '125px',
+                  width: '70px',
+                  height: '175px',
+                  borderRadius: '35%',
+                  zIndex: 12
+                }}
+              />
+            )}
+          </>
           
           <div style={{
             position: 'absolute',

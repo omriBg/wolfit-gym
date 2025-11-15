@@ -231,6 +231,24 @@
     inset 0 0 35px rgba(139, 92, 246, 0.4);
 }
 
+/* אפקט תאורה על איבר נבחר - div נפרד (גישה חדשה) */
+.body-area-glow {
+  pointer-events: none;
+  background: radial-gradient(ellipse at center, 
+    rgba(139, 92, 246, 0.7) 0%, 
+    rgba(139, 92, 246, 0.5) 30%,
+    rgba(139, 92, 246, 0.3) 50%,
+    rgba(139, 92, 246, 0.15) 70%,
+    transparent 90%);
+  box-shadow: 
+    0 0 30px rgba(139, 92, 246, 1),
+    0 0 50px rgba(139, 92, 246, 0.8),
+    0 0 70px rgba(139, 92, 246, 0.6),
+    0 0 100px rgba(139, 92, 246, 0.4),
+    inset 0 0 40px rgba(139, 92, 246, 0.6);
+  animation: glow-pulse 2s ease-in-out infinite;
+}
+
 @keyframes gentle-pulse {
   0%, 100% {
     opacity: 0.3;
