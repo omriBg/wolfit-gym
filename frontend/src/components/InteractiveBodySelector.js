@@ -164,7 +164,10 @@ const InteractiveBodySelector = ({ selectedAreas = [], onAreasChange, selectedFi
       </div>
       
       <div className="body-model-container">
-        <div style={{ position: 'relative', width: '400px', height: '500px', margin: '0 auto' }}>
+        <div 
+          className={`body-model-wrapper ${selectedAreas.length > 0 ? 'has-selections' : ''}`}
+          style={{ position: 'relative', width: '400px', height: '500px', margin: '0 auto' }}
+        >
           <Model
             type={currentSide}
             muscles={selectedMuscles}
