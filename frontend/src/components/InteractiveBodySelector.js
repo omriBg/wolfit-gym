@@ -324,7 +324,7 @@ const InteractiveBodySelector = ({ selectedAreas = [], onAreasChange, selectedFi
                 style={{
                   position: 'absolute',
                   top: '95px',
-                  right: currentSide === ModelType.ANTERIOR ? '25px' : '45px',
+                  left: currentSide === ModelType.ANTERIOR ? '270px' : '250px',
                   width: '105px',
                   height: '235px',
                   borderRadius: '45%',
@@ -416,7 +416,7 @@ const InteractiveBodySelector = ({ selectedAreas = [], onAreasChange, selectedFi
                 style={{
                   position: 'absolute',
                   top: '325px',
-                  right: '125px',
+                  left: '205px',
                   width: '70px',
                   height: '175px',
                   borderRadius: '35%',
