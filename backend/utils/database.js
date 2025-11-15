@@ -120,10 +120,31 @@ function setupPoolEventListeners(poolInstance) {
 // הגדרת event listeners
 setupPoolEventListeners(pool);
 
-// פונקציה להמתנה ל-pool להיות מוכן - ללא בדיקת חיבור!
-const waitForPoolReady = async () => {
-  console.log('✅ Pool מוכן לשימוש');
-  return pool;
+// פונקציה להמתנה ל-pool להיות מוכן - עם בדיקת חיבור
+const waitForPoolReady = async (maxRetries = 3, retryDelay = 1000) => {
+  for (let attempt = 1; attempt <= maxRetries; attempt++) {
+    try {
+      console.log(`🔍 ניסיון ${attempt}/${maxRetries} - בודק חיבור למסד נתונים...`);
+      const client = await pool.connect();
+      
+      // בדיקה מהירה שהחיבור עובד
+      await client.query('SELECT 1');
+      client.release();
+      
+      console.log('✅ Pool מוכן לשימוש');
+      return pool;
+    } catch (err) {
+      console.error(`❌ ניסיון ${attempt}/${maxRetries} נכשל:`, err.message);
+      
+      if (attempt === maxRetries) {
+        console.error('❌ כל הניסיונות נכשלו, זורק שגיאה');
+        throw new Error(`לא ניתן להתחבר למסד הנתונים לאחר ${maxRetries} ניסיונות: ${err.message}`);
+      }
+      
+      // המתנה לפני ניסיון נוסף
+      await new Promise(resolve => setTimeout(resolve, retryDelay));
+    }
+  }
 };
 
 // פונקציה לבדיקת חיבור (רק כשקוראים לה במפורש)

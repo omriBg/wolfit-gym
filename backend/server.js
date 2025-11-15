@@ -800,12 +800,24 @@ app.post('/api/google-login', async (req, res) => {  // הסרנו את loginLim
     console.error('❌ Error details:', {
       message: error.message,
       code: error.code,
-      stack: error.stack
+      stack: error.stack,
+      name: error.name
     });
+    
+    // אם זו שגיאת דאטהבייס, נחזיר הודעה יותר ברורה
+    if (error.code === 'ECONNREFUSED' || error.code === 'ETIMEDOUT' || error.code === 'ENOTFOUND') {
+      return res.status(500).json({
+        success: false,
+        error: 'שגיאה בהתחברות לדאטהבייס',
+        details: 'לא ניתן להתחבר לשרת הדאטהבייס. אנא נסה שוב מאוחר יותר.'
+      });
+    }
+    
     res.status(500).json({
       success: false,
       error: 'Google login failed',
-      details: error.message 
+      details: error.message,
+      code: error.code || 'UNKNOWN_ERROR'
     });
   }
 });
@@ -1740,27 +1752,40 @@ app.put('/api/save-user-preferences/:userId', authenticateToken, authorizeUserAc
 app.get('/api/verify-token', authenticateToken, async (req, res) => {
   try {
     // אם הגענו לכאן, הטוקן תקין (בגלל ה-middleware)
-    const user = await pool.query(
+    console.log('🔍 בודק טוקן עבור משתמש:', req.user.userId);
+    
+    // המתנה ל-pool להיות מוכן
+    const readyPool = await waitForPoolReady();
+    
+    const user = await readyPool.query(
       'SELECT iduser as id, email, name, picture FROM "User" WHERE iduser = $1',
       [req.user.userId]
     );
 
     if (user.rows.length === 0) {
+      console.log('❌ משתמש לא נמצא:', req.user.userId);
       return res.status(404).json({
         success: false,
         message: 'משתמש לא נמצא'
       });
     }
 
+    console.log('✅ טוקן אומת בהצלחה עבור משתמש:', user.rows[0].email);
     res.json({
       success: true,
       user: user.rows[0]
     });
   } catch (error) {
     console.error('❌ שגיאה באימות טוקן:', error);
+    console.error('❌ פרטי שגיאה:', {
+      message: error.message,
+      code: error.code,
+      stack: error.stack
+    });
     res.status(500).json({
       success: false,
-      message: 'שגיאה באימות טוקן'
+      message: 'שגיאה באימות טוקן',
+      error: error.message
     });
   }
 });
