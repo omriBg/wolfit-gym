@@ -115,48 +115,8 @@
   position: relative;
 }
 
-/* אפקט זוהר סביב המודל כאשר יש איברים נבחרים */
-.body-model-container::before {
-  content: '';
-  position: absolute;
-  top: 50%;
-  left: 50%;
-  transform: translate(-50%, -50%);
-  width: 450px;
-  height: 550px;
-  background: radial-gradient(ellipse, 
-    rgba(139, 92, 246, 0.1) 0%, 
-    rgba(139, 92, 246, 0.05) 40%,
-    transparent 70%);
-  border-radius: 50%;
-  pointer-events: none;
-  z-index: 0;
-  opacity: 0;
-  transition: opacity 0.3s ease;
-}
-
-.body-model-container:has(.body-area-button.selected)::before {
-  opacity: 1;
-  animation: container-glow 3s ease-in-out infinite;
-}
-
-@keyframes container-glow {
-  0%, 100% {
-    opacity: 0.3;
-    transform: translate(-50%, -50%) scale(1);
-  }
-  50% {
-    opacity: 0.5;
-    transform: translate(-50%, -50%) scale(1.05);
-  }
-}
-
 .body-model-wrapper {
   position: relative;
-}
-
-.body-model-wrapper.has-selections {
-  filter: drop-shadow(0 0 20px rgba(139, 92, 246, 0.3));
 }
 
 .body-model-container svg {
@@ -177,31 +137,6 @@
   transform: scale(1.05);
 }
 
-/* הדגשת שרירים נבחרים במודל */
-.body-model-container svg path[fill*="#8b5cf6"],
-.body-model-container svg path[fill*="#b38ed8"],
-.body-model-container svg path[fill*="#8762ab"],
-.body-model-container svg path[fill*="#6d4c7a"] {
-  filter: drop-shadow(0 0 8px rgba(139, 92, 246, 0.8)) 
-          drop-shadow(0 0 12px rgba(139, 92, 246, 0.6))
-          drop-shadow(0 0 16px rgba(139, 92, 246, 0.4));
-  animation: muscle-glow 2s ease-in-out infinite;
-}
-
-@keyframes muscle-glow {
-  0%, 100% {
-    filter: drop-shadow(0 0 8px rgba(139, 92, 246, 0.8)) 
-            drop-shadow(0 0 12px rgba(139, 92, 246, 0.6))
-            drop-shadow(0 0 16px rgba(139, 92, 246, 0.4));
-    opacity: 1;
-  }
-  50% {
-    filter: drop-shadow(0 0 12px rgba(139, 92, 246, 1)) 
-            drop-shadow(0 0 18px rgba(139, 92, 246, 0.8))
-            drop-shadow(0 0 24px rgba(139, 92, 246, 0.6));
-    opacity: 1.1;
-  }
-}
 
 /* כפתורים שקופים לחלוטין על חלקי הגוף */
 .body-area-button {
@@ -213,6 +148,7 @@
   margin: 0;
   outline: none;
   opacity: 0;
+  overflow: visible;
 }
 
 /* אפקט hover - רמז עדין שהאיזור לחיץ */
@@ -236,7 +172,7 @@
   animation: gentle-pulse 2s ease-in-out infinite;
 }
 
-/* אפקט selection - אור בוהק סגלגל */
+/* אפקט selection - אור בוהק סגלגל רק על האיבר הנבחר */
 .body-area-button.selected {
   opacity: 0;
   background: transparent !important;
@@ -249,25 +185,23 @@
   top: 50%;
   left: 50%;
   transform: translate(-50%, -50%);
-  width: 110%;
-  height: 110%;
-  background: radial-gradient(ellipse, 
-    rgba(139, 92, 246, 0.6) 0%, 
-    rgba(139, 92, 246, 0.4) 30%,
-    rgba(139, 92, 246, 0.2) 50%,
-    rgba(179, 142, 216, 0.1) 70%,
+  width: 100%;
+  height: 100%;
+  background: radial-gradient(ellipse at center, 
+    rgba(139, 92, 246, 0.4) 0%, 
+    rgba(139, 92, 246, 0.25) 45%,
+    rgba(139, 92, 246, 0.1) 65%,
     transparent 85%);
   border-radius: inherit;
   pointer-events: none;
   box-shadow: 
-    0 0 40px rgba(139, 92, 246, 0.9),
-    0 0 60px rgba(139, 92, 246, 0.7),
-    0 0 90px rgba(139, 92, 246, 0.5),
-    0 0 120px rgba(139, 92, 246, 0.3),
-    inset 0 0 40px rgba(139, 92, 246, 0.4),
-    inset 0 0 60px rgba(179, 142, 216, 0.2);
+    0 0 15px rgba(139, 92, 246, 0.9),
+    0 0 25px rgba(139, 92, 246, 0.7),
+    0 0 35px rgba(139, 92, 246, 0.5),
+    inset 0 0 20px rgba(139, 92, 246, 0.3);
   animation: glow-pulse 2s ease-in-out infinite;
   z-index: 5;
+  clip-path: inset(0);
 }
 
 .body-area-button.selected::before {
@@ -283,18 +217,15 @@
   pointer-events: none;
   z-index: 4;
   animation: inner-glow 2s ease-in-out infinite;
+  clip-path: inset(0);
 }
 
 .body-area-button.selected:hover::after {
   box-shadow: 
-    0 0 50px rgba(139, 92, 246, 1),
-    0 0 80px rgba(139, 92, 246, 0.8),
-    0 0 110px rgba(139, 92, 246, 0.6),
-    0 0 140px rgba(139, 92, 246, 0.4),
-    inset 0 0 50px rgba(139, 92, 246, 0.5),
-    inset 0 0 70px rgba(179, 142, 216, 0.3);
-  width: 115%;
-  height: 115%;
+    0 0 30px rgba(139, 92, 246, 1),
+    0 0 50px rgba(139, 92, 246, 0.8),
+    0 0 70px rgba(139, 92, 246, 0.6),
+    inset 0 0 35px rgba(139, 92, 246, 0.4);
 }
 
 @keyframes gentle-pulse {
@@ -313,34 +244,28 @@
     opacity: 0.9;
     transform: translate(-50%, -50%) scale(1);
     box-shadow: 
-      0 0 40px rgba(139, 92, 246, 0.9),
-      0 0 60px rgba(139, 92, 246, 0.7),
-      0 0 90px rgba(139, 92, 246, 0.5),
-      0 0 120px rgba(139, 92, 246, 0.3),
-      inset 0 0 40px rgba(139, 92, 246, 0.4),
-      inset 0 0 60px rgba(179, 142, 216, 0.2);
+      0 0 15px rgba(139, 92, 246, 0.9),
+      0 0 25px rgba(139, 92, 246, 0.7),
+      0 0 35px rgba(139, 92, 246, 0.5),
+      inset 0 0 20px rgba(139, 92, 246, 0.3);
   }
   50% {
     opacity: 1;
-    transform: translate(-50%, -50%) scale(1.08);
+    transform: translate(-50%, -50%) scale(1.01);
     box-shadow: 
-      0 0 50px rgba(139, 92, 246, 1),
-      0 0 80px rgba(139, 92, 246, 0.8),
-      0 0 110px rgba(139, 92, 246, 0.6),
-      0 0 140px rgba(139, 92, 246, 0.4),
-      inset 0 0 50px rgba(139, 92, 246, 0.5),
-      inset 0 0 70px rgba(179, 142, 216, 0.3);
+      0 0 20px rgba(139, 92, 246, 1),
+      0 0 35px rgba(139, 92, 246, 0.8),
+      0 0 50px rgba(139, 92, 246, 0.6),
+      inset 0 0 25px rgba(139, 92, 246, 0.4);
   }
 }
 
 @keyframes inner-glow {
   0%, 100% {
-    opacity: 0.15;
-    transform: translate(-50%, -50%) scale(1);
+    opacity: 0.2;
   }
   50% {
-    opacity: 0.25;
-    transform: translate(-50%, -50%) scale(1.02);
+    opacity: 0.3;
   }
 }
 
