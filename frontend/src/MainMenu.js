@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from './contexts/AuthContext';
 import { API_BASE_URL } from './config';
+import FacilityInfoModal from './components/FacilityInfoModal';
 import './MainMenu.css';
 
 function MainMenu() {
@@ -10,6 +11,7 @@ function MainMenu() {
   const [hoveredButton, setHoveredButton] = useState(null);
   const [availableHours, setAvailableHours] = useState(0);
   const [loading, setLoading] = useState(true);
+  const [isFacilityModalOpen, setIsFacilityModalOpen] = useState(false);
   const navigate = useNavigate();
 
   useEffect(() => {
@@ -66,6 +68,15 @@ function MainMenu() {
         onClick={() => logout()}
       >
         התנתק
+      </button>
+
+      {/* כפתור הסבר על המתחם */}
+      <button 
+        className="facility-info-btn"
+        onClick={() => setIsFacilityModalOpen(true)}
+        title="על המתחם"
+      >
+        <span className="facility-info-icon">ℹ</span>
       </button>
       
       <div className="menu-container">
@@ -125,6 +136,11 @@ function MainMenu() {
           </div>
         </div>
       </div>
+
+      <FacilityInfoModal 
+        isOpen={isFacilityModalOpen}
+        onClose={() => setIsFacilityModalOpen(false)}
+      />
     </div>
   );
 }
