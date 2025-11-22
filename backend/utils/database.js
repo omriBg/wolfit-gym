@@ -27,11 +27,11 @@ if (process.env.DATABASE_URL) {
       rejectUnauthorized: false,
       require: true
     },
-    // הגדרות connection pooling
-    max: 20,
-    min: 2,
+    // הגדרות connection pooling - מותאם ל-200 משתמשים
+    max: 50,  // הגדלה מ-20 ל-50 חיבורים
+    min: 5,   // הגדלה מ-2 ל-5 חיבורים
     idleTimeoutMillis: 30000,
-    connectionTimeoutMillis: 10000,
+    connectionTimeoutMillis: 5000,  // הקטנה מ-10000 ל-5000 (מהיר יותר)
     acquireTimeoutMillis: 60000,
     // הגדרות נוספות לחיבור יציב
     keepAlive: true,
@@ -48,11 +48,11 @@ if (process.env.DATABASE_URL) {
     ssl: {
       rejectUnauthorized: false
     },
-    // הגדרות connection pooling
-    max: 20,
-    min: 2,
+    // הגדרות connection pooling - מותאם ל-200 משתמשים
+    max: 50,  // הגדלה מ-20 ל-50 חיבורים
+    min: 5,   // הגדלה מ-2 ל-5 חיבורים
     idleTimeoutMillis: 30000,
-    connectionTimeoutMillis: 10000,
+    connectionTimeoutMillis: 5000,  // הקטנה מ-10000 ל-5000 (מהיר יותר)
     acquireTimeoutMillis: 60000,
     // הגדרות נוספות לחיבור יציב
     keepAlive: true,

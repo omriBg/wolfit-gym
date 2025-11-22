@@ -7,7 +7,7 @@ services:
     environment:
       POSTGRES_DB: Wolfit
       POSTGRES_USER: postgres
-      POSTGRES_PASSWORD: 9526
+      POSTGRES_PASSWORD: ${DB_PASSWORD}
     ports:
       - "5432:5432"
     volumes:
@@ -26,7 +26,7 @@ services:
       - DB_PORT=5432
       - DB_NAME=Wolfit
       - DB_USER=postgres
-      - DB_PASSWORD=9526
+      - DB_PASSWORD=${DB_PASSWORD}
     depends_on:
       - postgres
     volumes:

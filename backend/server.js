@@ -33,6 +33,22 @@ const { sendSMSCode, validatePhoneNumber, cleanPhoneNumber } = require('./smsSer
 // Logger and error utilities
 const { logger } = require('./utils/errorHandler');
 
+// 🔒 אבטחה: הסרת console.log מייצור - החלפה ב-logger
+if (process.env.NODE_ENV === 'production') {
+  // שמירה על console.error רק לשגיאות קריטיות
+  const originalError = console.error;
+  console.error = (...args) => {
+    logger.error(...args);
+    // בייצור, גם console.error ילך ל-logger
+  };
+  
+  // השבתת console.log, console.warn, console.info, console.debug בייצור
+  console.log = () => {};
+  console.warn = (...args) => logger.warn(...args);
+  console.info = () => {};
+  console.debug = () => {};
+}
+
 const app = express();
 const PORT = process.env.PORT || 10000;
 
@@ -99,7 +115,23 @@ app.use((req, res, next) => {
 // Mount analytics routes
  
 
-// Rate limiting
+// 🔒 Rate Limiting גלובלי - הגנה מפני DDoS (מוגדר למטה)
+const generalLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000, // 15 דקות
+  max: 100, // 100 בקשות לכל IP ב-15 דקות
+  message: {
+    success: false,
+    message: 'יותר מדי בקשות, נסה שוב מאוחר יותר'
+  },
+  standardHeaders: true,
+  legacyHeaders: false,
+  skip: (req) => {
+    // דלג על health checks
+    return req.path === '/health' || req.path === '/ready' || req.path === '/live';
+  }
+});
+
+// Rate limiting להתחברות
 const loginLimiter = rateLimit({
   windowMs: 15 * 60 * 1000, // 15 minutes
   max: 5, // limit each IP to 5 requests per windowMs
@@ -123,18 +155,18 @@ const workoutLimiter = rateLimit({
 // JWT Secret validation
 const JWT_SECRET = process.env.JWT_SECRET;
 if (!JWT_SECRET) {
-  console.error('❌ JWT_SECRET לא מוגדר');
+  logger.error('❌ JWT_SECRET לא מוגדר');
   process.exit(1);
 }
 
 if (JWT_SECRET.length < 32) {
-  console.error('❌ JWT_SECRET חייב להיות לפחות 32 תווים');
+  logger.error('❌ JWT_SECRET חייב להיות לפחות 32 תווים');
   process.exit(1);
 }
 
-console.log('🔍 בדיקת JWT_SECRET: קיים');
-console.log('🔍 אורך JWT_SECRET:', JWT_SECRET.length);
-console.log('✅ JWT_SECRET תקין, ממשיך...');
+logger.info('🔍 בדיקת JWT_SECRET: קיים');
+logger.info(`🔍 אורך JWT_SECRET: ${JWT_SECRET.length}`);
+logger.info('✅ JWT_SECRET תקין, ממשיך...');
 
 // JWT Authentication Middleware
 const authenticateToken = (req, res, next) => {
@@ -160,14 +192,14 @@ const authorizeUserAccess = (req, res, next) => {
   const tokenUserId = req.user.userId;
 
   if (requestedUserId !== tokenUserId) {
-    console.log(`❌ ניסיון גישה לא מורש: משתמש ${tokenUserId} מנסה לגשת למשתמש ${requestedUserId}`);
+    logger.warn(`❌ ניסיון גישה לא מורש: משתמש ${tokenUserId} מנסה לגשת למשתמש ${requestedUserId}`);
     return res.status(403).json({ 
       success: false, 
       message: 'Forbidden - אין הרשאה לגשת למשאב זה' 
     });
   }
 
-  console.log(`✅ הרשאה אושרה: משתמש ${tokenUserId} גישה למשאב שלו`);
+  logger.debug(`✅ הרשאה אושרה: משתמש ${tokenUserId} גישה למשאב שלו`);
   next();
 };
 
@@ -176,7 +208,7 @@ const authorizeAdmin = async (req, res, next) => {
   try {
     const userId = req.user.userId;
     
-    console.log(`🔍 בודק הרשאות מנהל עבור משתמש: ${userId}`);
+    logger.debug(`🔍 בודק הרשאות מנהל עבור משתמש: ${userId}`);
     
     // בדיקה שהמשתמש קיים ובעל הרשאות מנהל
     const userCheck = await pool.query(
@@ -185,7 +217,7 @@ const authorizeAdmin = async (req, res, next) => {
     );
     
     if (userCheck.rows.length === 0) {
-      console.log(`❌ משתמש ${userId} לא נמצא במערכת`);
+      logger.warn(`❌ משתמש ${userId} לא נמצא במערכת`);
       return res.status(404).json({
         success: false,
         message: 'משתמש לא נמצא במערכת'
@@ -195,18 +227,18 @@ const authorizeAdmin = async (req, res, next) => {
     const isAdmin = userCheck.rows[0].isadmin;
     
     if (!isAdmin) {
-      console.log(`❌ ניסיון גישה לא מורש: משתמש ${userId} אינו מנהל`);
+      logger.warn(`❌ ניסיון גישה לא מורש: משתמש ${userId} אינו מנהל`);
       return res.status(403).json({
         success: false,
         message: 'Forbidden - הרשאות מנהל נדרשות לגשת למשאב זה'
       });
     }
     
-    console.log(`✅ הרשאות מנהל אושרו: משתמש ${userId} הוא מנהל`);
+    logger.debug(`✅ הרשאות מנהל אושרו: משתמש ${userId} הוא מנהל`);
     next();
     
   } catch (error) {
-    console.error('❌ שגיאה בבדיקת הרשאות מנהל:', error);
+    logger.error('❌ שגיאה בבדיקת הרשאות מנהל:', error);
     return res.status(500).json({
       success: false,
       message: 'שגיאה בבדיקת הרשאות מנהל',
@@ -215,8 +247,8 @@ const authorizeAdmin = async (req, res, next) => {
   }
 };
 
-console.log('🔍 יוצר middleware לאימות JWT...');
-console.log('✅ Middleware לאימות JWT נוצר בהצלחה');
+logger.debug('🔍 יוצר middleware לאימות JWT...');
+logger.debug('✅ Middleware לאימות JWT נוצר בהצלחה');
 
 // ========================================
 // 🛡️ INPUT VALIDATION SCHEMAS
@@ -381,7 +413,7 @@ const adminAddHoursSchema = Joi.object({
 // Validation Middleware
 const validateRequest = (schema) => {
   return (req, res, next) => {
-    console.log('🔍 מתחיל אימות קלט:', {
+    logger.debug('🔍 מתחיל אימות קלט:', {
       body: req.body,
       height: req.body.height,
       weight: req.body.weight,
@@ -396,8 +428,8 @@ const validateRequest = (schema) => {
     
     if (error) {
       const errorMessages = error.details.map(detail => detail.message);
-      console.log('❌ שגיאות אימות קלט:', errorMessages);
-      console.log('❌ פרטי שגיאות:', error.details);
+      logger.warn('❌ שגיאות אימות קלט:', errorMessages);
+      logger.debug('❌ פרטי שגיאות:', error.details);
       
       return res.status(400).json({
         success: false,
@@ -406,33 +438,33 @@ const validateRequest = (schema) => {
       });
     }
     
-    console.log('✅ אימות קלט עבר בהצלחה');
+    logger.debug('✅ אימות קלט עבר בהצלחה');
     // החלפת הנתונים המקוריים בנתונים המאומתים
     req.body = value;
     next();
   };
 };
 
-console.log('✅ Input validation schemas created');
+logger.debug('✅ Input validation schemas created');
 
 // Environment variables check
-console.log('🔍 מגיע לבדיקת משתני סביבה...');
+logger.debug('🔍 מגיע לבדיקת משתני סביבה...');
 
 if (process.env.DATABASE_URL) {
-  console.log('✅ DATABASE_URL קיים, משתמש ב-connection string');
+  logger.info('✅ DATABASE_URL קיים, משתמש ב-connection string');
 } else if (process.env.DB_HOST && process.env.DB_NAME && process.env.DB_USER && process.env.DB_PASSWORD) {
-  console.log('✅ משתני סביבה נפרדים קיימים');
+  logger.info('✅ משתני סביבה נפרדים קיימים');
 } else {
-  console.error('❌ שגיאה קריטית: משתני סביבה חסרים למסד הנתונים:', [
+  logger.error('❌ שגיאה קריטית: משתני סביבה חסרים למסד הנתונים:', [
     'DB_HOST', 'DB_NAME', 'DB_USER', 'DB_PASSWORD'
   ].filter(key => !process.env[key]));
   process.exit(1);
 }
 
-console.log('✅ כל משתני הסביבה קיימים, ממשיך...');
+logger.info('✅ כל משתני הסביבה קיימים, ממשיך...');
 
 // Health Check Endpoints
-console.log('🔍 מגיע ל-Health Check Endpoints...');
+logger.debug('🔍 מגיע ל-Health Check Endpoints...');
 
 app.get('/health', async (req, res) => {
   try {
@@ -495,37 +527,40 @@ app.get('/ready', async (req, res) => {
   }
 });
 
-console.log('✅ Health Check Endpoints נוצרו בהצלחה');
+logger.debug('✅ Health Check Endpoints נוצרו בהצלחה');
+
+// 🔒 החלת Rate Limiting גלובלי על כל ה-API routes
+app.use('/api', generalLimiter);
 
 // Google Login API
-app.post('/api/google-login', async (req, res) => {  // הסרנו את loginLimiter כרגע לצורך דיבוג
+app.post('/api/google-login', async (req, res) => {
   try {
-    console.log('=== התחלת תהליך התחברות Google ===');
-    console.log('📝 Request Body:', req.body);
-    console.log('📝 Request Headers:', req.headers);
+    logger.debug('=== התחלת תהליך התחברות Google ===');
+    logger.debug('📝 Request Body:', { hasCredential: !!req.body.credential });
+    logger.debug('📝 Request Headers:', { origin: req.headers.origin, userAgent: req.headers['user-agent'] });
     
     const { credential } = req.body;
     if (!credential) {
-      console.error('❌ Credential חסר בבקשה');
+      logger.warn('❌ Credential חסר בבקשה');
       return res.status(400).json({
         success: false,
         message: 'Credential נדרש'
       });
     }
     
-    console.log('📦 מנסה לפענח credential');
+    logger.debug('📦 מנסה לפענח credential');
     
     // פענוח ה-credential מ-Google
     let googleData;
     try {
       googleData = jwt.decode(credential);
-      console.log('✅ Credential פוענח בהצלחה:', {
+      logger.info('✅ Credential פוענח בהצלחה:', {
         sub: googleData?.sub,
         email: googleData?.email,
         name: googleData?.name
       });
     } catch (error) {
-      console.error('❌ שגיאה בפענוח Credential:', error);
+      logger.error('❌ שגיאה בפענוח Credential:', error);
       return res.status(400).json({
         success: false,
         message: 'Credential לא תקין',
@@ -534,7 +569,7 @@ app.post('/api/google-login', async (req, res) => {  // הסרנו את loginLim
     }
     
     if (!googleData || !googleData.sub || !googleData.email) {
-      console.error('❌ נתוני Google לא תקינים:', { googleData });
+      logger.warn('❌ נתוני Google לא תקינים:', { hasSub: !!googleData?.sub, hasEmail: !!googleData?.email });
       return res.status(400).json({
         success: false,
         message: 'נתוני Google לא תקינים'
@@ -542,36 +577,38 @@ app.post('/api/google-login', async (req, res) => {  // הסרנו את loginLim
     }
     
     // בדיקה אם המשתמש קיים במסד הנתונים
-    console.log('=== התחלת בדיקת משתמש קיים ===');
-    console.log('🔍 מחפש משתמש לפי:', {
+    logger.debug('=== התחלת בדיקת משתמש קיים ===');
+    logger.debug('🔍 מחפש משתמש לפי:', {
       googleId: googleData.sub,
       email: googleData.email
     });
 
     // המתנה ל-pool להיות מוכן
-    console.log('⏳ מחכה שהדאטהבייס יהיה מוכן...');
+    logger.debug('⏳ מחכה שהדאטהבייס יהיה מוכן...');
     let readyPool;
     try {
       readyPool = await waitForPoolReady();
-      console.log('✅ הדאטהבייס מוכן');
+      logger.debug('✅ הדאטהבייס מוכן');
 
-      // בדיקת מבנה הדאטהבייס
-      const tables = await readyPool.query(`
-        SELECT table_name 
-        FROM information_schema.tables 
-        WHERE table_schema = 'public'
-      `);
-      console.log('📊 טבלאות קיימות:', tables.rows.map(row => row.table_name));
-      
-      // בדיקת מבנה טבלת User
-      const columns = await readyPool.query(`
-        SELECT column_name, data_type 
-        FROM information_schema.columns 
-        WHERE table_name = 'User'
-      `);
-      console.log('📊 עמודות בטבלת User:', columns.rows);
+      // בדיקת מבנה הדאטהבייס (רק בפיתוח)
+      if (process.env.NODE_ENV === 'development') {
+        const tables = await readyPool.query(`
+          SELECT table_name 
+          FROM information_schema.tables 
+          WHERE table_schema = 'public'
+        `);
+        logger.debug('📊 טבלאות קיימות:', tables.rows.map(row => row.table_name));
+        
+        // בדיקת מבנה טבלת User
+        const columns = await readyPool.query(`
+          SELECT column_name, data_type 
+          FROM information_schema.columns 
+          WHERE table_name = 'User'
+        `);
+        logger.debug('📊 עמודות בטבלת User:', columns.rows);
+      }
     } catch (error) {
-      console.error('❌ שגיאה בהתחברות לדאטהבייס:', error);
+      logger.error('❌ שגיאה בהתחברות לדאטהבייס:', error);
       return res.status(500).json({
         success: false,
         message: 'שגיאה בהתחברות לדאטהבייס',
