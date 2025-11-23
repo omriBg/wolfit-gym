@@ -35,8 +35,48 @@ function FacilityInfoModal({ isOpen, onClose }) {
           <div className="facility-section">
             <h3 className="facility-section-title">מבנה המתחם</h3>
             <p className="facility-section-text">
-              המתחם בנוי ממספר סוגי ספורט שונים, כאשר כל סוג ספורט כולל מספר מגרשים ייחודיים. 
-              המגוון הרחב מאפשר לך לבחור את הפעילות המתאימה לך ביותר.
+              המתחם כולל <strong>9 סוגי ספורט שונים</strong>, כאשר כל סוג ספורט כולל מספר מגרשים ייחודיים:
+            </p>
+            <div className="sports-list">
+              <div className="sport-item">
+                <span className="sport-name">כדורגל</span>
+                <span className="sport-count">מספר מגרשים</span>
+              </div>
+              <div className="sport-item">
+                <span className="sport-name">כדורסל</span>
+                <span className="sport-count">מספר מגרשים</span>
+              </div>
+              <div className="sport-item">
+                <span className="sport-name">טיפוס</span>
+                <span className="sport-count">מספר מגרשים</span>
+              </div>
+              <div className="sport-item">
+                <span className="sport-name">חדר כושר</span>
+                <span className="sport-count">מספר מגרשים</span>
+              </div>
+              <div className="sport-item">
+                <span className="sport-name">קורדינציה</span>
+                <span className="sport-count">מספר מגרשים</span>
+              </div>
+              <div className="sport-item">
+                <span className="sport-name">טניס</span>
+                <span className="sport-count">מספר מגרשים</span>
+              </div>
+              <div className="sport-item">
+                <span className="sport-name">פינגפונג</span>
+                <span className="sport-count">מספר מגרשים</span>
+              </div>
+              <div className="sport-item">
+                <span className="sport-name">אגרוף</span>
+                <span className="sport-count">מספר מגרשים</span>
+              </div>
+              <div className="sport-item">
+                <span className="sport-name">אופניים</span>
+                <span className="sport-count">מספר מגרשים</span>
+              </div>
+            </div>
+            <p className="facility-section-text" style={{ marginTop: '1rem' }}>
+              המגוון הרחב מאפשר לך לבחור את הפעילות המתאימה לך ביותר ולבנות אימון מגוון ומאתגר.
             </p>
           </div>
 

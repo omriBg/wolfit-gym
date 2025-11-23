@@ -12,11 +12,28 @@ function MainMenu() {
   const [availableHours, setAvailableHours] = useState(0);
   const [loading, setLoading] = useState(true);
   const [isFacilityModalOpen, setIsFacilityModalOpen] = useState(false);
+  const [showFacilityHint, setShowFacilityHint] = useState(true);
   const navigate = useNavigate();
 
   useEffect(() => {
     const timer = setTimeout(() => setIsLoaded(true), 100);
     loadUserHours();
+    
+    // בדיקה אם המשתמש כבר ראה את ההסבר
+    const hasSeenFacilityInfo = localStorage.getItem('hasSeenFacilityInfo');
+    if (hasSeenFacilityInfo) {
+      setShowFacilityHint(false);
+    } else {
+      // הסתרת הרמז אחרי 10 שניות
+      const hintTimer = setTimeout(() => {
+        setShowFacilityHint(false);
+      }, 10000);
+      return () => {
+        clearTimeout(timer);
+        clearTimeout(hintTimer);
+      };
+    }
+    
     return () => clearTimeout(timer);
   }, []);
 
@@ -71,13 +88,25 @@ function MainMenu() {
       </button>
 
       {/* כפתור הסבר על המתחם */}
-      <button 
-        className="facility-info-btn"
-        onClick={() => setIsFacilityModalOpen(true)}
-        title="על המתחם"
-      >
-        <span className="facility-info-icon">ℹ</span>
-      </button>
+      <div className="facility-info-wrapper">
+        <button 
+          className={`facility-info-btn ${showFacilityHint ? 'pulse-animation' : ''}`}
+          onClick={() => {
+            setIsFacilityModalOpen(true);
+            setShowFacilityHint(false);
+            localStorage.setItem('hasSeenFacilityInfo', 'true');
+          }}
+          title="על המתחם"
+        >
+          <span className="facility-info-icon">ℹ</span>
+        </button>
+        {showFacilityHint && (
+          <div className="facility-hint">
+            <span className="hint-text">לחץ כאן למידע על המתחם</span>
+            <div className="hint-arrow">↓</div>
+          </div>
+        )}
+      </div>
       
       <div className="menu-container">
         <div className="header-section">

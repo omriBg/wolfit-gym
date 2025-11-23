@@ -185,6 +185,42 @@
   letter-spacing: 0.3px;
 }
 
+.sports-list {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 0.8rem;
+  margin-top: 1rem;
+}
+
+.sport-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 0.8rem 1rem;
+  background: rgba(139, 92, 246, 0.1);
+  border: 1px solid rgba(139, 92, 246, 0.3);
+  border-radius: 8px;
+  transition: all 0.3s ease;
+}
+
+.sport-item:hover {
+  background: rgba(139, 92, 246, 0.2);
+  border-color: rgba(139, 92, 246, 0.5);
+  transform: translateX(-5px);
+}
+
+.sport-name {
+  font-weight: 500;
+  color: rgba(255, 255, 255, 0.9);
+  font-size: 1rem;
+}
+
+.sport-count {
+  font-size: 0.9rem;
+  color: rgba(139, 92, 246, 0.8);
+  font-weight: 400;
+}
+
 /* Responsive Design */
 @media (max-width: 768px) {
   .facility-modal-content {
